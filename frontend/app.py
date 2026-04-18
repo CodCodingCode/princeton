@@ -697,8 +697,7 @@ def _send_case_chat(user_msg: str) -> None:
         chat = CaseChatAgent(case=case_obj)
         if not chat.available:
             st.warning(
-                "KIMI_API_KEY not set in backend/.env — post-run chat disabled. "
-                "Add `KIMI_API_KEY=...` and reload."
+                "K2_API_KEY not set in backend/.env — post-run chat disabled."
             )
             return
         st.session_state.case_chat = chat

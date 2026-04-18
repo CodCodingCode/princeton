@@ -1,13 +1,10 @@
 """Kimi K2 client for the post-run chat agent.
 
-Mirrors the surface of [agent/_llm.py](../agent/_llm.py) but reads its own env
-vars so K2 (cloud, used for chat) and MediX (GH200, used for the orchestrator)
-can both be live in the same process.
+Reuses the same env vars as the orchestrator — one key, one endpoint:
 
-Env:
-    KIMI_BASE_URL    default https://api.k2think.ai/v1
-    KIMI_API_KEY     required
-    KIMI_MODEL       default MBZUAI-IFM/K2-Think-v2
+    K2_API_KEY     required
+    K2_BASE_URL    default https://api.k2think.ai/v1
+    NEOVAX_MODEL   default MBZUAI-IFM/K2-Think-v2
 
 Two functions:
 
@@ -26,29 +23,30 @@ from functools import lru_cache
 from typing import AsyncIterator, Literal
 
 
-KIMI_BASE_URL = os.environ.get("KIMI_BASE_URL", "https://api.k2think.ai/v1")
-KIMI_MODEL_DEFAULT = os.environ.get("KIMI_MODEL_DEFAULT", "MBZUAI-IFM/K2-Think-v2")
-
 _THINK_OPEN = "<think>"
 _THINK_CLOSE = "</think>"
 
 
-def has_kimi_key() -> bool:
-    return bool(os.environ.get("KIMI_API_KEY"))
+def _base_url() -> str:
+    return os.environ.get("K2_BASE_URL", "https://api.k2think.ai/v1")
 
 
 def _model_name() -> str:
-    return os.environ.get("KIMI_MODEL", KIMI_MODEL_DEFAULT)
+    return os.environ.get("NEOVAX_MODEL", "MBZUAI-IFM/K2-Think-v2")
+
+
+def has_kimi_key() -> bool:
+    return bool(os.environ.get("K2_API_KEY"))
 
 
 @lru_cache(maxsize=1)
 def _client():
     from openai import AsyncOpenAI
 
-    api_key = os.environ.get("KIMI_API_KEY")
-    if not api_key:
-        raise RuntimeError("KIMI_API_KEY not set — chat agent disabled")
-    return AsyncOpenAI(base_url=KIMI_BASE_URL, api_key=api_key)
+    key = os.environ.get("K2_API_KEY")
+    if not key:
+        raise RuntimeError("K2_API_KEY not set — chat agent disabled")
+    return AsyncOpenAI(base_url=_base_url(), api_key=key)
 
 
 async def k2_stream_with_thinking(
