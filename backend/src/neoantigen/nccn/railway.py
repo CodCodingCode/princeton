@@ -32,21 +32,56 @@ def _mermaid_label(s: str, max_len: int = 80) -> str:
 
 
 def to_mermaid(rmap: RailwayMap) -> str:
-    """Render the railway as a Mermaid ``flowchart LR`` string."""
+    """Render the railway as a Mermaid ``flowchart TD`` string.
+
+    When ``phase_id`` is populated on every step, group steps into per-phase
+    ``subgraph`` blocks (dynamic-walker output). Falls back to a flat chain
+    for legacy single-node outputs.
+    """
     lines: list[str] = ["flowchart TD"]
     step_ids: list[str] = []
+    # Map phase_id → ordered list of (step, safe_id).
+    phases: dict[str, list[tuple[RailwayStep, str]]] = {}
+    phase_order: list[str] = []
+    phase_titles: dict[str, str] = {}
 
-    # Main chosen path — solid rectangles linked top-to-bottom.
     for s in rmap.steps:
-        step_id = _safe_id(s.node_id)
-        step_ids.append(step_id)
-        label = f"<b>{_mermaid_label(s.title, 60)}</b><br/>{_mermaid_label(s.chosen_option_label, 80)}"
-        lines.append(f'    {step_id}["{label}"]:::chosen')
+        sid = _safe_id(s.node_id)
+        step_ids.append(sid)
+        pid = s.phase_id or "main"
+        if pid not in phases:
+            phases[pid] = []
+            phase_order.append(pid)
+            phase_titles[pid] = s.phase_title or ""
+        phases[pid].append((s, sid))
 
+    use_subgraphs = len(phase_order) > 1 or phase_order[0] != "main"
+
+    if use_subgraphs:
+        for pid in phase_order:
+            title = phase_titles.get(pid) or pid
+            lines.append(f'    subgraph {_safe_id(pid)}["{_mermaid_label(title, 40)}"]')
+            for s, sid in phases[pid]:
+                label = (
+                    f"<b>{_mermaid_label(s.title, 60)}</b><br/>"
+                    f"{_mermaid_label(s.chosen_option_label, 80)}"
+                )
+                lines.append(f'        {sid}["{label}"]:::chosen')
+            lines.append("    end")
+    else:
+        for s, sid in phases[phase_order[0]]:
+            label = (
+                f"<b>{_mermaid_label(s.title, 60)}</b><br/>"
+                f"{_mermaid_label(s.chosen_option_label, 80)}"
+            )
+            lines.append(f'    {sid}["{label}"]:::chosen')
+
+    # Main chosen-path chain across all steps in declaration order.
     for i in range(len(step_ids) - 1):
         lines.append(f"    {step_ids[i]} ==> {step_ids[i + 1]}")
 
-    # Alternatives — dashed spurs branching off the main line.
+    # Alternatives — dashed spurs. Placed outside any subgraph so they sit
+    # beside their parent node in the final layout.
     alt_counter = 0
     for s in rmap.steps:
         parent = _safe_id(s.node_id)

@@ -8,6 +8,9 @@ export interface Mutation {
 }
 
 export interface PathologyFindings {
+  primary_cancer_type: string;
+  histology: string;
+  primary_site: string;
   melanoma_subtype: string;
   breslow_thickness_mm: number | null;
   ulceration: boolean | null;
@@ -39,13 +42,6 @@ export interface EnrichedBiomarkers {
   source_notes: Record<string, string>;
 }
 
-export interface NCCNEvidenceNodeRef {
-  node_id: string;
-  node_title: string;
-}
-
-export type NCCNEvidenceMap = Record<string, NCCNEvidenceNodeRef[]>;
-
 export interface CitationRef {
   pmid: string;
   title: string;
@@ -75,6 +71,8 @@ export interface RailwayStep {
   citations: CitationRef[];
   alternatives: RailwayAlternative[];
   is_terminal: boolean;
+  phase_id: string;
+  phase_title: string;
 }
 
 export interface RailwayMap {
@@ -116,6 +114,9 @@ export interface TrialSite {
 export interface PageFinding {
   page_number: number;
   description: string;
+  primary_cancer_type: string | null;
+  histology: string | null;
+  primary_site: string | null;
   melanoma_subtype: string | null;
   breslow_thickness_mm: number | null;
   ulceration: boolean | null;
@@ -153,6 +154,7 @@ export interface ProvenanceEntry {
 export interface PatientCase {
   case_id: string;
   pathology: PathologyFindings;
+  primary_cancer_type: string;
   intake: ClinicianIntake;
   enrichment: EnrichedBiomarkers | null;
   mutations: Mutation[];

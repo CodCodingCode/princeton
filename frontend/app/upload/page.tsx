@@ -248,9 +248,10 @@ export default function UploadPage() {
         </div>
         <div className="p-4 rounded-lg bg-ink-900/50 border border-ink-800">
           <div className="text-teal-400 font-medium mb-1">
-            3 · NCCN + trials
+            3 · Railway + trials
           </div>
-          Railway with alternatives, matched trials, map, PDF report
+          4-phase dynamic railway grounded in phase-2+ trial literature, matched
+          trials, map, PDF report
         </div>
       </div>
     </div>

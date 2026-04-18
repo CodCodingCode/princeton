@@ -59,6 +59,9 @@ class _AggField(BaseModel):
 class _AggPayload(BaseModel):
     """Schema Kimi K2 fills in when reconciling across PDFs."""
 
+    primary_cancer_type: _AggField = Field(default_factory=_AggField)
+    histology: _AggField = Field(default_factory=_AggField)
+    primary_site: _AggField = Field(default_factory=_AggField)
     melanoma_subtype: _AggField = Field(default_factory=_AggField)
     breslow_thickness_mm: _AggField = Field(default_factory=_AggField)
     ulceration: _AggField = Field(default_factory=_AggField)
@@ -84,27 +87,39 @@ class _AggPayload(BaseModel):
     )
 
 
-SYSTEM_PROMPT = """You are a melanoma-oncology chart reconciler. You will be
-given the per-page findings extracted from a patient's full document folder
-(pathology reports, IHC addenda, NGS reports, imaging reports, H&P notes).
-Multiple pages and multiple PDFs often mention the same field with slightly
-different values.
+SYSTEM_PROMPT = """You are an oncology chart reconciler. You will be given the
+per-page findings extracted from a patient's full document folder (pathology
+reports, IHC addenda, NGS reports, imaging reports, H&P notes). Multiple pages
+and multiple PDFs often mention the same field with slightly different values.
+The patient may have any cancer type — melanoma, lung, breast, colorectal,
+etc. — so do NOT force fields into a melanoma frame.
 
-Field priority — NCCN-critical fields. These drive the NCCN cutaneous
-melanoma railway, so getting them right matters more than the trial-eligibility
-fields:
+Field priority tier 1 — cancer identity. These drive downstream literature
+retrieval, so a wrong value here poisons the whole railway:
+
+  primary_cancer_type, histology, primary_site
+
+Always prefer the primary pathology report for these. `primary_cancer_type`
+must be a stable snake_case token (cutaneous_melanoma, lung_adenocarcinoma,
+lung_squamous, breast_ductal_carcinoma, colorectal_adenocarcinoma, gastric_carcinoma,
+pancreatic_carcinoma, prostate_carcinoma, ovarian_carcinoma, renal_cell_carcinoma,
+hepatocellular_carcinoma, bladder_carcinoma, head_neck_scc, glioblastoma,
+lymphoma_dlbcl, multiple_myeloma, other).
+
+Field priority tier 2 — clinical pathology fields used by the melanoma
+NCCN-style reasoning path when applicable:
 
   melanoma_subtype, breslow_thickness_mm, ulceration, mitotic_rate_per_mm2,
   tils_present, pdl1_estimate, lag3_ihc_percent
 
-For NCCN-critical fields, always prefer the primary pathology report or IHC
-addendum over a clinical-note summary, even when the note is more recent. A
-consult note saying "Breslow ~2 mm" must lose to the pathology report saying
-"Breslow 2.1 mm". An IHC addendum must win over a consult note that says
-"PD-L1 pending".
+For these, prefer the primary pathology report or IHC addendum over a
+clinical-note summary, even when the note is more recent. A consult note
+saying "Breslow ~2 mm" must lose to the pathology report saying "Breslow
+2.1 mm". An IHC addendum must win over a consult note that says "PD-L1
+pending". For non-melanoma cases most of these stay null — that is fine.
 
-Secondary fields (trial-eligibility — prefer the most recent clinical note,
-since these change over time): ajcc_stage, age_years, ecog,
+Field priority tier 3 — trial-eligibility, prefer the most recent clinical
+note since these change over time: ajcc_stage, age_years, ecog,
 measurable_disease_recist, life_expectancy_months, prior_systemic_therapy,
 prior_anti_pd1.
 
@@ -192,6 +207,7 @@ def _payload_to_models(
     provenance: list[ProvenanceEntry] = []
 
     for name in [
+        "primary_cancer_type", "histology", "primary_site",
         "melanoma_subtype", "breslow_thickness_mm", "ulceration", "mitotic_rate_per_mm2",
         "tils_present", "pdl1_estimate", "lag3_ihc_percent",
         "ajcc_stage", "age_years", "ecog", "measurable_disease_recist",
@@ -219,6 +235,9 @@ def _payload_to_models(
     )
 
     pathology = PathologyFindings(
+        primary_cancer_type=(payload.primary_cancer_type.value or "unknown"),
+        histology=(payload.histology.value or ""),
+        primary_site=(payload.primary_site.value or ""),
         melanoma_subtype=subtype,
         breslow_thickness_mm=_parse_float(payload.breslow_thickness_mm.value),
         ulceration=_parse_bool(payload.ulceration.value),
@@ -294,6 +313,9 @@ def _heuristic_aggregate(
 
     for doc in docs:
         for page in doc.pages:
+            _set(pathology, "primary_cancer_type", page.primary_cancer_type, doc.filename, page.page_number)
+            _set(pathology, "histology", page.histology, doc.filename, page.page_number)
+            _set(pathology, "primary_site", page.primary_site, doc.filename, page.page_number)
             _set(pathology, "melanoma_subtype", page.melanoma_subtype, doc.filename, page.page_number)
             _set(pathology, "breslow_thickness_mm", page.breslow_thickness_mm, doc.filename, page.page_number)
             _set(pathology, "ulceration", page.ulceration, doc.filename, page.page_number)
@@ -343,6 +365,9 @@ def _render_docs_for_prompt(docs: list[DocumentExtraction]) -> str:
             blocks.append(f"--- page {page.page_number} ---")
             blocks.append(f"description: {page.description}")
             shown_fields = {
+                "primary_cancer_type": page.primary_cancer_type,
+                "histology": page.histology,
+                "primary_site": page.primary_site,
                 "melanoma_subtype": page.melanoma_subtype,
                 "breslow_thickness_mm": page.breslow_thickness_mm,
                 "ulceration": page.ulceration,

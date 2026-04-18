@@ -21,6 +21,7 @@ from dataclasses import dataclass, field
 from typing import Sequence
 
 from ..enrichment import enrich
+from ..enrichment.cancer_type import detect_primary_cancer
 from ..external.regeneron_rules import evaluate_all
 from ..external.trial_sites import fetch_trial_sites
 from ..io.aggregator import aggregate_documents
@@ -35,13 +36,12 @@ from ..models import (
     TrialMatch,
     TrialSite,
 )
-from ..nccn.evidence import evidence_map_payload
-from ..nccn.railway import build_map
-from ..nccn.walker import (
+from ..nccn.dynamic_walker import (
+    DynamicRailwayWalker,
     PatientState,
-    RailwayWalker,
     final_recommendation_from_steps,
 )
+from ..nccn.railway import build_map
 from .events import EventBus, EventKind, set_current_bus
 
 
@@ -101,13 +101,17 @@ class PatientOrchestrator:
 
         # 2.5. Enrichment — compute TMB from mutations (always runs; silent when
         #      the list is empty). Without this, the walker sees "TMB: unknown"
-        #      at BRAF_MUT_TX / BRAF_WT_TX / VACCINE_CANDIDATE.
+        #      at the systemic-therapy phase.
         enriched: EnrichedBiomarkers = await enrich(mutations=mutations)
+
+        # 2.6. Primary cancer detection — seeds the RAG query + phase prompts.
+        primary_cancer_type = detect_primary_cancer(pathology, mutations)
 
         # Bundle the case shell
         case = PatientCase(
             case_id=self.case_id,
             pathology=pathology,
+            primary_cancer_type=primary_cancer_type,
             intake=intake,
             enrichment=enriched,
             mutations=mutations,
@@ -121,7 +125,7 @@ class PatientOrchestrator:
         # Legacy event for frontend components still keyed on PDF_EXTRACTED
         await self.bus.emit(
             EventKind.PDF_EXTRACTED,
-            f"Canonical record · {len(mutations)} mutations · "
+            f"Canonical record · {primary_cancer_type} · {len(mutations)} mutations · "
             f"{len(provenance)} provenance entries · {len(conflicts)} conflicts",
             {
                 "pathology": pathology.model_dump(),
@@ -131,17 +135,17 @@ class PatientOrchestrator:
                 "provenance": [p.model_dump() for p in provenance],
                 "conflicts": conflicts,
                 "doc_count": len(documents),
-                "nccn_evidence_map": evidence_map_payload(),
+                "primary_cancer_type": primary_cancer_type,
             },
         )
 
-        # 3. NCCN railway walk
+        # 3. Dynamic railway walk (4 phases grounded in phase-2+ trial RAG)
         state = PatientState(
             pathology=pathology,
             mutations=mutations,
             tumor_mutational_burden=enriched.tmb_mut_per_mb,
         )
-        walker = RailwayWalker(state=state)
+        walker = DynamicRailwayWalker(state=state, cancer_type=primary_cancer_type)
         steps = await walker.walk()
         rmap = build_map(
             steps,

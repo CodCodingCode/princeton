@@ -31,23 +31,25 @@ from .tools import TOOL_SCHEMAS, execute_tool
 MAX_TOOL_LOOPS = 3
 
 
-SYSTEM_PROMPT = """You are a melanoma-oncology patient copilot. The patient's
-pathology PDF has already been analysed: structured fields extracted, NCCN
-treatment railway walked, clinical trials matched, trial sites geocoded. You
-have the full case summary in your context.
+SYSTEM_PROMPT = """You are an oncology patient copilot. The patient's document
+folder has already been analysed: structured fields extracted, a 4-phase
+treatment railway generated from phase-2+ trial literature, clinical trials
+matched, trial sites geocoded. You have the full case summary in your context.
+The patient may have any cancer type — do not assume melanoma.
 
 Your job is to help the patient (or their clinician) understand the railway
 and the matched trials. Explain the agent's reasoning, show alternative
-branches that were considered, surface PubMed evidence, and use tools to
+options that were considered, surface PubMed evidence, and use tools to
 scroll the dashboard.
 
 Rules:
 * Always reason inside <think>...</think> first, then write the user-facing
   answer.
-* When the user asks "why this path?" or "why not X?", call explain_node or
-  explain_branch.
+* When the user asks "why this recommendation?" or "why not X?", call
+  explain_node or explain_branch.
 * When the user asks "where is trial X?", call show_trial.
-* When the user asks for evidence or recent papers, call pubmed_search.
+* When the user asks for evidence or recent papers, call pubmed_search — the
+  corpus is phase-2+ interventional trials across all major cancers.
 * Be concise. Answer in 2-4 sentences unless explicitly asked for depth.
 * Cite PMIDs inline when referencing a paper.
 * You are NOT a licensed physician; defer final decisions to the oncologist.
@@ -61,7 +63,12 @@ def _slim_case(case: PatientCase) -> str:
     lines = [
         f"CASE {case.case_id}",
         "",
-        "PATHOLOGY",
+        "DIAGNOSIS",
+        f"  primary cancer: {case.primary_cancer_type or 'unknown'}",
+        f"  histology: {p.histology or 'unknown'}",
+        f"  primary site: {p.primary_site or 'unknown'}",
+        "",
+        "PATHOLOGY (melanoma-specific fields — null if not melanoma)",
         f"  subtype: {p.melanoma_subtype}",
         f"  Breslow: {p.breslow_thickness_mm} mm" if p.breslow_thickness_mm is not None else "  Breslow: unknown",
         f"  ulceration: {p.ulceration}",

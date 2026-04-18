@@ -1,0 +1,451 @@
+"""Cancer-agnostic railway walker — grounded in the phase-2+ RAG corpus.
+
+Replaces the static melanoma graph ([melanoma_v2024.py]) with a dynamic,
+literature-driven walker that works for any oncology case.
+
+Flow per case:
+
+  For each of 4 fixed phases (staging → primary → systemic → followup):
+    1. Build a RAG query from primary_cancer_type + driver mutations +
+       phase focus.
+    2. Retrieve top-K phase-2+ citations, filtered by cancer_type.
+    3. Prompt the medical model with (a) extracted patient evidence,
+       (b) retrieved paper titles + snippets + PMIDs, (c) this phase's
+       scope. Model returns a JSON list of 2-4 decisions.
+    4. Parse → list[RailwayStep] for this phase (phase_id + phase_title
+       stamped on every step). Emit RAILWAY_STEP per step.
+
+When the model / RAG are unavailable we emit a single "needs more data"
+placeholder step per phase so the UI never looks broken.
+"""
+
+from __future__ import annotations
+
+import json
+import re
+from dataclasses import dataclass, field
+from typing import Literal
+
+from pydantic import BaseModel, Field
+
+from ..agent._llm import has_api_key, split_thinking, stream_with_thinking
+from ..agent.events import EventKind, emit
+from ..models import (
+    CitationRef,
+    Mutation,
+    PathologyFindings,
+    RailwayAlternative,
+    RailwayStep,
+)
+from ..rag import Citation, has_store as _rag_available, query_papers
+
+
+# ─────────────────────────────────────────────────────────────
+# Phases
+# ─────────────────────────────────────────────────────────────
+
+
+@dataclass(frozen=True)
+class Phase:
+    id: str
+    title: str
+    focus: str           # one-line scope description included in the prompt
+    query_suffix: str    # appended to the RAG query to bias retrieval
+
+
+PHASES: tuple[Phase, ...] = (
+    Phase(
+        id="staging",
+        title="Staging & workup",
+        focus=(
+            "Imaging, biopsy adequacy, molecular testing, and pathology "
+            "re-review decisions — the work needed to lock in the diagnosis "
+            "and stage before therapy is picked."
+        ),
+        query_suffix="staging workup diagnosis biomarker testing",
+    ),
+    Phase(
+        id="primary",
+        title="Primary / local therapy",
+        focus=(
+            "Surgery, radiation, and other local control of the primary "
+            "tumor or regional disease."
+        ),
+        query_suffix="surgery resection radiation adjuvant local therapy",
+    ),
+    Phase(
+        id="systemic",
+        title="Systemic therapy",
+        focus=(
+            "First-line and subsequent systemic regimens — targeted "
+            "therapy, immunotherapy, chemotherapy. Line of therapy matters."
+        ),
+        query_suffix="first-line second-line systemic targeted immunotherapy",
+    ),
+    Phase(
+        id="followup",
+        title="Follow-up & adjuvant",
+        focus=(
+            "Surveillance, survivorship, adjuvant monitoring, response "
+            "assessment cadence, and long-term toxicity management."
+        ),
+        query_suffix="surveillance follow-up adjuvant monitoring response",
+    ),
+)
+
+
+# ─────────────────────────────────────────────────────────────
+# State carried through the walk
+# ─────────────────────────────────────────────────────────────
+
+
+@dataclass
+class PatientState:
+    """Minimal patient state the walker reasons over.
+
+    Kept separate from the legacy melanoma walker's `PatientState` so we can
+    delete that file later without disturbing this module.
+    """
+
+    pathology: PathologyFindings
+    mutations: list[Mutation] = field(default_factory=list)
+    tumor_mutational_burden: float | None = None
+
+    @property
+    def driver_tokens(self) -> list[str]:
+        out: list[str] = []
+        for m in self.mutations[:6]:
+            out.append(f"{m.gene} {m.label}")
+        return out
+
+    def evidence_summary(self) -> dict[str, str]:
+        p = self.pathology
+        fields: dict[str, str] = {
+            "primary_cancer_type": p.primary_cancer_type or "unknown",
+            "histology": p.histology or "unknown",
+            "primary_site": p.primary_site or "unknown",
+            "mutations": ", ".join(self.driver_tokens) or "none reported",
+            "tumor_mutational_burden": (
+                f"{self.tumor_mutational_burden:.1f} mut/Mb"
+                if self.tumor_mutational_burden is not None
+                else "unknown"
+            ),
+        }
+        # Include melanoma-specific fields when populated (they naturally
+        # collapse to "unknown" for non-melanoma cases).
+        if p.melanoma_subtype not in {"unknown", None}:
+            fields["melanoma_subtype"] = p.melanoma_subtype
+        if p.breslow_thickness_mm is not None:
+            fields["breslow_thickness_mm"] = f"{p.breslow_thickness_mm} mm"
+        if p.ulceration is not None:
+            fields["ulceration"] = "present" if p.ulceration else "absent"
+        if p.mitotic_rate_per_mm2 is not None:
+            fields["mitotic_rate_per_mm2"] = f"{p.mitotic_rate_per_mm2}/mm²"
+        if p.tils_present != "unknown":
+            fields["tils_present"] = p.tils_present
+        if p.pdl1_estimate != "unknown":
+            fields["pdl1_estimate"] = p.pdl1_estimate
+        if p.lag3_ihc_percent is not None:
+            fields["lag3_ihc_percent"] = f"{p.lag3_ihc_percent}%"
+        return fields
+
+
+# ─────────────────────────────────────────────────────────────
+# Prompt + schema
+# ─────────────────────────────────────────────────────────────
+
+
+SYSTEM_PROMPT = (
+    "You are an oncologist reasoning about a patient's treatment plan, "
+    "grounded strictly in the phase-2+ clinical-trial literature you are "
+    "given per phase. For each phase you will emit 2-4 decision steps. "
+    "Every recommendation must cite at least one PMID from the retrieved "
+    "papers — unless the literature genuinely doesn't cover the decision, "
+    "in which case say so and mark citations as empty. Think step-by-step "
+    "inside <think>...</think>, then output the JSON object."
+)
+
+
+class _DecisionAlt(BaseModel):
+    option_label: str
+    option_description: str = ""
+    reason_not_chosen: str = ""
+
+
+class _PhaseDecision(BaseModel):
+    title: str = Field(description="Short decision question, e.g. 'Choose first-line systemic therapy'")
+    chosen_option_label: str = Field(description="The recommended action")
+    chosen_option_description: str = ""
+    chosen_rationale: str = Field(description="One-sentence rationale tied to patient evidence")
+    citation_pmids: list[str] = Field(
+        default_factory=list,
+        description="PMIDs from the retrieved papers that support this recommendation",
+    )
+    alternatives: list[_DecisionAlt] = Field(default_factory=list)
+
+
+class _PhaseResponse(BaseModel):
+    decisions: list[_PhaseDecision] = Field(default_factory=list)
+
+
+def _build_phase_prompt(
+    phase: Phase,
+    cancer_type: str,
+    state: PatientState,
+    citations: list[Citation],
+) -> str:
+    ev_lines = "\n".join(f"  - {k}: {v}" for k, v in state.evidence_summary().items())
+    cite_block = ""
+    if citations:
+        cite_lines: list[str] = []
+        for i, c in enumerate(citations, 1):
+            head = (
+                f"  [{i}] PMID {c.pmid} · {c.title} ({c.journal} {c.year}"
+                f"{', phase ' + c.trial_phase if c.trial_phase and c.trial_phase not in ('unknown', '') else ''})"
+            )
+            cite_lines.append(head)
+            cite_lines.append(f"      {c.snippet}")
+        cite_block = "Retrieved phase-2+ trial literature:\n" + "\n".join(cite_lines) + "\n\n"
+    else:
+        cite_block = (
+            "Retrieved literature: (none — RAG store is empty or filtered out "
+            "everything for this cancer type). State that the literature is "
+            "thin in your rationales and leave citation_pmids empty.\n\n"
+        )
+    return (
+        f"Phase: {phase.title}\n"
+        f"Scope: {phase.focus}\n"
+        f"Primary cancer type: {cancer_type}\n\n"
+        f"Patient evidence:\n{ev_lines}\n\n"
+        f"{cite_block}"
+        "Emit a JSON object with 2-4 decision steps relevant to THIS phase. "
+        "Do not re-cover decisions from other phases. Each step must have: "
+        "title, chosen_option_label, chosen_option_description, chosen_rationale, "
+        "citation_pmids (at least one PMID from the retrieved literature when "
+        "possible), alternatives (1-3 short alternative options with "
+        "reason_not_chosen).\n\n"
+        "Respond with: <think>your reasoning</think>\n"
+        "{\n"
+        '  "decisions": [\n'
+        "    {\n"
+        '      "title": "…",\n'
+        '      "chosen_option_label": "…",\n'
+        '      "chosen_option_description": "…",\n'
+        '      "chosen_rationale": "…",\n'
+        '      "citation_pmids": ["12345678"],\n'
+        '      "alternatives": [\n'
+        '        {"option_label": "…", "option_description": "…", "reason_not_chosen": "…"}\n'
+        "      ]\n"
+        "    }\n"
+        "  ]\n"
+        "}"
+    )
+
+
+def _parse_phase_response(answer: str) -> _PhaseResponse:
+    m = re.search(r"\{[\s\S]*\}", answer)
+    if m:
+        try:
+            data = json.loads(m.group(0))
+            return _PhaseResponse.model_validate(data)
+        except Exception:
+            pass
+    return _PhaseResponse(decisions=[])
+
+
+# ─────────────────────────────────────────────────────────────
+# RAG query assembly
+# ─────────────────────────────────────────────────────────────
+
+
+def _rag_query(phase: Phase, cancer_type: str, state: PatientState) -> str:
+    drivers = " ".join(state.driver_tokens) or ""
+    cancer_pretty = cancer_type.replace("_", " ") if cancer_type else ""
+    return f"{cancer_pretty} {drivers} {phase.query_suffix}".strip()
+
+
+async def _fetch_phase_citations(
+    phase: Phase, cancer_type: str, state: PatientState,
+) -> list[Citation]:
+    if not _rag_available():
+        return []
+    try:
+        return query_papers(
+            _rag_query(phase, cancer_type, state),
+            top_k=5,
+            cancer_type=cancer_type if cancer_type not in {"", "unknown"} else None,
+        )
+    except Exception:
+        return []
+
+
+def _citation_ref(c: Citation) -> CitationRef:
+    return CitationRef(
+        pmid=c.pmid, title=c.title, year=c.year, journal=c.journal,
+        snippet=c.snippet, relevance=c.relevance,
+    )
+
+
+def _resolve_citations(
+    wanted_pmids: list[str], pool: list[Citation],
+) -> list[CitationRef]:
+    """Map model-emitted PMIDs back to full Citation records from the phase
+    retrieval pool. Silently drops PMIDs the model hallucinated that aren't
+    in the pool."""
+    by_pmid = {c.pmid: c for c in pool}
+    out: list[CitationRef] = []
+    for pmid in wanted_pmids:
+        c = by_pmid.get(str(pmid).strip())
+        if c is not None:
+            out.append(_citation_ref(c))
+    return out
+
+
+# ─────────────────────────────────────────────────────────────
+# Walker
+# ─────────────────────────────────────────────────────────────
+
+
+@dataclass
+class DynamicRailwayWalker:
+    state: PatientState
+    cancer_type: str = "unknown"
+
+    async def walk(self) -> list[RailwayStep]:
+        steps: list[RailwayStep] = []
+        node_counter = 0
+
+        for phase in PHASES:
+            citations = await _fetch_phase_citations(phase, self.cancer_type, self.state)
+            if citations:
+                await emit(
+                    EventKind.RAG_CITATIONS,
+                    f"📚 {len(citations)} phase-2+ citations for {phase.id}",
+                    {
+                        "phase_id": phase.id,
+                        "citations": [_citation_ref(c).model_dump() for c in citations],
+                    },
+                )
+
+            user_prompt = _build_phase_prompt(phase, self.cancer_type, self.state, citations)
+            await emit(
+                EventKind.TOOL_START,
+                f"Railway ▸ {phase.title}",
+                {"phase_id": phase.id, "cancer_type": self.cancer_type},
+            )
+
+            answer_buf = ""
+            think_buf = ""
+            mode: Literal["api", "heuristic"] = "api" if has_api_key() else "heuristic"
+            try:
+                if mode == "api":
+                    async for kind, chunk in stream_with_thinking(
+                        SYSTEM_PROMPT, user_prompt, max_tokens=1400,
+                    ):
+                        if kind == "thinking":
+                            think_buf += chunk
+                            await emit(
+                                EventKind.THINKING_DELTA, "thinking",
+                                {"phase_id": phase.id, "delta": chunk},
+                            )
+                        else:
+                            answer_buf += chunk
+                            await emit(
+                                EventKind.ANSWER_DELTA, "answer",
+                                {"phase_id": phase.id, "delta": chunk},
+                            )
+            except Exception as e:
+                await emit(
+                    EventKind.LOG,
+                    f"Railway model call failed for {phase.id}: {e}",
+                )
+                mode = "heuristic"
+
+            if not think_buf and answer_buf:
+                think_part, answer_part = split_thinking(answer_buf)
+                think_buf = think_buf or think_part
+                answer_buf = answer_part or answer_buf
+
+            phase_steps: list[RailwayStep] = []
+
+            if mode == "api" and answer_buf:
+                parsed = _parse_phase_response(answer_buf)
+                for d in parsed.decisions:
+                    node_counter += 1
+                    step = RailwayStep(
+                        node_id=f"{phase.id.upper()}_{node_counter}",
+                        title=d.title or phase.title,
+                        question=phase.focus,
+                        chosen_option_label=d.chosen_option_label,
+                        chosen_option_description=d.chosen_option_description,
+                        chosen_next_id=None,
+                        chosen_rationale=d.chosen_rationale,
+                        reasoning=think_buf.strip(),
+                        evidence=self.state.evidence_summary(),
+                        citations=_resolve_citations(d.citation_pmids, citations),
+                        alternatives=[
+                            RailwayAlternative(
+                                option_label=a.option_label,
+                                option_description=a.option_description,
+                                reason_not_chosen=a.reason_not_chosen,
+                                next_id=None,
+                            )
+                            for a in d.alternatives
+                        ],
+                        is_terminal=False,
+                        phase_id=phase.id,
+                        phase_title=phase.title,
+                    )
+                    phase_steps.append(step)
+
+            # Fallback: single placeholder step for this phase so the UI still
+            # renders the four swim-lanes with an actionable message.
+            if not phase_steps:
+                node_counter += 1
+                reason = (
+                    "Medical reasoning endpoint unavailable (K2_API_KEY unset)."
+                    if mode == "heuristic"
+                    else "No decision could be synthesised — literature may be thin for this profile."
+                )
+                phase_steps.append(
+                    RailwayStep(
+                        node_id=f"{phase.id.upper()}_{node_counter}",
+                        title=phase.title,
+                        question=phase.focus,
+                        chosen_option_label="Needs clinician review",
+                        chosen_option_description=reason,
+                        chosen_next_id=None,
+                        chosen_rationale=reason,
+                        reasoning=think_buf.strip(),
+                        evidence=self.state.evidence_summary(),
+                        citations=[_citation_ref(c) for c in citations[:3]],
+                        alternatives=[],
+                        is_terminal=False,
+                        phase_id=phase.id,
+                        phase_title=phase.title,
+                    )
+                )
+
+            for step in phase_steps:
+                await emit(
+                    EventKind.RAILWAY_STEP,
+                    f"{phase.title} ▸ {step.chosen_option_label}",
+                    {"step": step.model_dump()},
+                )
+                steps.append(step)
+
+        return steps
+
+
+def final_recommendation_from_steps(steps: list[RailwayStep]) -> str:
+    """Short English summary combining the systemic-phase decisions."""
+    if not steps:
+        return "No railway generated."
+    systemic = [s for s in steps if s.phase_id == "systemic"]
+    if systemic:
+        head = systemic[0]
+        return f"{head.title}: {head.chosen_option_label}"
+    return f"{steps[-1].title}: {steps[-1].chosen_option_label}"
+
+
+__all__ = ["DynamicRailwayWalker", "PatientState", "PHASES", "final_recommendation_from_steps"]

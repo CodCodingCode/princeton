@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "NeoVax — melanoma oncologist copilot",
+  title: "NeoVax — oncologist copilot",
   description:
-    "Upload a pathology PDF and get a walked NCCN treatment railway, alternative branches, matched clinical trials, and a downloadable oncologist report.",
+    "Upload a patient's oncology document folder and get a dynamic treatment railway grounded in phase-2+ trial literature, matched clinical trials, and a downloadable oncologist report.",
 };
 
 export default function RootLayout({
@@ -22,7 +22,7 @@ export default function RootLayout({
                 NeoVax
               </span>
               <span className="text-ink-400 text-xs uppercase tracking-widest">
-                melanoma copilot
+                oncology copilot
               </span>
             </a>
             <nav className="text-sm text-ink-400">

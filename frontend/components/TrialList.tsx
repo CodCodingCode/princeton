@@ -28,7 +28,7 @@ export function TrialList({
   if (!matches.length) {
     return (
       <div className="rounded-xl border border-ink-800 bg-ink-900/40 p-6 text-ink-400 text-sm">
-        Trials will appear here once the NCCN walker finishes…
+        Trials will appear here once the railway finishes…
       </div>
     );
   }

@@ -68,7 +68,7 @@ export function RailwayMermaid({
   if (empty) {
     return (
       <div className="rounded-xl border border-ink-800 bg-ink-900/40 p-8 text-ink-400 text-sm text-center">
-        Railway will appear here as the NCCN walker runs…
+        Railway will appear here as the phase-walker runs…
       </div>
     );
   }

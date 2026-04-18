@@ -2,8 +2,6 @@ import type {
   ClinicianIntake,
   EnrichedBiomarkers,
   Mutation,
-  NCCNEvidenceMap,
-  NCCNEvidenceNodeRef,
   PathologyFindings,
 } from "@/lib/types";
 
@@ -13,39 +11,21 @@ function isEmpty(value: unknown): boolean {
   );
 }
 
-function MissingBadge({ blocking }: { blocking: NCCNEvidenceNodeRef[] }) {
-  if (blocking.length === 0) {
-    return <span className="text-ink-500">—</span>;
-  }
-  const labels = blocking.map((n) => n.node_title).join(" · ");
-  return (
-    <span
-      className="text-amber-400/80 text-xs italic"
-      title={blocking.map((n) => `${n.node_id} — ${n.node_title}`).join("\n")}
-    >
-      Missing — blocks {labels}
-    </span>
-  );
-}
-
-function Row({
-  label,
-  value,
-  blocking,
-}: {
-  label: string;
-  value: unknown;
-  blocking?: NCCNEvidenceNodeRef[];
-}) {
+function Row({ label, value }: { label: string; value: unknown }) {
   const empty = isEmpty(value);
   return (
     <div className="flex justify-between gap-4 py-1 text-sm border-b border-ink-800/60 last:border-none">
       <span className="text-ink-400">{label}</span>
       <span className="text-ink-100 text-right">
-        {empty ? <MissingBadge blocking={blocking ?? []} /> : String(value)}
+        {empty ? <span className="text-ink-500">—</span> : String(value)}
       </span>
     </div>
   );
+}
+
+function prettyCancerType(t: string | null | undefined): string {
+  if (!t || t === "unknown") return "—";
+  return t.replace(/_/g, " ");
 }
 
 export function ExtractedFields({
@@ -53,18 +33,17 @@ export function ExtractedFields({
   intake,
   enrichment,
   mutations,
+  primaryCancerType,
   tStage,
-  evidenceMap,
 }: {
   pathology: PathologyFindings;
   intake: ClinicianIntake;
   enrichment: EnrichedBiomarkers | null;
   mutations: Mutation[];
+  primaryCancerType: string;
   tStage: string;
-  evidenceMap: NCCNEvidenceMap;
 }) {
-  const blocks = (field: string): NCCNEvidenceNodeRef[] =>
-    evidenceMap[field] ?? [];
+  const isMelanoma = primaryCancerType === "cutaneous_melanoma";
 
   return (
     <div className="rounded-xl border border-ink-800 bg-ink-900/40 p-5">
@@ -74,65 +53,24 @@ export function ExtractedFields({
 
       <div className="mt-4">
         <div className="text-xs uppercase tracking-wider text-teal-300/80 mb-1">
-          NCCN evidence
+          Diagnosis
         </div>
         <p className="text-xs text-ink-500 mb-2">
-          Inputs the NCCN cutaneous melanoma walker reads at each decision node.
-          Missing fields block the listed node.
+          Drives the dynamic railway and RAG retrieval from the phase-2+ trial
+          corpus.
         </p>
         <div className="grid md:grid-cols-2 gap-x-8">
           <div>
             <Row
-              label="Subtype"
-              value={pathology.melanoma_subtype}
-              blocking={blocks("melanoma_subtype")}
+              label="Primary cancer"
+              value={prettyCancerType(
+                primaryCancerType || pathology.primary_cancer_type,
+              )}
             />
-            <Row
-              label="Breslow"
-              value={
-                pathology.breslow_thickness_mm !== null
-                  ? `${pathology.breslow_thickness_mm} mm`
-                  : null
-              }
-              blocking={blocks("breslow_thickness_mm")}
-            />
-            <Row
-              label="Ulceration"
-              value={
-                pathology.ulceration === null
-                  ? null
-                  : pathology.ulceration
-                    ? "Yes"
-                    : "No"
-              }
-              blocking={blocks("ulceration")}
-            />
-            <Row
-              label="Mitoses/mm²"
-              value={pathology.mitotic_rate_per_mm2}
-              blocking={blocks("mitotic_rate_per_mm2")}
-            />
-            <Row
-              label="TILs"
-              value={pathology.tils_present}
-              blocking={blocks("tils_present")}
-            />
+            <Row label="Histology" value={pathology.histology} />
+            <Row label="Primary site" value={pathology.primary_site} />
           </div>
           <div>
-            <Row
-              label="PD-L1"
-              value={pathology.pdl1_estimate}
-              blocking={blocks("pdl1_estimate")}
-            />
-            <Row
-              label="LAG-3 IHC"
-              value={
-                pathology.lag3_ihc_percent !== null
-                  ? `${pathology.lag3_ihc_percent}%`
-                  : null
-              }
-              blocking={blocks("lag3_ihc_percent")}
-            />
             <Row
               label="TMB"
               value={
@@ -140,17 +78,10 @@ export function ExtractedFields({
                   ? `${enrichment.tmb_mut_per_mb.toFixed(1)} mut/Mb`
                   : null
               }
-              blocking={blocks("tumor_mutational_burden")}
-            />
-            <Row
-              label="Derived T-stage"
-              value={tStage}
-              blocking={blocks("t_stage")}
             />
             <Row
               label="Mutations"
               value={mutations.length > 0 ? `${mutations.length} found` : null}
-              blocking={blocks("mutations")}
             />
           </div>
         </div>
@@ -174,11 +105,59 @@ export function ExtractedFields({
 
       <div className="mt-6">
         <div className="text-xs uppercase tracking-wider text-ink-400 mb-1">
+          Melanoma-specific pathology
+        </div>
+        <p className="text-xs text-ink-500 mb-2">
+          {isMelanoma
+            ? "Fields used by the melanoma NCCN framework."
+            : "Populated only for melanoma cases — expect these to be empty for other tumor types."}
+        </p>
+        <div className="grid md:grid-cols-2 gap-x-8">
+          <div>
+            <Row label="Subtype" value={pathology.melanoma_subtype} />
+            <Row
+              label="Breslow"
+              value={
+                pathology.breslow_thickness_mm !== null
+                  ? `${pathology.breslow_thickness_mm} mm`
+                  : null
+              }
+            />
+            <Row
+              label="Ulceration"
+              value={
+                pathology.ulceration === null
+                  ? null
+                  : pathology.ulceration
+                    ? "Yes"
+                    : "No"
+              }
+            />
+            <Row label="Mitoses/mm²" value={pathology.mitotic_rate_per_mm2} />
+            <Row label="TILs" value={pathology.tils_present} />
+          </div>
+          <div>
+            <Row label="PD-L1" value={pathology.pdl1_estimate} />
+            <Row
+              label="LAG-3 IHC"
+              value={
+                pathology.lag3_ihc_percent !== null
+                  ? `${pathology.lag3_ihc_percent}%`
+                  : null
+              }
+            />
+            <Row label="Derived T-stage" value={tStage} />
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-6">
+        <div className="text-xs uppercase tracking-wider text-ink-400 mb-1">
           Trial eligibility
         </div>
         <p className="text-xs text-ink-500 mb-2">
-          Inputs the Regeneron trial matcher reads. Separate from NCCN — missing
-          values here do not block the railway.
+          Inputs the Regeneron trial matcher reads. Separate from the railway —
+          missing values here do not block phase-level recommendations.
         </p>
         <div className="grid md:grid-cols-2 gap-x-8">
           <div>

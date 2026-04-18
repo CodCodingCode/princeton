@@ -5,7 +5,6 @@ import { useParams } from "next/navigation";
 import { subscribeCaseEvents, fetchCase } from "@/lib/api";
 import type {
   AgentEvent,
-  NCCNEvidenceMap,
   PatientCase,
   RailwayMap,
   RailwayStep,
@@ -31,7 +30,6 @@ export default function CasePage() {
   const [done, setDone] = useState(false);
   const [selectedNct, setSelectedNct] = useState<string | null>(null);
   const [showClinician, setShowClinician] = useState(false);
-  const [evidenceMap, setEvidenceMap] = useState<NCCNEvidenceMap>({});
 
   useEffect(() => {
     let cancelled = false;
@@ -51,9 +49,6 @@ export default function CasePage() {
         setCaseData(ev.payload as unknown as PatientCase);
       } else if (ev.kind === "pdf_extracted") {
         const p = ev.payload as Record<string, unknown>;
-        if (p.nccn_evidence_map) {
-          setEvidenceMap(p.nccn_evidence_map as NCCNEvidenceMap);
-        }
         setCaseData((prev) => {
           if (!prev) return prev;
           return {
@@ -65,6 +60,8 @@ export default function CasePage() {
               (p.enrichment as PatientCase["enrichment"]) ?? prev.enrichment,
             mutations:
               (p.mutations as PatientCase["mutations"]) ?? prev.mutations,
+            primary_cancer_type:
+              (p.primary_cancer_type as string) ?? prev.primary_cancer_type,
           };
         });
       } else if (ev.kind === "railway_step") {
@@ -283,7 +280,7 @@ export default function CasePage() {
         >
           <span className="text-ink-300">
             <span className="text-teal-400 mr-2">⚕</span>
-            Clinical detail for your oncologist — NCCN railway, source
+            Clinical detail for your oncologist — treatment railway, source
             documents, pipeline events
           </span>
           <span className="text-ink-500 text-xs">
@@ -298,13 +295,13 @@ export default function CasePage() {
               intake={caseData.intake}
               enrichment={caseData.enrichment}
               mutations={caseData.mutations}
+              primaryCancerType={caseData.primary_cancer_type}
               tStage={tStage}
-              evidenceMap={evidenceMap}
             />
 
             <div>
               <div className="text-xs uppercase tracking-widest text-teal-400 mb-2">
-                NCCN treatment railway
+                Treatment railway (4 phases, phase-2+ trial-grounded)
               </div>
               <RailwayMermaid
                 mermaidSource={caseData.railway?.mermaid ?? ""}
@@ -330,62 +327,93 @@ export default function CasePage() {
 }
 
 function RailwayStepsTable({ steps }: { steps: RailwayStep[] }) {
+  // Group steps by phase while preserving declaration order.
+  const grouped: {
+    phaseId: string;
+    phaseTitle: string;
+    steps: RailwayStep[];
+  }[] = [];
+  for (const s of steps) {
+    const pid = s.phase_id || "main";
+    const title = s.phase_title || "";
+    const last = grouped[grouped.length - 1];
+    if (last && last.phaseId === pid) {
+      last.steps.push(s);
+    } else {
+      grouped.push({ phaseId: pid, phaseTitle: title, steps: [s] });
+    }
+  }
+
   return (
-    <div className="mt-2 rounded-xl border border-ink-800 bg-ink-900/40 divide-y divide-ink-800">
-      {steps.map((s) => (
-        <details key={s.node_id} className="p-3 group">
-          <summary className="cursor-pointer flex items-start gap-3 list-none">
-            <span className="text-xs font-mono text-teal-400 shrink-0 w-32 truncate">
-              {s.node_id}
-            </span>
-            <div className="flex-1">
-              <div className="text-sm text-ink-100">
-                {s.title}
-                {!s.is_terminal && (
-                  <span className="text-teal-400">
-                    {" "}
-                    → {s.chosen_option_label}
+    <div className="mt-2 space-y-3">
+      {grouped.map((group) => (
+        <div
+          key={group.phaseId}
+          className="rounded-xl border border-ink-800 bg-ink-900/40"
+        >
+          {group.phaseTitle && (
+            <div className="px-3 py-2 border-b border-ink-800 text-[11px] uppercase tracking-widest text-teal-400 font-semibold">
+              {group.phaseTitle}
+            </div>
+          )}
+          <div className="divide-y divide-ink-800">
+            {group.steps.map((s) => (
+              <details key={s.node_id} className="p-3 group">
+                <summary className="cursor-pointer flex items-start gap-3 list-none">
+                  <span className="text-xs font-mono text-teal-400 shrink-0 w-32 truncate">
+                    {s.node_id}
                   </span>
+                  <div className="flex-1">
+                    <div className="text-sm text-ink-100">
+                      {s.title}
+                      {!s.is_terminal && (
+                        <span className="text-teal-400">
+                          {" "}
+                          → {s.chosen_option_label}
+                        </span>
+                      )}
+                    </div>
+                    {s.chosen_rationale && (
+                      <div className="text-xs text-ink-400 mt-0.5">
+                        {s.chosen_rationale}
+                      </div>
+                    )}
+                  </div>
+                  <span className="text-ink-500 text-xs group-open:rotate-90 transition">
+                    ▸
+                  </span>
+                </summary>
+                {s.alternatives.length > 0 && (
+                  <div className="mt-3 pl-36 space-y-1.5 text-xs">
+                    {s.alternatives.map((a, i) => (
+                      <div key={i}>
+                        <span className="text-ink-300">{a.option_label}:</span>{" "}
+                        <span className="text-ink-500">
+                          {a.reason_not_chosen || "—"}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
                 )}
-              </div>
-              {s.chosen_rationale && (
-                <div className="text-xs text-ink-400 mt-0.5">
-                  {s.chosen_rationale}
-                </div>
-              )}
-            </div>
-            <span className="text-ink-500 text-xs group-open:rotate-90 transition">
-              ▸
-            </span>
-          </summary>
-          {s.alternatives.length > 0 && (
-            <div className="mt-3 pl-36 space-y-1.5 text-xs">
-              {s.alternatives.map((a, i) => (
-                <div key={i}>
-                  <span className="text-ink-300">{a.option_label}:</span>{" "}
-                  <span className="text-ink-500">
-                    {a.reason_not_chosen || "—"}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-          {s.citations.length > 0 && (
-            <div className="mt-3 pl-36 space-y-1 text-xs">
-              {s.citations.map((c) => (
-                <a
-                  key={c.pmid}
-                  href={`https://pubmed.ncbi.nlm.nih.gov/${c.pmid}/`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="block text-teal-400 hover:text-teal-300 truncate"
-                >
-                  PMID {c.pmid} — {c.title}
-                </a>
-              ))}
-            </div>
-          )}
-        </details>
+                {s.citations.length > 0 && (
+                  <div className="mt-3 pl-36 space-y-1 text-xs">
+                    {s.citations.map((c) => (
+                      <a
+                        key={c.pmid}
+                        href={`https://pubmed.ncbi.nlm.nih.gov/${c.pmid}/`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="block text-teal-400 hover:text-teal-300 truncate"
+                      >
+                        PMID {c.pmid} — {c.title}
+                      </a>
+                    ))}
+                  </div>
+                )}
+              </details>
+            ))}
+          </div>
+        </div>
       ))}
     </div>
   );
