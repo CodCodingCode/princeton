@@ -25,6 +25,9 @@ class EventKind(str, Enum):
     ANSWER_DELTA = "answer_delta"
 
     # Patient-flow events
+    DOC_EXTRACTED = "doc_extracted"
+    AGGREGATION_START = "aggregation_start"
+    AGGREGATION_DONE = "aggregation_done"
     PDF_EXTRACTED = "pdf_extracted"
     NCCN_NODE_VISITED = "nccn_node_visited"
     RAILWAY_STEP = "railway_step"

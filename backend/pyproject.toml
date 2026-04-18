@@ -31,7 +31,7 @@ web = [
     "googlemaps>=4.10",
 ]
 pdf-vision = [
-    "pdf2image>=1.17",
+    "pymupdf>=1.24",
     "pillow>=10.0",
 ]
 rag = [

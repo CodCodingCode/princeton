@@ -1,0 +1,13 @@
+{
+  "case_id": "c5476668-4b3f-47bb-9d67-488cef891243",
+  "submitter_id": "TCGA-EE-A3AC",
+  "sex": "male",
+  "vital_status": "Alive",
+  "age_at_diagnosis": "47",
+  "stage": "Stage III",
+  "days_to_death": "",
+  "days_to_last_follow_up": "1948.0",
+  "primary_diagnosis": "Malignant melanoma, NOS",
+  "tumor_grade": "",
+  "biopsy_site": "Lymph nodes of axilla or arm"
+}

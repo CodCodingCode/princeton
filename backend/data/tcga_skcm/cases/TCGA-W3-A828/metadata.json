@@ -1,0 +1,13 @@
+{
+  "case_id": "ba207d79-91c0-45dc-a784-4bcaec580eb4",
+  "submitter_id": "TCGA-W3-A828",
+  "sex": "male",
+  "vital_status": "Dead",
+  "age_at_diagnosis": "66",
+  "stage": "",
+  "days_to_death": "3683",
+  "days_to_last_follow_up": "3683.0",
+  "primary_diagnosis": "Spindle cell nevus, NOS",
+  "tumor_grade": "",
+  "biopsy_site": "Lower lobe, lung"
+}

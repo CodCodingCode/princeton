@@ -42,8 +42,23 @@ MelanomaSubtype = Literal[
 
 
 class PathologyFindings(BaseModel):
-    """Structured oncology findings extracted from a pathology PDF."""
+    """Structured oncology pathology findings (extracted from PDFs).
 
+    Cancer-agnostic primary fields drive the dynamic railway; melanoma-specific
+    fields remain here for back-compat and as additional evidence when the case
+    is melanoma. For non-melanoma cases they simply stay at their defaults.
+    """
+
+    # Cancer-agnostic primaries (used by the dynamic walker to seed RAG queries)
+    primary_cancer_type: str = "unknown"   # e.g. "cutaneous_melanoma",
+                                            # "lung_adenocarcinoma",
+                                            # "breast_ductal_carcinoma",
+                                            # "colorectal_adenocarcinoma",
+                                            # "other", "unknown"
+    histology: str = ""                     # free-text histology, e.g. "adenocarcinoma"
+    primary_site: str = ""                  # free-text site, e.g. "right upper lobe lung"
+
+    # Melanoma-specific evidence (populated when the case is melanoma)
     melanoma_subtype: MelanomaSubtype = "unknown"
     breslow_thickness_mm: float | None = None
     ulceration: bool | None = None
@@ -127,6 +142,8 @@ class RailwayStep(BaseModel):
     citations: list[CitationRef] = Field(default_factory=list)
     alternatives: list[RailwayAlternative] = Field(default_factory=list)
     is_terminal: bool = False
+    phase_id: str = ""                         # dynamic-railway phase grouping
+    phase_title: str = ""                      # human label for the phase
 
 
 class RailwayMap(BaseModel):
@@ -204,15 +221,65 @@ class TrialSite(BaseModel):
 # ─────────────────────────────────────────────────────────────
 
 
+class PageFinding(BaseModel):
+    """Per-page VLM output — structured findings pulled from one PDF page image."""
+
+    page_number: int
+    description: str = ""
+    primary_cancer_type: str | None = None
+    histology: str | None = None
+    primary_site: str | None = None
+    melanoma_subtype: str | None = None
+    breslow_thickness_mm: float | None = None
+    ulceration: bool | None = None
+    mitotic_rate_per_mm2: float | None = None
+    tils_present: str | None = None
+    pdl1_estimate: str | None = None
+    lag3_ihc_percent: float | None = None
+    ajcc_stage: str | None = None
+    age_years: int | None = None
+    ecog: int | None = None
+    measurable_disease_recist: bool | None = None
+    life_expectancy_months: int | None = None
+    prior_systemic_therapy: bool | None = None
+    prior_anti_pd1: bool | None = None
+    mutations_text: list[str] = Field(default_factory=list)
+    notes: str = ""
+
+
+class DocumentExtraction(BaseModel):
+    """One PDF's worth of extracted content — text + per-page VLM findings."""
+
+    filename: str
+    document_kind: str = "unknown"
+    page_count: int = 0
+    text_excerpt: str = ""
+    pages: list[PageFinding] = Field(default_factory=list)
+    used_vision_fallback: bool = False
+
+
+class ProvenanceEntry(BaseModel):
+    """Which source document + page a datum came from, for reviewable audit trails."""
+
+    field: str
+    value: str
+    filename: str
+    page_number: int | None = None
+
+
 class PatientCase(BaseModel):
-    """Everything the patient orchestrator produces for one pathology PDF."""
+    """Everything the patient orchestrator produces for one patient's document folder."""
 
     case_id: str
     pathology: PathologyFindings
+    primary_cancer_type: str = "unknown"        # detected from pathology + mutations
     intake: ClinicianIntake = Field(default_factory=ClinicianIntake)
     enrichment: EnrichedBiomarkers | None = None
     mutations: list[Mutation] = Field(default_factory=list)
-    pdf_text_excerpt: str = ""
+    documents: list[DocumentExtraction] = Field(default_factory=list)
+    provenance: list[ProvenanceEntry] = Field(default_factory=list)
+    conflicts: list[str] = Field(default_factory=list)
+    pdf_text_excerpt: str = ""  # legacy — first doc's text, kept for report compatibility
     railway: RailwayMap | None = None
     trial_matches: list[TrialMatch] = Field(default_factory=list)
     trial_sites: list[TrialSite] = Field(default_factory=list)

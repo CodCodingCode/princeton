@@ -1,0 +1,13 @@
+{
+  "case_id": "f09f3062-f904-4aff-9cd6-38eed201e652",
+  "submitter_id": "TCGA-EE-A3AG",
+  "sex": "male",
+  "vital_status": "Dead",
+  "age_at_diagnosis": "25",
+  "stage": "",
+  "days_to_death": "1265",
+  "days_to_last_follow_up": "",
+  "primary_diagnosis": "Chronic myeloid leukemia, NOS",
+  "tumor_grade": "",
+  "biopsy_site": "Not Reported"
+}

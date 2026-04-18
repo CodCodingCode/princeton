@@ -1,0 +1,13 @@
+{
+  "case_id": "beab616a-256e-48f3-a458-028897a6138c",
+  "submitter_id": "TCGA-D3-A8GI",
+  "sex": "male",
+  "vital_status": "Dead",
+  "age_at_diagnosis": "68",
+  "stage": "",
+  "days_to_death": "1780",
+  "days_to_last_follow_up": "1780.0",
+  "primary_diagnosis": "Malignant melanoma, NOS",
+  "tumor_grade": "",
+  "biopsy_site": "Lymph nodes of head, face and neck"
+}

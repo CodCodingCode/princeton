@@ -9,7 +9,7 @@ from typing import Any
 from fastapi import APIRouter, HTTPException, UploadFile, File, status
 from fastapi.responses import StreamingResponse
 
-from ...agent.patient_orchestrator import PatientOrchestrator
+from ...agent.patient_orchestrator import InputPDF, PatientOrchestrator
 from ...models import PathologyFindings, PatientCase
 from ...report.pdf_report import build_report_pdf
 from ..sse import queue_to_sse
@@ -25,19 +25,33 @@ router = APIRouter(prefix="/api/cases", tags=["cases"])
 
 
 @router.post("", status_code=status.HTTP_201_CREATED)
-async def create_case(file: UploadFile = File(...)) -> dict[str, Any]:
-    """Upload a pathology PDF, kick off the orchestrator in the background.
+async def create_case(files: list[UploadFile] = File(...)) -> dict[str, Any]:
+    """Upload a folder of pathology / clinical PDFs, kick off the orchestrator.
 
-    The orchestrator runs asynchronously and streams events to anyone who
-    subscribes to ``GET /api/cases/{case_id}/stream``.
+    Accepts multiple files in a single multipart request (key ``files``). The
+    orchestrator runs asynchronously and streams events to anyone subscribed
+    to ``GET /api/cases/{case_id}/stream``.
     """
-    content_type = (file.content_type or "").lower()
-    if "pdf" not in content_type and not (file.filename or "").lower().endswith(".pdf"):
-        raise HTTPException(status_code=400, detail="Expected a PDF upload.")
+    if not files:
+        raise HTTPException(status_code=400, detail="At least one PDF is required.")
 
-    pdf_bytes = await file.read()
-    if not pdf_bytes:
-        raise HTTPException(status_code=400, detail="Empty file upload.")
+    inputs: list[InputPDF] = []
+    for f in files:
+        name = f.filename or "unknown.pdf"
+        ctype = (f.content_type or "").lower()
+        if "pdf" not in ctype and not name.lower().endswith(".pdf"):
+            # Silently skip non-PDFs (e.g. a stray .DS_Store from a folder drop)
+            continue
+        data = await f.read()
+        if not data:
+            continue
+        inputs.append(InputPDF(filename=name, data=data))
+
+    if not inputs:
+        raise HTTPException(
+            status_code=400,
+            detail="No valid PDF files in upload (expected PDFs by extension or mime type).",
+        )
 
     s = store()
     case_id = s.new_case_id()
@@ -47,7 +61,7 @@ async def create_case(file: UploadFile = File(...)) -> dict[str, Any]:
 
     orch = PatientOrchestrator(
         case_id=case_id,
-        pdf_bytes=pdf_bytes,
+        pdfs=inputs,
         bus=record.bus,
     )
 
@@ -88,16 +102,19 @@ async def stream_case(case_id: str):
         raise HTTPException(status_code=500, detail="sse-starlette not installed.")
 
     queue = await rec.subscribe()
+    # sse-starlette drains the async generator. When the client disconnects,
+    # the generator raises CancelledError, which we catch inside queue_to_sse
+    # via normal iteration termination. We unsubscribe after the generator
+    # ends so the fanout stops pushing to a dead queue.
+    return EventSourceResponse(_stream_and_cleanup(queue, rec))
 
-    async def _cleanup() -> None:
+
+async def _stream_and_cleanup(queue, rec):
+    try:
+        async for event in queue_to_sse(queue):
+            yield event
+    finally:
         rec.unsubscribe(queue)
-
-    response = EventSourceResponse(queue_to_sse(queue))
-    response.background = asyncio.ensure_future(asyncio.sleep(0))  # type: ignore[attr-defined]
-    # Note: EventSourceResponse will drain the generator; cleanup happens when
-    # the client disconnects and the generator raises CancelledError. We also
-    # remove the queue in _cleanup, but sse-starlette already calls close.
-    return response
 
 
 @router.get("/{case_id}/trial-sites")

@@ -1,0 +1,13 @@
+{
+  "case_id": "0f579238-5a11-4adc-9c80-572cbb2ce58f",
+  "submitter_id": "TCGA-WE-A8K5",
+  "sex": "male",
+  "vital_status": "Dead",
+  "age_at_diagnosis": "65",
+  "stage": "",
+  "days_to_death": "1860",
+  "days_to_last_follow_up": "1860.0",
+  "primary_diagnosis": "Lentigo maligna melanoma",
+  "tumor_grade": "",
+  "biopsy_site": "Connective, subcutaneous and other soft tissues of lower limb and hip"
+}

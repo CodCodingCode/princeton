@@ -1,0 +1,13 @@
+{
+  "case_id": "783eb662-7d7a-4637-8500-e2d86d73ec7b",
+  "submitter_id": "TCGA-EE-A2GO",
+  "sex": "female",
+  "vital_status": "Alive",
+  "age_at_diagnosis": "66",
+  "stage": "",
+  "days_to_death": "",
+  "days_to_last_follow_up": "3857.0",
+  "primary_diagnosis": "Amelanotic melanoma",
+  "tumor_grade": "",
+  "biopsy_site": "Connective, subcutaneous and other soft tissues of lower limb and hip"
+}

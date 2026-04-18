@@ -1,0 +1,13 @@
+{
+  "case_id": "cf97d5ff-1cb7-434e-9ca8-c396cf960e5a",
+  "submitter_id": "TCGA-EB-A3Y7",
+  "sex": "female",
+  "vital_status": "Dead",
+  "age_at_diagnosis": "86",
+  "stage": "Stage IIIB",
+  "days_to_death": "326",
+  "days_to_last_follow_up": "326.0",
+  "primary_diagnosis": "Malignant melanoma, NOS",
+  "tumor_grade": "",
+  "biopsy_site": "Connective, subcutaneous and other soft tissues of head, face, and neck"
+}

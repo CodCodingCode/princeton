@@ -1,0 +1,13 @@
+{
+  "case_id": "2f5d8110-35c7-419f-8b35-bc3040f940f3",
+  "submitter_id": "TCGA-W3-A825",
+  "sex": "female",
+  "vital_status": "Dead",
+  "age_at_diagnosis": "60",
+  "stage": "",
+  "days_to_death": "1917",
+  "days_to_last_follow_up": "1917.0",
+  "primary_diagnosis": "Malignant melanoma, NOS",
+  "tumor_grade": "",
+  "biopsy_site": "Lower lobe, lung"
+}

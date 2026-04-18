@@ -1,0 +1,13 @@
+{
+  "case_id": "590b5e18-d837-4c0e-becf-80520db57c0f",
+  "submitter_id": "TCGA-Z2-A8RT",
+  "sex": "female",
+  "vital_status": "Alive",
+  "age_at_diagnosis": "42",
+  "stage": "Stage IIB",
+  "days_to_death": "",
+  "days_to_last_follow_up": "",
+  "primary_diagnosis": "Malignant melanoma, NOS",
+  "tumor_grade": "",
+  "biopsy_site": "Not Reported"
+}

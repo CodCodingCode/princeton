@@ -1,0 +1,13 @@
+{
+  "case_id": "d7207811-3f9a-48ac-ab9b-3e8af1b1d9f2",
+  "submitter_id": "TCGA-QB-A6FS",
+  "sex": "male",
+  "vital_status": "Alive",
+  "age_at_diagnosis": "49",
+  "stage": "Stage IIIC",
+  "days_to_death": "",
+  "days_to_last_follow_up": "",
+  "primary_diagnosis": "Malignant melanoma, NOS",
+  "tumor_grade": "",
+  "biopsy_site": "Not Reported"
+}

@@ -14,21 +14,8 @@ node_modules/
 next-env.d.ts
 *.tsbuildinfo
 
-# OAuth / Gmail
-client_secret*.json
-credentials.json
-backend/credentials.json
-gmail_token.json
-gmail_token.json.sender
-.config/
-
-# Derived / downloaded data — rebuild with backend/scripts/fetch_tcga_skcm.py
-# and backend/scripts/build_tcga_skcm_cases.py, don't commit.
-# (Keep backend/data/dla_alleles.json and backend/data/vendors.json — those
-# are static reference tables the code depends on.)
-backend/data/tcga_skcm/
+# Derived / downloaded data — rebuild with backend/scripts/build_pubmed_rag.py,
+# don't commit.
 backend/data/rag/
 backend/out/
 out/
-vaccine.fasta
-vaccine.json

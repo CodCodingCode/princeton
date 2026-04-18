@@ -1,0 +1,13 @@
+{
+  "case_id": "ef9f1829-0eed-47b3-9d44-06d0a8bb2bfb",
+  "submitter_id": "TCGA-OD-A75X",
+  "sex": "male",
+  "vital_status": "Dead",
+  "age_at_diagnosis": "49",
+  "stage": "",
+  "days_to_death": "9061",
+  "days_to_last_follow_up": "",
+  "primary_diagnosis": "Malignant melanoma, NOS",
+  "tumor_grade": "",
+  "biopsy_site": "Not Reported"
+}

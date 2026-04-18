@@ -1,0 +1,13 @@
+{
+  "case_id": "1cad4b22-ec8b-4e34-bfef-5464d185923a",
+  "submitter_id": "TCGA-D9-A4Z3",
+  "sex": "female",
+  "vital_status": "Alive",
+  "age_at_diagnosis": "73",
+  "stage": "",
+  "days_to_death": "",
+  "days_to_last_follow_up": "",
+  "primary_diagnosis": "Nodular melanoma",
+  "tumor_grade": "",
+  "biopsy_site": "Not Reported"
+}

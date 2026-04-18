@@ -30,6 +30,22 @@ export interface ClinicianIntake {
   age_years: number | null;
 }
 
+export interface EnrichedBiomarkers {
+  tmb_mut_per_mb: number | null;
+  uv_signature_fraction: number | null;
+  total_snvs_scored: number | null;
+  prior_systemic_therapies: string[];
+  prior_anti_pd1: boolean | null;
+  source_notes: Record<string, string>;
+}
+
+export interface NCCNEvidenceNodeRef {
+  node_id: string;
+  node_title: string;
+}
+
+export type NCCNEvidenceMap = Record<string, NCCNEvidenceNodeRef[]>;
+
 export interface CitationRef {
   pmid: string;
   title: string;
@@ -97,11 +113,52 @@ export interface TrialSite {
   status: string;
 }
 
+export interface PageFinding {
+  page_number: number;
+  description: string;
+  melanoma_subtype: string | null;
+  breslow_thickness_mm: number | null;
+  ulceration: boolean | null;
+  mitotic_rate_per_mm2: number | null;
+  tils_present: string | null;
+  pdl1_estimate: string | null;
+  lag3_ihc_percent: number | null;
+  ajcc_stage: string | null;
+  age_years: number | null;
+  ecog: number | null;
+  measurable_disease_recist: boolean | null;
+  life_expectancy_months: number | null;
+  prior_systemic_therapy: boolean | null;
+  prior_anti_pd1: boolean | null;
+  mutations_text: string[];
+  notes: string;
+}
+
+export interface DocumentExtraction {
+  filename: string;
+  document_kind: string;
+  page_count: number;
+  text_excerpt: string;
+  pages: PageFinding[];
+  used_vision_fallback: boolean;
+}
+
+export interface ProvenanceEntry {
+  field: string;
+  value: string;
+  filename: string;
+  page_number: number | null;
+}
+
 export interface PatientCase {
   case_id: string;
   pathology: PathologyFindings;
   intake: ClinicianIntake;
+  enrichment: EnrichedBiomarkers | null;
   mutations: Mutation[];
+  documents: DocumentExtraction[];
+  provenance: ProvenanceEntry[];
+  conflicts: string[];
   pdf_text_excerpt: string;
   railway: RailwayMap | null;
   trial_matches: TrialMatch[];
@@ -118,6 +175,9 @@ export type EventKind =
   | "thinking_delta"
   | "answer_delta"
   | "pdf_extracted"
+  | "doc_extracted"
+  | "aggregation_start"
+  | "aggregation_done"
   | "nccn_node_visited"
   | "railway_step"
   | "railway_ready"

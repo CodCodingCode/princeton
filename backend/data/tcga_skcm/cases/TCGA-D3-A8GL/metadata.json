@@ -1,0 +1,13 @@
+{
+  "case_id": "14407399-b1f0-46bf-9179-8bf11c39d919",
+  "submitter_id": "TCGA-D3-A8GL",
+  "sex": "male",
+  "vital_status": "Dead",
+  "age_at_diagnosis": "43",
+  "stage": "",
+  "days_to_death": "2711",
+  "days_to_last_follow_up": "2711.0",
+  "primary_diagnosis": "Malignant melanoma, NOS",
+  "tumor_grade": "",
+  "biopsy_site": "Connective, subcutaneous and other soft tissues of lower limb and hip"
+}

@@ -1,0 +1,13 @@
+{
+  "case_id": "727a7579-bd82-4141-973f-794424f4d111",
+  "submitter_id": "TCGA-BF-AAP4",
+  "sex": "male",
+  "vital_status": "Alive",
+  "age_at_diagnosis": "61",
+  "stage": "Stage IIC",
+  "days_to_death": "",
+  "days_to_last_follow_up": "335.0",
+  "primary_diagnosis": "Epithelioid cell melanoma",
+  "tumor_grade": "",
+  "biopsy_site": "Skin of trunk"
+}

@@ -1,0 +1,13 @@
+{
+  "case_id": "ef608754-3f87-458e-9bcf-4434c54c8c9e",
+  "submitter_id": "TCGA-EE-A29D",
+  "sex": "male",
+  "vital_status": "Dead",
+  "age_at_diagnosis": "87",
+  "stage": "",
+  "days_to_death": "425",
+  "days_to_last_follow_up": "425.0",
+  "primary_diagnosis": "Malignant melanoma, NOS",
+  "tumor_grade": "",
+  "biopsy_site": "Lymph nodes of head, face and neck"
+}

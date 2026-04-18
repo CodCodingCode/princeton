@@ -1,0 +1,13 @@
+{
+  "case_id": "3df3f0a9-ba52-4c50-910f-828439b0ee14",
+  "submitter_id": "TCGA-EE-A3J7",
+  "sex": "male",
+  "vital_status": "Alive",
+  "age_at_diagnosis": "43",
+  "stage": "",
+  "days_to_death": "",
+  "days_to_last_follow_up": "1949.0",
+  "primary_diagnosis": "Malignant melanoma, NOS",
+  "tumor_grade": "",
+  "biopsy_site": "Connective, subcutaneous and other soft tissues of upper limb and shoulder"
+}

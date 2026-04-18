@@ -9,6 +9,9 @@ const ALL_EVENT_KINDS: string[] = [
   "thinking_delta",
   "answer_delta",
   "pdf_extracted",
+  "doc_extracted",
+  "aggregation_start",
+  "aggregation_done",
   "nccn_node_visited",
   "railway_step",
   "railway_ready",
@@ -26,9 +29,10 @@ const ALL_EVENT_KINDS: string[] = [
   "stream_end",
 ];
 
-export async function uploadPdf(file: File): Promise<string> {
+export async function uploadPdfs(files: File[]): Promise<string> {
+  if (!files.length) throw new Error("No PDFs to upload.");
   const form = new FormData();
-  form.append("file", file);
+  for (const f of files) form.append("files", f, f.name);
   const resp = await fetch("/api/cases", { method: "POST", body: form });
   if (!resp.ok) {
     const msg = await resp.text();

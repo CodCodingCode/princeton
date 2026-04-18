@@ -1,0 +1,13 @@
+{
+  "case_id": "01cb0004-fc1e-4da5-9d27-f458f8d711ee",
+  "submitter_id": "TCGA-EE-A29V",
+  "sex": "male",
+  "vital_status": "Dead",
+  "age_at_diagnosis": "85",
+  "stage": "",
+  "days_to_death": "787",
+  "days_to_last_follow_up": "787.0",
+  "primary_diagnosis": "Malignant melanoma, NOS",
+  "tumor_grade": "",
+  "biopsy_site": "Skin of trunk"
+}

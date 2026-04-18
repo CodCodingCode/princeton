@@ -59,7 +59,7 @@ export function ChatPanel({ caseId }: { caseId: string }) {
   }
 
   return (
-    <div className="rounded-xl border border-ink-800 bg-ink-900/40 flex flex-col h-[28rem]">
+    <div className="rounded-2xl border border-ink-800 bg-ink-900/40 flex flex-col flex-1 min-h-0 h-full">
       <div className="px-4 py-2 border-b border-ink-800 flex items-center justify-between">
         <span className="text-sm font-semibold text-teal-400">
           Ask Kimi K2 about this case

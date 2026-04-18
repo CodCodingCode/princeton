@@ -4,182 +4,87 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-**NeoVax** — a melanoma oncologist copilot. Input: tumour VCF (or a TCGA-SKCM submitter id) + pathology slide. Output: NCCN treatment plan, molecular landscape, ranked neoantigen peptides + mRNA construct, HLA peptide poses, TCGA twin-matched survival snapshot, matched clinical trials, and a post-run chat agent for tumour-board drill-down.
-
-The Streamlit UI (`app.py`) lives in [../frontend/](../frontend/). This directory contains the Python package, CLI, sample data, TCGA cohort + RAG build scripts.
+Python 3.11+ package `neoantigen`. Ships one Typer command — `neoantigen serve` — which boots a FastAPI + SSE app on :8000. The app accepts a pathology PDF, runs an async orchestrator that extracts oncology fields → walks the NCCN railway → matches Regeneron trials → geocodes trial sites → lazily builds a ReportLab PDF, and streams every step live as Server-Sent Events for the Next.js frontend in [../frontend/](../frontend/).
 
 ## Commands
 
 ```bash
-# Install (editable). MHCflurry ships as a base dep; fetch its models once.
-pip install -e .
-mhcflurry-downloads fetch
-
-# Pure-pipeline CLI (no LLM, no UI)
-neoantigen demo                           # bundled BRAF V600E sample
-neoantigen run sample_data/braf_v600e.tsv
-neoantigen run input.vcf --top 20 --max-nm 500
-neoantigen run input.vcf --scorer heuristic   # test fixture only; prints ⚠ banner
-
-# Full melanoma agent (VLM pathology → NCCN walk → molecular → vaccine → twins → trials)
-neoantigen melanoma-demo                                   # auto-picks TCGA demo patient if cohort built, else sample VCF + slide
-neoantigen melanoma-demo --tcga-patient TCGA-XX-XXXX
-neoantigen melanoma-demo --slide path/slide.jpg --vcf path/tumor.vcf
-
-# Batch runner over every <submitter_id>/ under --dataset (expects slide.jpg + tumor.vcf per case)
-neoantigen melanoma-batch --dataset data/tcga_skcm/cases --output-dir out/cases --limit 20
-
-# One-off data builds (slow — run once)
-python scripts/fetch_tcga_skcm.py          # populates data/tcga_skcm/
-python scripts/build_tcga_skcm_cases.py    # fans cohort out to data/tcga_skcm/cases/<submitter_id>/{slide.jpg,tumor.vcf,metadata.json}
-python scripts/build_pubmed_rag.py         # populates data/rag/ (ChromaDB)
+pip install -e '.[agent,web,pdf-vision,rag]'
+neoantigen serve --reload                           # FastAPI on :8000
+python scripts/build_pubmed_rag.py                  # one-shot, ~100–150 MB, 15–30 min
 ```
 
-For the Streamlit UI, see [../frontend/](../frontend/).
-
-No test suite exists (`test.py` and `main.py` are empty).
+No test suite. [test_fixtures/](test_fixtures/) holds a full case's worth of pathology/imaging/chemo PDFs plus `GROUND_TRUTH.json` — use as fodder for the PDF extractor, not as pytest fixtures.
 
 ## Architecture
 
-**Dual interface** over a shared peptide pipeline:
+### The request flow ([agent/patient_orchestrator.py](src/neoantigen/agent/patient_orchestrator.py))
 
-- Pure CLI ([src/neoantigen/cli.py](src/neoantigen/cli.py) via Typer/Rich) — `run`, `demo`, `fetch-gene` for the scoring pipeline alone; `melanoma-demo` and `melanoma-batch` for the full agent.
-- Five-panel Streamlit live UI ([../frontend/app.py](../frontend/app.py)) — drives `MelanomaOrchestrator` in a background thread and consumes its `EventBus` via a `queue.Queue` bridge.
-
-### Peptide pipeline ([src/neoantigen/pipeline/](src/neoantigen/pipeline/))
-
-Each step is a separate module:
+`PatientOrchestrator.run()` is a deterministic Python coroutine — **not** an LLM-driven tool loop — and emits on an `EventBus` at every step:
 
 ```
-parser.py    → Parse mutations from VCF (SnpEff ANN) or TSV
-protein.py   → Fetch wild-type sequence from UniProt, apply mutation
-peptides.py  → Sliding-window peptide generation (8–11 aa)
-scoring.py   → MHC binding prediction (MHCflurryScorer default; HeuristicScorer is a ⚠ test fixture)
-filters.py   → Filter by mutation presence, self-reactivity, affinity threshold
-construct.py → Assemble mRNA: Kozak + ATG + epitopes + linkers + stop codon
-codon.py     → Codon-optimized reverse translation
-runner.py    → Orchestrator (RunConfig dataclass, sync run; async wrapper in the orchestrator)
+1. io/pdf_extract.extract_oncology_fields  → PathologyFindings + ClinicianIntake + Mutation[]
+                                             (pypdf first; pdf2image + VLM fallback on scans)
+2. nccn/walker.RailwayWalker.walk          → streams THINKING_DELTA, emits RAILWAY_STEP per node
+   nccn/railway.build_map                  → RailwayMap for Mermaid
+3. Parallel via asyncio.gather:
+   ├─ external/regeneron_rules.evaluate_all → ranked TrialMatch list
+   └─ external/trial_sites.fetch_trial_sites → geocoded TrialSite list (Google Maps)
+4. DONE; the PDF report is built lazily on GET /report.pdf
 ```
 
-All data flows through Pydantic models in [models.py](src/neoantigen/models.py): `Mutation`, `Peptide`, `Candidate`, `VaccineConstruct`, `PipelineResult`, `PathologyFindings`, `CitationRef`, `NCCNStep`, `TwinMatchRef`, `SurvivalPoint`, `CohortSnapshot`, `MoleculeView`, `StructurePose`, `TrialMatch`, `MelanomaCase`.
+Rationale for scripting the flow in Python: the medical model (K2 Think V2 / MediX-R1-30B) is tuned for reasoning, not multi-turn tool calling — we only invoke it where reasoning matters (NCCN decisions and the VLM fallback on scanned PDFs). The streaming `<think>` UX the frontend depends on is easier to preserve this way than through a tool-calling agent.
 
-### Melanoma agent orchestrator ([src/neoantigen/agent/melanoma_orchestrator.py](src/neoantigen/agent/melanoma_orchestrator.py))
+### Event bus ([agent/events.py](src/neoantigen/agent/events.py) + [web/storage.py](src/neoantigen/web/storage.py))
 
-`MelanomaOrchestrator.run()` drives a deterministic Python workflow and emits progress on an `EventBus` (asyncio.Queue):
+`EventBus` wraps an `asyncio.Queue`. `CaseRecord` owns one bus per case and runs a fanout pump that appends to a `replay` list and forwards to every subscriber queue. New SSE subscribers get the replay first, then live events — so reconnecting a tab mid-run catches up without re-running the orchestrator.
 
-```
-1. VLM pathology     → vlm_pathology.analyze_slide() → PathologyFindings
-2. Mutations         → TCGA cohort lookup or pipeline.parser.parse()
-3. NCCN walk         → nccn.walker.NCCNWalker streams THINKING_DELTA while walking
-                       melanoma_v2024.GRAPH; emits NCCN_NODE_VISITED per node,
-                       NCCN_PATH_COMPLETE when done
-4. Parallel:
-   ├─ Molecular landscape → agent.molecular.build_landscape() — WT/mutant folds +
-   │                        drug co-crystals (DRUG_COMPLEX_READY) for top drivers
-   └─ Vaccine pipeline    → pipeline.runner.run() (only if NCCN path reaches the
-   │                        vaccine branch), then agent.structure.dock_peptide()
-   │                        for the top 3 candidates into HLA-A*02:01
-   └─ Clinical trials     → external.trials (ClinicalTrials.gov v2) + external.regeneron_rules
-                            (hardcoded Regeneron trial predicates); TRIAL_MATCHES_READY
-5. Cohort snapshot   → cohort.find_twins() + kaplan_meier() (only when running
-                       on a TCGA patient and the cohort is built)
-6. DONE              → final MelanomaCase bundled and emitted
-```
+`EventKind` (17 values) is the source of truth for cross-cutting work — the frontend's SSE handler switches on these string values. Adding or renaming one touches both sides. Notable kinds: `PDF_EXTRACTED`, `RAILWAY_STEP`, `RAILWAY_READY`, `TRIAL_MATCHES_READY`, `TRIAL_SITES_READY`, `CASE_UPDATE`, and the `CHAT_*` family.
 
-Default HLA allele: `DEFAULT_HLA = "HLA-A*02:01"` at [melanoma_orchestrator.py:54](src/neoantigen/agent/melanoma_orchestrator.py#L54).
+Case state lives only in memory ([web/storage.py `CaseStore`](src/neoantigen/web/storage.py)). Restarting the backend drops all cases.
 
-Event consumers:
-
-- CLI `melanoma-demo` — renders events as Rich-styled lines (skips `THINKING_DELTA` / `ANSWER_DELTA`).
-- CLI `melanoma-batch` — drains events silently; writes per-case JSON and a summary table.
-- Streamlit — streams thinking live into the sidebar; reconstructs panel state from `CASE_UPDATE` / `DONE` payloads.
-
-Full `EventKind` enum in [src/neoantigen/agent/events.py](src/neoantigen/agent/events.py): `TOOL_START`, `TOOL_RESULT`, `TOOL_ERROR`, `LOG`, `DONE`, `THINKING_DELTA`, `ANSWER_DELTA`, `VLM_FINDING`, `NCCN_NODE_VISITED`, `NCCN_PATH_COMPLETE`, `MOLECULE_READY`, `DRUG_COMPLEX_READY`, `PIPELINE_RESULT`, `STRUCTURE_READY`, `CASE_UPDATE`, `RAG_CITATIONS`, `COHORT_TWINS_READY`, `SURVIVAL_CURVE_READY`, `TRIAL_MATCHES_READY`, and the chat-agent set `CHAT_THINKING_DELTA`, `CHAT_ANSWER_DELTA`, `CHAT_TOOL_CALL`, `CHAT_TOOL_RESULT`, `CHAT_UI_FOCUS`, `CHAT_RERANK`, `CHAT_DONE`.
-
-### NCCN walker ([src/neoantigen/nccn/](src/neoantigen/nccn/))
+### NCCN walker ([nccn/](src/neoantigen/nccn/))
 
 - [melanoma_v2024.py](src/neoantigen/nccn/melanoma_v2024.py) — static decision graph (`GRAPH`, `ROOT`). Nodes declare `evidence_required` (which `PatientState` fields to show the model) and option labels.
-- [walker.py](src/neoantigen/nccn/walker.py) — at each node, builds a prompt with the question, option labels, sliced patient evidence, and optionally RAG citations from `rag.query_papers()`. Streams the model's `<think>` block as `THINKING_DELTA`, parses post-think JSON (`_DecisionResponse`), emits `NCCN_NODE_VISITED`, advances. Falls back to safest standard-of-care when evidence is missing.
+- [walker.py](src/neoantigen/nccn/walker.py) — at each node, builds a prompt with the question, option labels, sliced patient evidence, and optionally RAG citations from `rag.query_papers()`. Streams `<think>` live, parses post-think JSON (`_RailwayDecisionResponse` — includes `alternative_reasons` for each rejected option so the UI can render branches), emits `RAILWAY_STEP`, advances. Falls back to the safest option when `K2_API_KEY` is unset.
+- [railway.py](src/neoantigen/nccn/railway.py) — converts the walked `NCCNStep[]` into a `RailwayMap` the frontend renders as a Mermaid diagram.
 
-### Cohort ([src/neoantigen/cohort/](src/neoantigen/cohort/))
+### Post-run chat agent ([chat/](src/neoantigen/chat/))
 
-TCGA-SKCM survival analysis, produced by `scripts/fetch_tcga_skcm.py`:
+LangGraph state machine: `rag_retrieve` → `k2_respond` → optional `tool_dispatch` loop (max 3 rounds). [agent.py:57 `_slim_case`](src/neoantigen/chat/agent.py#L57) renders the case as a ~2K-token string that ships with every Kimi call — so the agent remembers pathology, intake, railway, and mutations across turns without blowing context. Tools ([chat/tools.py](src/neoantigen/chat/tools.py)) never mutate the case; they return a short string and emit `CHAT_UI_FOCUS` events for the frontend to react to. Chat is disabled cleanly when `KIMI_API_KEY` is unset — [k2_client.py `has_kimi_key()`](src/neoantigen/chat/k2_client.py) gates `CaseChatAgent.available`.
 
-- [tcga.py](src/neoantigen/cohort/tcga.py) — `load_cohort()`, `has_cohort()`, `demo_patient_id()`, `mutations_for_patient()`. Returns empty cohort if data folder is missing; orchestrator falls back to "no twins available".
-- [twins.py](src/neoantigen/cohort/twins.py) — `find_twins(query, others, top_k)` scored on BRAF V600E / NRAS Q61 / KIT / NF1 / stage / age / shared driver genes.
-- [survival.py](src/neoantigen/cohort/survival.py) — `kaplan_meier()` returning `KMPoint` series.
+### External APIs ([external/](src/neoantigen/external/))
 
-### RAG ([src/neoantigen/rag/](src/neoantigen/rag/))
+- [trials.py](src/neoantigen/external/trials.py) — ClinicalTrials.gov REST v2 client (disk-cached).
+- [regeneron_rules.py](src/neoantigen/external/regeneron_rules.py) — hardcoded predicate gates for four Regeneron-sponsored melanoma trials (age, AJCC stage, T-stage, driver mutations, etc.). Most `never_in_intake_gates` (ECOG, prior therapy, RECIST) stay `needs_more_data` until the intake path captures them — start there to raise trial-match precision.
+- [trial_sites.py](src/neoantigen/external/trial_sites.py) — geocodes NCT site addresses via Google Maps when `GOOGLE_MAPS_API_KEY` is set.
 
-ChromaDB-backed PubMed retrieval built by `scripts/build_pubmed_rag.py`. `has_store()` gates whether the NCCN walker adds citations to each decision prompt, and is re-used by the chat agent's `pubmed_search` tool. Returns `Citation` objects (PMID, title, snippet) via `query_papers()`.
+All use `httpx.AsyncClient` with `asyncio.gather()` where applicable.
 
-### External APIs ([src/neoantigen/external/](src/neoantigen/external/))
+### RAG ([rag/store.py](src/neoantigen/rag/store.py))
 
-- [trials.py](src/neoantigen/external/trials.py) — ClinicalTrials.gov REST v2 client (disk-cached) returning raw `CTGovStudy` records.
-- [regeneron_rules.py](src/neoantigen/external/regeneron_rules.py) — hardcoded predicate gates for four Regeneron-sponsored melanoma trials (age, AJCC stage, T-stage, driver mutations, etc.), used to produce ranked `TrialMatch` entries for the case.
+Chroma collection built by [scripts/build_pubmed_rag.py](scripts/build_pubmed_rag.py). 15 hardcoded melanoma topics (BRAF V600E, NRAS Q61, KIT, NF1, anti-PD-1, TMB, AJCC staging, brain mets…) drive NCBI E-utilities searches. Query-time: `all-MiniLM-L6-v2` embeds the query and returns top-K `Citation` objects. `has_store()` gates both the walker (adds a "Recent literature" block to each decision prompt) and the chat agent's `pubmed_search` tool. Silent no-op when the store isn't built.
 
-Both use `httpx.AsyncClient` with `asyncio.gather()` where applicable.
+### Shared types ([models.py](src/neoantigen/models.py))
 
-### Post-run chat agent ([src/neoantigen/chat/](src/neoantigen/chat/))
+One Pydantic module defines every type that crosses a module boundary: `PathologyFindings`, `ClinicianIntake`, `Mutation`, `NCCNStep`, `RailwayStep`, `RailwayAlternative`, `RailwayMap`, `CitationRef`, `TrialMatch`, `TrialSite`, `PatientCase`. The frontend's [lib/types.ts](../frontend/lib/types.ts) mirrors these by hand — changing a field on either side needs both files updated.
 
-LangGraph state machine that takes a completed `MelanomaCase` and lets the doctor drill in from the Streamlit sidebar. One user turn = one full graph traversal (`rag_retrieve` → `k2_respond` → optional `tool_dispatch` loop, max 3 rounds).
+## LLM layer ([agent/\_llm.py](src/neoantigen/agent/_llm.py))
 
-- [agent.py](src/neoantigen/chat/agent.py) — `CaseChatAgent` + graph builder. `_slim_case()` renders the case as a ~2–3K-token summary that ships with every K2 call, so the agent remembers pathology, NCCN path, top peptides, and cohort across turns. Streams `<think>` + answer chunks + tool calls out-of-band as `CHAT_*` events.
-- [k2_client.py](src/neoantigen/chat/k2_client.py) — separate Kimi/K2 client using `KIMI_API_KEY`. `has_kimi_key()` gates `CaseChatAgent.available`; chat is cleanly disabled when unset.
-- [tools.py](src/neoantigen/chat/tools.py) — five tools registered as OpenAI-format schemas in `TOOL_SCHEMAS`:
-  - `highlight_panel(panel: 1–5, focus?)` — scroll the UI to a panel (1=NCCN, 2=molecular, 3=vaccine, 4=cohort) and optionally focus a sub-element.
-  - `pubmed_search(query, top_k?)` — fresh PubMed RAG search.
-  - `show_twin(submitter_id)` — open a twin in the cohort panel.
-  - `rerank_peptides(by: binding|length|gene|rank)` — re-sort the vaccine table.
-  - `explain_node(node_id)` — return recorded reasoning + citations for a walked NCCN node.
-- [state.py](src/neoantigen/chat/state.py) — `ChatMessage`, `ChatState`, `ToolCall` typed dicts/dataclasses.
+Shared OpenAI-compatible client for the medical model. Backend selection is env-driven — swap K2 ↔ MediX without touching code.
 
-Tools never mutate the underlying case — they emit `CHAT_UI_FOCUS` / `CHAT_RERANK` / `CHAT_TOOL_RESULT` for the UI to react to, and return a short string so K2 can keep reasoning.
+- `K2_BASE_URL` (default `https://api.k2think.ai/v1`) — point at the SSH-tunneled vLLM endpoint, e.g. `http://localhost:8000/v1`.
+- `K2_API_KEY` — required by the OpenAI client; vLLM ignores its value but one must be set.
+- `NEOVAX_MODEL` — served model name (default `MBZUAI-IFM/K2-Think-v2`; use `medix-r1-30b` when hitting vLLM).
+- `NEOVAX_LOG_PATH` — every request + response is logged here (default `out/k2.log`). **Check this first when agent output looks wrong.**
 
-### Caching
+Call surfaces: `call_for_json(schema, system, user)`, `call_with_vision(images, system, user, schema)`, `stream_with_thinking(system, user)`. `has_api_key()` lets callers degrade gracefully.
 
-- Protein sequences → `~/.cache/neoantigen/proteins/`
-- AlphaFold structures → `~/.cache/neoantigen/structures/`
-- ClinicalTrials.gov → on-disk cache in `trials.py`
-- Streamlit → `@st.cache_data`
-
-### Gene map ([genes.py](src/neoantigen/genes.py))
-
-Hardcoded dict mapping ~20 common cancer driver genes to UniProt accessions. Unknown genes raise `KeyError` — add new mappings here.
+Separately, the chat agent uses `KIMI_API_KEY` through [chat/k2_client.py](src/neoantigen/chat/k2_client.py) — two independent model clients.
 
 ## Key design decisions
 
-- Scorer uses a Python `Protocol` (duck typing). `MHCflurryScorer` is the production default; `HeuristicScorer` is a test fixture (made-up anchor-residue math) that emits a `RuntimeWarning` and surfaces a ⚠ banner in CLI + Streamlit whenever it runs — including the orchestrator's fallback path if MHCflurry isn't installed.
-- The pipeline is sync at the module level but the orchestrator uses `asyncio.gather` for concurrent molecular + pipeline + trials steps and `asyncio.to_thread` to offload the sync pipeline runner.
-- The orchestrator is **deterministic Python**, not LLM-driven tool calling. The medical model is only invoked for per-node NCCN decisions (via `stream_with_thinking`) and for vision-based pathology extraction. Rationale: MediX-R1-30B is tuned for medical reasoning, not multi-turn tool-use loops — scripting the flow in Python keeps it reliable while preserving the streaming `<think>` UX the UI depends on.
-- The **post-run chat** flips that tradeoff: once the case is built, the user asks open-ended questions, so `chat/` uses a LangGraph-driven tool-calling agent with a separate model (K2/Kimi). The two agents never share a conversation — chat just gets a slimmed case summary as context.
-
-## LLM layer ([src/neoantigen/agent/\_llm.py](src/neoantigen/agent/_llm.py))
-
-Shared OpenAI-compatible client for the medical reasoning model. Backend selection is env-driven — swap K2 ↔ MediX without touching code.
-
-- `K2_BASE_URL` (default `https://api.k2think.ai/v1`) — point at the SSH-tunneled vLLM endpoint, e.g. `http://localhost:8000/v1`.
-- `K2_API_KEY` — required by the OpenAI client; vLLM ignores its value.
-- `NEOVAX_MODEL` — served model name (default `MBZUAI-IFM/K2-Think-v2`; use `medix-r1-30b` when hitting vLLM).
-- `NEOVAX_LOG_PATH` — every request is logged here (default `out/k2.log`). Check this first when agent output looks wrong.
-
-Separate from this, the chat agent uses `KIMI_API_KEY` through [chat/k2_client.py](src/neoantigen/chat/k2_client.py).
-
-Call surfaces: `call_for_json(schema, system, user)`, `call_with_vision(images, system, user, schema)`, `stream_with_thinking(system, user)`. `has_api_key()` / heuristic fallbacks exist so modules can degrade gracefully when no key is set.
-
-## Run commands
-
-```bash
-# Headless end-to-end
-.venv/bin/neoantigen melanoma-demo \
-  --slide sample_data/tcga_skcm_demo_slide.jpg \
-  --vcf   sample_data/tcga_skcm_demo.vcf
-
-# On a TCGA cohort patient (requires scripts/fetch_tcga_skcm.py first)
-.venv/bin/neoantigen melanoma-demo --tcga-patient TCGA-XX-XXXX
-
-# Batch over the full per-case dataset
-.venv/bin/neoantigen melanoma-batch --dataset data/tcga_skcm/cases --limit 20
-
-# Streamlit live UI — see ../frontend/
-```
+- **Orchestrator is deterministic Python, not LLM tool-calling.** The medical model is only called for per-node NCCN decisions and the VLM PDF-extraction fallback. Keeps the flow reliable while preserving streaming `<think>`.
+- **Chat flips that tradeoff.** Once the case is built, open-ended questions need a LangGraph tool-calling agent on a separate model (Kimi). The two agents never share a conversation — chat just gets a slimmed case summary.
+- **Degrade, don't fail.** Missing `K2_API_KEY`, missing RAG store, missing Google Maps key, scanned PDF without `pdf-vision` — every path falls back silently and logs. `/api/health` surfaces which ones are wired up.
+- **Event-bus fanout with replay.** Reconnecting SSE clients (or opening a second tab) replays everything the orchestrator emitted so far, then gets live events. Case state is otherwise in-memory and ephemeral.

@@ -1,0 +1,13 @@
+{
+  "case_id": "210726bd-db19-48ae-9a3d-e6ac44480e85",
+  "submitter_id": "TCGA-DA-A1HV",
+  "sex": "female",
+  "vital_status": "Alive",
+  "age_at_diagnosis": "75",
+  "stage": "",
+  "days_to_death": "",
+  "days_to_last_follow_up": "",
+  "primary_diagnosis": "Malignant melanoma, NOS",
+  "tumor_grade": "",
+  "biopsy_site": "Not Reported"
+}

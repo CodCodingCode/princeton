@@ -5,12 +5,14 @@ import { useParams } from "next/navigation";
 import { subscribeCaseEvents, fetchCase } from "@/lib/api";
 import type {
   AgentEvent,
+  NCCNEvidenceMap,
   PatientCase,
   RailwayMap,
   RailwayStep,
   TrialMatch,
   TrialSite,
 } from "@/lib/types";
+import { deriveTStage, toPatientFriendly } from "@/lib/plainEnglish";
 import { RailwayMermaid } from "@/components/RailwayMermaid";
 import { ExtractedFields } from "@/components/ExtractedFields";
 import { TrialList } from "@/components/TrialList";
@@ -18,6 +20,7 @@ import { TrialMap } from "@/components/TrialMap";
 import { ChatPanel } from "@/components/ChatPanel";
 import { ReportButton } from "@/components/ReportButton";
 import { EventLog } from "@/components/EventLog";
+import { DocumentsPanel } from "@/components/DocumentsPanel";
 
 export default function CasePage() {
   const params = useParams<{ id: string }>();
@@ -27,8 +30,9 @@ export default function CasePage() {
   const [events, setEvents] = useState<AgentEvent[]>([]);
   const [done, setDone] = useState(false);
   const [selectedNct, setSelectedNct] = useState<string | null>(null);
+  const [showClinician, setShowClinician] = useState(false);
+  const [evidenceMap, setEvidenceMap] = useState<NCCNEvidenceMap>({});
 
-  // Initial snapshot
   useEffect(() => {
     let cancelled = false;
     fetchCase(caseId)
@@ -39,7 +43,6 @@ export default function CasePage() {
     };
   }, [caseId]);
 
-  // Live event stream
   useEffect(() => {
     const cleanup = subscribeCaseEvents(caseId, (ev) => {
       setEvents((prev) => [...prev, ev]);
@@ -47,24 +50,28 @@ export default function CasePage() {
       if (ev.kind === "case_update") {
         setCaseData(ev.payload as unknown as PatientCase);
       } else if (ev.kind === "pdf_extracted") {
+        const p = ev.payload as Record<string, unknown>;
+        if (p.nccn_evidence_map) {
+          setEvidenceMap(p.nccn_evidence_map as NCCNEvidenceMap);
+        }
         setCaseData((prev) => {
-          const next = prev ? { ...prev } : null;
-          if (!next) return prev;
-          // Narrow: payload carries pathology, intake, mutations (typed on backend).
-          const p = ev.payload as Record<string, unknown>;
-          if (p.pathology)
-            next.pathology = p.pathology as PatientCase["pathology"];
-          if (p.intake) next.intake = p.intake as PatientCase["intake"];
-          if (p.mutations)
-            next.mutations = p.mutations as PatientCase["mutations"];
-          return next;
+          if (!prev) return prev;
+          return {
+            ...prev,
+            pathology:
+              (p.pathology as PatientCase["pathology"]) ?? prev.pathology,
+            intake: (p.intake as PatientCase["intake"]) ?? prev.intake,
+            enrichment:
+              (p.enrichment as PatientCase["enrichment"]) ?? prev.enrichment,
+            mutations:
+              (p.mutations as PatientCase["mutations"]) ?? prev.mutations,
+          };
         });
       } else if (ev.kind === "railway_step") {
         setCaseData((prev) => {
           if (!prev) return prev;
           const step = (ev.payload as { step: RailwayStep }).step;
           const existing = prev.railway?.steps ?? [];
-          // Replace-or-append by node_id
           const idx = existing.findIndex((s) => s.node_id === step.node_id);
           const newSteps =
             idx >= 0
@@ -105,17 +112,22 @@ export default function CasePage() {
     return cleanup;
   }, [caseId]);
 
+  const friendly = useMemo(
+    () => (caseData ? toPatientFriendly(caseData) : null),
+    [caseData],
+  );
+
   const statusLabel = useMemo(() => {
     if (!caseData) return "Loading…";
-    if (done) return "Complete";
-    if (caseData.trial_sites.length > 0) return "Geocoding trials…";
+    if (done) return "Ready";
+    if (caseData.trial_sites.length > 0) return "Locating trial sites…";
     if (caseData.trial_matches.length > 0) return "Matching trials…";
-    if (caseData.railway?.steps.length) return "Walking NCCN railway…";
-    if (caseData.mutations.length > 0) return "Railway walker ready…";
-    return "Extracting PDF…";
+    if (caseData.railway?.steps.length) return "Planning your treatment…";
+    if (caseData.documents.length > 0) return "Reading your records with AI…";
+    return "Starting…";
   }, [caseData, done]);
 
-  if (!caseData) {
+  if (!caseData || !friendly) {
     return (
       <div className="max-w-6xl mx-auto px-6 py-20 text-ink-400">
         Loading case {caseId}…
@@ -123,90 +135,195 @@ export default function CasePage() {
     );
   }
 
-  const tStage = caseData.pathology.breslow_thickness_mm
-    ? deriveTStage(
-        caseData.pathology.breslow_thickness_mm,
-        caseData.pathology.ulceration,
-      )
-    : "Tx";
+  const tStage = deriveTStage(
+    caseData.pathology.breslow_thickness_mm,
+    caseData.pathology.ulceration,
+  );
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-8 space-y-6">
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <div className="text-xs uppercase tracking-widest text-ink-500 mb-1">
-            Case · {caseId}
-          </div>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            {caseData.final_recommendation || "Walking treatment railway…"}
-          </h1>
-          <div
-            className={`mt-1 text-sm ${done ? "text-emerald-400" : "text-teal-400 pulse-dot"}`}
-          >
-            {statusLabel}
-          </div>
-        </div>
-        <ReportButton caseId={caseId} enabled={done} />
-      </div>
-
-      <ExtractedFields
-        pathology={caseData.pathology}
-        intake={caseData.intake}
-        mutations={caseData.mutations}
-        tStage={tStage}
-      />
-
-      <section className="space-y-2">
-        <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-teal-400 uppercase tracking-widest">
-            NCCN treatment railway
-          </h2>
-          {caseData.railway?.steps && (
-            <span className="text-xs text-ink-500">
-              {caseData.railway.steps.length} nodes ·{" "}
-              {caseData.railway.steps.reduce(
-                (n, s) => n + s.alternatives.length,
-                0,
-              )}{" "}
-              sibling options
+    <div className="px-4 py-3 max-w-[1400px] mx-auto flex flex-col gap-3 min-h-[calc(100vh-56px)]">
+      {/* ── HERO ───────────────────────────────────────────── */}
+      <section className="rounded-2xl border border-teal-400/30 bg-gradient-to-br from-teal-400/10 via-ink-900/80 to-ink-900/40 p-5 flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <div className="text-xs uppercase tracking-widest text-teal-400 mb-1">
+            Case {caseId} ·{" "}
+            <span
+              className={done ? "text-emerald-400" : "text-teal-400 pulse-dot"}
+            >
+              {statusLabel}
             </span>
-          )}
+          </div>
+          <h1 className="text-2xl md:text-3xl font-semibold tracking-tight leading-tight">
+            {friendly.diagnosisHeadline}
+          </h1>
+          <p className="text-ink-400 text-sm mt-1 max-w-2xl">
+            {friendly.diagnosisDetails}
+          </p>
         </div>
-        <RailwayMermaid
-          mermaidSource={caseData.railway?.mermaid ?? ""}
-          empty={!caseData.railway?.mermaid}
-        />
-        {caseData.railway?.steps && caseData.railway.steps.length > 0 && (
-          <RailwayStepsTable steps={caseData.railway.steps} />
-        )}
+        <div className="shrink-0">
+          <ReportButton caseId={caseId} enabled={done} />
+        </div>
       </section>
 
-      <section className="grid md:grid-cols-5 gap-6">
-        <div className="md:col-span-3 space-y-4">
-          <h2 className="text-sm font-semibold text-teal-400 uppercase tracking-widest">
-            Matched trials
-          </h2>
-          <TrialList
-            matches={caseData.trial_matches}
-            selected={selectedNct}
-            onSelect={setSelectedNct}
-          />
+      {/* ── MAIN GRID ─────────────────────────────────────── */}
+      <section className="grid grid-cols-12 gap-3 flex-1 min-h-0">
+        {/* Recommended action */}
+        <div className="col-span-12 md:col-span-4 rounded-2xl border border-teal-400/40 bg-teal-400/5 p-5 flex flex-col">
+          <div className="text-[11px] uppercase tracking-widest text-teal-400 font-semibold mb-2">
+            Recommended next step
+          </div>
+          <div className="text-lg font-medium leading-snug text-ink-100 mb-3">
+            {friendly.recommendedAction}
+          </div>
+          <div className="text-sm text-ink-400 mb-4 leading-relaxed">
+            <span className="text-ink-300 font-medium">Why: </span>
+            {friendly.recommendedActionDetail}
+          </div>
+
+          {friendly.nextSteps.length > 0 && (
+            <div className="mb-4">
+              <div className="text-[11px] uppercase tracking-widest text-ink-500 mb-1">
+                Plan at a glance
+              </div>
+              <ol className="text-sm text-ink-200 space-y-1">
+                {friendly.nextSteps.map((s, i) => (
+                  <li key={i} className="flex gap-2">
+                    <span className="text-teal-400 shrink-0">{i + 1}.</span>
+                    <span>{s}</span>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          )}
+
+          <button
+            disabled={!done}
+            onClick={() => {
+              // Placeholder — in production, hook into a scheduler.
+              window.open(
+                "https://www.cancer.net/find-a-cancer-doctor",
+                "_blank",
+              );
+            }}
+            className={`mt-auto w-full px-4 py-2.5 rounded-xl text-sm font-semibold transition ${
+              done
+                ? "bg-teal-500 hover:bg-teal-400 text-ink-950"
+                : "bg-ink-800 text-ink-500 cursor-not-allowed"
+            }`}
+          >
+            {friendly.ctaLabel}
+          </button>
         </div>
-        <div className="md:col-span-2">
-          <h2 className="text-sm font-semibold text-teal-400 uppercase tracking-widest mb-4">
-            Trial sites
-          </h2>
+
+        {/* About you */}
+        <div className="col-span-12 md:col-span-4 rounded-2xl border border-ink-800 bg-ink-900/40 p-5 flex flex-col">
+          <div className="text-[11px] uppercase tracking-widest text-teal-400 font-semibold mb-3">
+            About you
+          </div>
+          <ul className="space-y-2.5 flex-1">
+            {friendly.aboutYou.map((item, i) => (
+              <li key={i}>
+                <div className="text-[11px] uppercase tracking-wider text-ink-500">
+                  {item.label}
+                </div>
+                <div className="text-sm text-ink-100 leading-snug">
+                  {item.value}
+                </div>
+              </li>
+            ))}
+          </ul>
+          {caseData.conflicts.length > 0 && (
+            <div className="mt-3 rounded-lg bg-amber-400/10 border border-amber-400/30 p-2 text-xs text-amber-200">
+              <span className="font-semibold">Worth reviewing:</span>{" "}
+              {caseData.conflicts.length} fact
+              {caseData.conflicts.length === 1 ? "" : "s"} disagreed between
+              your documents.
+            </div>
+          )}
+        </div>
+
+        {/* Chat */}
+        <div className="col-span-12 md:col-span-4 min-h-[24rem] md:min-h-0 flex flex-col">
+          <ChatPanel caseId={caseId} />
+        </div>
+      </section>
+
+      {/* ── TRIALS ROW ────────────────────────────────────── */}
+      <section className="grid grid-cols-12 gap-3">
+        <div className="col-span-12 lg:col-span-7">
+          <div className="text-[11px] uppercase tracking-widest text-teal-400 font-semibold mb-2">
+            Trials near you
+          </div>
+          <div className="text-sm text-ink-300 mb-2">{friendly.trialsCta}</div>
           <TrialMap
             sites={caseData.trial_sites}
             selected={selectedNct}
             onSelect={setSelectedNct}
           />
         </div>
+        <div className="col-span-12 lg:col-span-5">
+          <div className="text-[11px] uppercase tracking-widest text-teal-400 font-semibold mb-2">
+            Matching trials
+          </div>
+          <div className="max-h-80 overflow-y-auto pr-1">
+            <TrialList
+              matches={caseData.trial_matches}
+              selected={selectedNct}
+              onSelect={setSelectedNct}
+            />
+          </div>
+        </div>
       </section>
 
-      <section className="grid md:grid-cols-2 gap-6">
-        <ChatPanel caseId={caseId} />
-        <EventLog events={events} />
+      {/* ── CLINICIAN DRAWER ──────────────────────────────── */}
+      <section>
+        <button
+          onClick={() => setShowClinician((v) => !v)}
+          className="w-full flex items-center justify-between px-4 py-3 rounded-xl border border-ink-800 bg-ink-900/40 hover:border-ink-600 text-sm"
+        >
+          <span className="text-ink-300">
+            <span className="text-teal-400 mr-2">⚕</span>
+            Clinical detail for your oncologist — NCCN railway, source
+            documents, pipeline events
+          </span>
+          <span className="text-ink-500 text-xs">
+            {showClinician ? "Hide" : "Show"}
+          </span>
+        </button>
+
+        {showClinician && (
+          <div className="mt-3 space-y-3">
+            <ExtractedFields
+              pathology={caseData.pathology}
+              intake={caseData.intake}
+              enrichment={caseData.enrichment}
+              mutations={caseData.mutations}
+              tStage={tStage}
+              evidenceMap={evidenceMap}
+            />
+
+            <div>
+              <div className="text-xs uppercase tracking-widest text-teal-400 mb-2">
+                NCCN treatment railway
+              </div>
+              <RailwayMermaid
+                mermaidSource={caseData.railway?.mermaid ?? ""}
+                empty={!caseData.railway?.mermaid}
+              />
+              {(caseData.railway?.steps?.length ?? 0) > 0 && (
+                <RailwayStepsTable steps={caseData.railway!.steps} />
+              )}
+            </div>
+
+            <DocumentsPanel
+              documents={caseData.documents}
+              provenance={caseData.provenance}
+              conflicts={caseData.conflicts}
+            />
+
+            <EventLog events={events} />
+          </div>
+        )}
       </section>
     </div>
   );
@@ -214,9 +331,9 @@ export default function CasePage() {
 
 function RailwayStepsTable({ steps }: { steps: RailwayStep[] }) {
   return (
-    <div className="rounded-xl border border-ink-800 bg-ink-900/40 divide-y divide-ink-800">
+    <div className="mt-2 rounded-xl border border-ink-800 bg-ink-900/40 divide-y divide-ink-800">
       {steps.map((s) => (
-        <details key={s.node_id} className="p-4 group">
+        <details key={s.node_id} className="p-3 group">
           <summary className="cursor-pointer flex items-start gap-3 list-none">
             <span className="text-xs font-mono text-teal-400 shrink-0 w-32 truncate">
               {s.node_id}
@@ -272,13 +389,4 @@ function RailwayStepsTable({ steps }: { steps: RailwayStep[] }) {
       ))}
     </div>
   );
-}
-
-function deriveTStage(breslow: number, ulceration: boolean | null): string {
-  const u = !!ulceration;
-  if (breslow < 0.8 && !u) return "T1a";
-  if (breslow < 1.0) return "T1b";
-  if (breslow < 2.0) return u ? "T2b" : "T2a";
-  if (breslow < 4.0) return u ? "T3b" : "T3a";
-  return u ? "T4b" : "T4a";
 }

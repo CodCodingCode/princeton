@@ -1,0 +1,13 @@
+{
+  "case_id": "6783fb7d-f509-47c6-b39f-535a9026f6bc",
+  "submitter_id": "TCGA-BF-AAP1",
+  "sex": "male",
+  "vital_status": "Alive",
+  "age_at_diagnosis": "86",
+  "stage": "Stage IIC",
+  "days_to_death": "",
+  "days_to_last_follow_up": "409.0",
+  "primary_diagnosis": "Epithelioid cell melanoma",
+  "tumor_grade": "",
+  "biopsy_site": "Skin of upper limb and shoulder"
+}

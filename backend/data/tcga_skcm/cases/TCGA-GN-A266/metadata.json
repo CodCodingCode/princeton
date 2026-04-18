@@ -1,0 +1,13 @@
+{
+  "case_id": "3429967f-4f77-4894-bf27-c4a22698ca92",
+  "submitter_id": "TCGA-GN-A266",
+  "sex": "male",
+  "vital_status": "Dead",
+  "age_at_diagnosis": "45",
+  "stage": "",
+  "days_to_death": "308",
+  "days_to_last_follow_up": "308.0",
+  "primary_diagnosis": "Malignant melanoma, NOS",
+  "tumor_grade": "",
+  "biopsy_site": "Skin of scalp and neck"
+}

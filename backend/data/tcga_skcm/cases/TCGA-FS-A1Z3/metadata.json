@@ -1,0 +1,13 @@
+{
+  "case_id": "29bcb876-5a91-4d56-af47-7b4c856c151f",
+  "submitter_id": "TCGA-FS-A1Z3",
+  "sex": "female",
+  "vital_status": "Dead",
+  "age_at_diagnosis": "72",
+  "stage": "Stage IV",
+  "days_to_death": "636",
+  "days_to_last_follow_up": "",
+  "primary_diagnosis": "Malignant melanoma, NOS",
+  "tumor_grade": "",
+  "biopsy_site": "Not Reported"
+}

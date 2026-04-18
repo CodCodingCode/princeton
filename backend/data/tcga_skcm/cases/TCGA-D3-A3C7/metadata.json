@@ -1,0 +1,13 @@
+{
+  "case_id": "3b62e38c-d473-4329-86ab-5d4977f92b09",
+  "submitter_id": "TCGA-D3-A3C7",
+  "sex": "female",
+  "vital_status": "Alive",
+  "age_at_diagnosis": "57",
+  "stage": "Stage III",
+  "days_to_death": "",
+  "days_to_last_follow_up": "1429.0",
+  "primary_diagnosis": "Malignant melanoma, NOS",
+  "tumor_grade": "",
+  "biopsy_site": "Lymph nodes of inguinal region or leg"
+}

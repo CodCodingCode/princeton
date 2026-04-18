@@ -1,0 +1,13 @@
+{
+  "case_id": "7b617d72-ae16-4829-a1d9-274d1d30617f",
+  "submitter_id": "TCGA-YD-A89C",
+  "sex": "female",
+  "vital_status": "Alive",
+  "age_at_diagnosis": "43",
+  "stage": "",
+  "days_to_death": "",
+  "days_to_last_follow_up": "210.0",
+  "primary_diagnosis": "Malignant melanoma, NOS",
+  "tumor_grade": "",
+  "biopsy_site": "Liver"
+}
