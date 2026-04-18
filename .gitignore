@@ -8,6 +8,12 @@ venv/
 .env.*
 !.env.example
 
+# Next.js / node
+node_modules/
+.next/
+next-env.d.ts
+*.tsbuildinfo
+
 # OAuth / Gmail
 client_secret*.json
 credentials.json

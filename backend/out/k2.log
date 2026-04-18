@@ -477,3 +477,18 @@ pdl1_estimate
 2026-04-18 11:05:59,466 [INFO] neoantigen.llm: call response schema=PathologyFindings len=3609
 2026-04-18 11:05:59,505 [INFO] neoantigen.llm: stream_with_thinking start user_len=455 images=0
 2026-04-18 11:06:01,812 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 12:21:14,495 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+2026-04-18 12:21:14,649 [INFO] neoantigen.llm: stream_with_thinking start user_len=629 images=0
+2026-04-18 12:21:15,967 [ERROR] neoantigen.llm: stream HTTP error: APIConnectionError: Connection error.
+2026-04-18 12:21:15,968 [INFO] neoantigen.llm: stream_with_thinking start user_len=650 images=0
+2026-04-18 12:21:17,284 [ERROR] neoantigen.llm: stream HTTP error: APIConnectionError: Connection error.
+2026-04-18 12:21:17,285 [INFO] neoantigen.llm: stream_with_thinking start user_len=860 images=0
+2026-04-18 12:21:18,682 [ERROR] neoantigen.llm: stream HTTP error: APIConnectionError: Connection error.
+2026-04-18 12:21:18,683 [INFO] neoantigen.llm: stream_with_thinking start user_len=590 images=0
+2026-04-18 12:21:19,992 [ERROR] neoantigen.llm: stream HTTP error: APIConnectionError: Connection error.
+2026-04-18 12:21:19,992 [INFO] neoantigen.llm: stream_with_thinking start user_len=580 images=0
+2026-04-18 12:21:21,308 [ERROR] neoantigen.llm: stream HTTP error: APIConnectionError: Connection error.
+2026-04-18 12:21:21,308 [INFO] neoantigen.llm: stream_with_thinking start user_len=824 images=0
+2026-04-18 12:21:22,669 [ERROR] neoantigen.llm: stream HTTP error: APIConnectionError: Connection error.
+2026-04-18 12:21:22,670 [INFO] neoantigen.llm: stream_with_thinking start user_len=735 images=0
+2026-04-18 12:21:23,836 [ERROR] neoantigen.llm: stream HTTP error: APIConnectionError: Connection error.

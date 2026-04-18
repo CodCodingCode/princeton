@@ -2,59 +2,93 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Repository layout
+## Project
 
-Princeton Hacks project — **NeoVax**, a melanoma oncologist copilot. Input: tumour VCF (or TCGA-SKCM submitter id) + pathology slide. Output: NCCN-walked treatment plan, molecular landscape (WT/mutant folds + drug co-crystals), ranked neoantigen peptides, mRNA construct, HLA peptide poses, TCGA twin-matched survival snapshot, and matched clinical trials. After the run finishes, a sidebar chat agent (LangGraph + tool calls) drills into the case for tumour-board prep.
+Princeton Hacks project — **NeoVax**, a melanoma oncologist copilot. The user drops a pathology PDF; the backend extracts oncology fields, walks the NCCN railway (streaming `<think>` tokens from a medical reasoning model), matches Regeneron trials, geocodes trial sites, and produces a downloadable oncologist report. A sidebar Kimi chat drills into the case once the run lands.
 
-- [backend/](backend/) — Python package, CLI, pipeline, agent orchestration, post-run chat agent, sample + TCGA data, RAG store. See [backend/CLAUDE.md](backend/CLAUDE.md) for the authoritative architecture reference.
-- [frontend/](frontend/) — Streamlit five-panel live UI in [frontend/app.py](frontend/app.py). Imports the `neoantigen` package installed from `backend/` and reads sample files from `../backend/sample_data/` via `__file__`-anchored paths.
+Two services:
 
-## Running the Streamlit app
+- [backend/](backend/) — Python 3.11+ package (`neoantigen`). Typer CLI with a single `serve` command that boots a FastAPI + SSE app on :8000. Shipped extras: `agent` (OpenAI + LangGraph), `web` (FastAPI/uvicorn/sse-starlette/reportlab/googlemaps), `pdf-vision` (pdf2image for VLM fallback on scanned PDFs), `rag` (Chroma + sentence-transformers).
+- [frontend/](frontend/) — Next.js 15 + Tailwind dashboard. Pages: [/upload](frontend/app/upload) (PDF drop) and [/case/[id]](frontend/app/case) (live dashboard: extracted fields, Mermaid railway, trials list, Google Maps, Kimi chat, SSE event log, downloadable report).
 
-The Streamlit deps ship with the backend's `[agent]` extra. Install once from the repo root, then run from `frontend/`:
+[backend/CLAUDE.md](backend/CLAUDE.md) has a deeper architecture reference but parts of it still describe the older Streamlit + VCF + melanoma_orchestrator design — trust the code over that file when they disagree.
+
+## Running both services
 
 ```bash
-pip install -e './backend[agent]'
-mhcflurry-downloads fetch     # one-time ~1 GB of MHC-I binding models; without it the vaccine pipeline falls back to a ⚠ heuristic
+# Backend (from repo root)
+pip install -e './backend[agent,web,pdf-vision,rag]'
+neoantigen serve --reload                 # FastAPI on http://localhost:8000
 
+# Frontend (in a second terminal)
 cd frontend
-streamlit run app.py
+npm install
+npm run dev                               # Next.js on http://localhost:3000
 ```
 
-[frontend/app.py](frontend/app.py) explicitly loads `backend/.env` via `python-dotenv` at [frontend/app.py:37](frontend/app.py#L37), so env vars work regardless of CWD.
+`next.config.mjs` proxies `/api/*` → `NEOVAX_BACKEND_URL` (default `http://localhost:8000`) so CORS never matters in dev. The backend's CORS allowlist can be overridden via `NEOVAX_CORS_ORIGINS` (comma-separated). Health check: `GET /api/health` reports which optional dependencies are wired up.
+
+No test suite exists. `backend/test.py` and `backend/main.py` are empty placeholders.
+
+## Request flow (one case)
+
+```
+POST /api/cases (multipart PDF)
+  → PatientOrchestrator (backend/src/neoantigen/agent/patient_orchestrator.py)
+    1. io/pdf_extract.extract_oncology_fields  → PathologyFindings + intake + mutations
+    2. nccn/walker.RailwayWalker.walk          → streams THINKING_DELTA + RAILWAY_STEP
+       then nccn/railway.build_map             → Mermaid-ready RailwayMap
+    3. external/regeneron_rules.evaluate_all   → ranked TrialMatch list  ┐ parallel
+    4. external/trial_sites.fetch_trial_sites  → geocoded TrialSite list ┘
+    5. report/pdf_report.build_report_pdf lazily on GET /report.pdf
+  → every step publishes on an asyncio EventBus stored in web/storage.CaseRecord
+GET  /api/cases/{id}/stream (SSE)             → frontend ChatPanel / RailwayMermaid / EventLog
+GET  /api/cases/{id}                          → current PatientCase snapshot
+GET  /api/cases/{id}/report.pdf               → reportlab-built PDF
+POST /api/cases/{id}/chat                     → LangGraph Kimi agent (chat/agent.py)
+```
+
+Case state lives in an in-memory `CaseStore` ([web/storage.py](backend/src/neoantigen/web/storage.py)) — restarting the backend drops all cases. Each case owns one `EventBus`; multiple SSE subscribers are fanned out via per-client queues.
 
 ## LLM layer
 
 Two separate model clients:
 
-- **Medical reasoning model** (Qwen3-VL-based VLM, MediX-R1-30B on GH200 via vLLM, OpenAI-compatible) — used by the orchestrator for VLM pathology, NCCN decisions, and molecular reasoning. Accessed via [backend/src/neoantigen/agent/\_llm.py](backend/src/neoantigen/agent/_llm.py). Supports `<think>...</think>` streaming blocks surfaced as `THINKING_DELTA` events.
-- **Post-run chat model** (K2/Kimi with tool calling) — used by the LangGraph chat agent in [backend/src/neoantigen/chat/](backend/src/neoantigen/chat/). Accessed via [backend/src/neoantigen/chat/k2_client.py](backend/src/neoantigen/chat/k2_client.py). Emits `CHAT_*` events.
+- **Medical reasoning model** (K2 Think V2 by default; swap to MediX-R1-30B via SSH-tunneled vLLM). OpenAI-compatible. Used by the NCCN walker and the PDF vision fallback. Lives in [backend/src/neoantigen/agent/\_llm.py](backend/src/neoantigen/agent/_llm.py). `stream_with_thinking` surfaces `<think>...</think>` blocks as `THINKING_DELTA` events.
+- **Post-run chat model** (Kimi/K2 with tool calling). Used by the LangGraph chat agent in [backend/src/neoantigen/chat/](backend/src/neoantigen/chat/). Emits `CHAT_*` events. Tools never mutate the case — they return UI focus hints and short strings for the model to keep reasoning.
 
-Env vars (all optional — orchestrator defaults point at the public K2 Think V2 endpoint):
+Env vars (put them in `backend/.env`; the CLI loads it via `python-dotenv`):
 
-- `K2_BASE_URL` — OpenAI-compatible base URL for the medical model (default `https://api.k2think.ai/v1`). Point at the SSH-tunneled vLLM endpoint, e.g. `http://localhost:8000/v1`.
-- `K2_API_KEY` — required by the OpenAI client; vLLM ignores its value but one must be set.
-- `NEOVAX_MODEL` — served model name, e.g. `medix-r1-30b`. Default `MBZUAI-IFM/K2-Think-v2`.
-- `KIMI_API_KEY` — separate key for the sidebar chat agent; chat is disabled when unset.
-- `NEOVAX_LOG_PATH` — every model call is logged here (default `backend/out/k2.log`). **Check this first when agent output looks wrong.**
+| Var                               | Purpose                                                                              | Default                            |
+| --------------------------------- | ------------------------------------------------------------------------------------ | ---------------------------------- |
+| `K2_BASE_URL`                     | OpenAI-compatible base URL for the medical model                                     | `https://api.k2think.ai/v1`        |
+| `K2_API_KEY`                      | Required by the OpenAI client (vLLM ignores the value but one must be set)           | —                                  |
+| `NEOVAX_MODEL`                    | Served model name (`medix-r1-30b` on vLLM)                                           | `MBZUAI-IFM/K2-Think-v2`           |
+| `KIMI_API_KEY`                    | Sidebar chat; chat is cleanly disabled when unset                                    | —                                  |
+| `NEOVAX_LOG_PATH`                 | Every model call is logged here — **check this first when agent output looks wrong** | `backend/out/k2.log`               |
+| `GOOGLE_MAPS_API_KEY`             | Geocodes trial sites server-side; falls back to no coords                            | —                                  |
+| `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` | Renders the map in the browser; `TrialMap` degrades to a text list without it        | —                                  |
+| `NEOVAX_BACKEND_URL`              | Frontend proxy target                                                                | `http://localhost:8000`            |
+| `NEOVAX_CORS_ORIGINS`             | Comma-separated backend allowlist                                                    | `localhost:3000`, `localhost:5173` |
 
-Call surfaces in [\_llm.py](backend/src/neoantigen/agent/_llm.py): `call_for_json`, `call_with_vision` (image input), `stream_with_thinking` (async iterator of `("thinking", chunk)` / `("answer", chunk)` tuples).
+For the GH200 vLLM path, the user has a saved SSH tunnel — see memory `ssh_tunnel_medix.md`.
 
 ## Silent fallbacks (read first when output looks wrong)
 
-The run never hard-fails when optional dependencies or data folders are missing — it silently degrades. Symptom → cause map:
+The orchestrator never hard-fails on missing deps — it degrades to `needs_more_data` and logs a line. Symptom → cause map:
 
-| Symptom                                                                     | Missing                               | Check                                                                                                                         |
-| --------------------------------------------------------------------------- | ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| Vaccine table shows ⚠ heuristic banner                                      | MHCflurry models not fetched          | [orchestrator.py:182](backend/src/neoantigen/agent/melanoma_orchestrator.py#L182) — falls back to `HeuristicScorer`           |
-| NCCN walker picks "standard of care" at every node with no `<think>` stream | `K2_API_KEY` unset                    | [walker.py:229](backend/src/neoantigen/nccn/walker.py#L229) — `has_api_key()` false → heuristic mode                          |
-| Panel 4 (twins + KM) empty                                                  | `scripts/fetch_tcga_skcm.py` not run  | [cohort/tcga.py:61 `has_cohort()`](backend/src/neoantigen/cohort/tcga.py#L61) false → orchestrator skips cohort stage         |
-| NCCN decisions have no PubMed citations                                     | `scripts/build_pubmed_rag.py` not run | [rag/store.py:35 `has_store()`](backend/src/neoantigen/rag/store.py#L35) false → walker omits citation block                  |
-| Sidebar chat never appears                                                  | `KIMI_API_KEY` unset                  | [chat/k2_client.py:38 `has_kimi_key()`](backend/src/neoantigen/chat/k2_client.py#L38) false → `CaseChatAgent.available` false |
+| Symptom                                                                        | Missing                                                                                             | Check                                                                                                            |
+| ------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| NCCN railway renders every node as "standard of care" with no `<think>` stream | `K2_API_KEY` unset                                                                                  | [\_llm.py `has_api_key()`](backend/src/neoantigen/agent/_llm.py) false → walker falls back to safest option      |
+| NCCN steps have no PubMed citations                                            | `scripts/build_pubmed_rag.py` never run                                                             | [rag/store.py `has_store()`](backend/src/neoantigen/rag/store.py) false → walker omits citation block            |
+| Sidebar chat never appears / `/api/health` shows `kimi_api_key: false`         | `KIMI_API_KEY` unset                                                                                | [chat/k2_client.py `has_kimi_key()`](backend/src/neoantigen/chat/k2_client.py) false → chat endpoint returns 503 |
+| Trial sites list present but map is blank                                      | `GOOGLE_MAPS_API_KEY` unset server-side, **or** `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` unset client-side | `/api/health` reports server-side; client-side is compile-time                                                   |
+| PDF upload succeeds but `pathology` is mostly empty                            | Scanned PDF + `pdf-vision` extra not installed                                                      | [io/pdf_extract.py](backend/src/neoantigen/io/pdf_extract.py) falls back to text-only extraction                 |
 
 ## Working in this repo
 
-- Three entry points share the pipeline: the pure-pipeline CLI (`neoantigen run` / `neoantigen demo`), the full agent flow (`neoantigen melanoma-demo` + [frontend/app.py](frontend/app.py)), and the batch runner (`neoantigen melanoma-batch` over per-case dirs built by `scripts/build_tcga_skcm_cases.py`). Changes to pipeline behaviour should be considered against all three.
-- No test suite exists — [backend/test.py](backend/test.py) and [backend/main.py](backend/main.py) are empty placeholders.
-- Generated artefacts (case JSON, logs, cached downloads) live in [backend/out/](backend/out/); per-case TCGA-SKCM builds live in [backend/data/tcga_skcm/](backend/data/tcga_skcm/).
-- Regeneron track: the 4-trial registry (`REGENERON_TRIALS`) + structured eligibility predicates live in [backend/src/neoantigen/external/regeneron_rules.py](backend/src/neoantigen/external/regeneron_rules.py). Most `never_in_tcga_gates` (ECOG, prior therapy, RECIST) stay as `needs_more_data` until a clinician intake path is added — start there to raise trial-match precision.
+- The Typer CLI is intentionally tiny — `neoantigen serve` is the only command. Don't bring back the old `run`/`demo`/`melanoma-demo`/`melanoma-batch` surface unless the user asks; those were removed with the pathology-PDF pivot.
+- Shared Pydantic models live in [backend/src/neoantigen/models.py](backend/src/neoantigen/models.py). The frontend's `lib/types.ts` mirrors them by hand — when you change a model field, update both sides.
+- Event kinds live in [backend/src/neoantigen/agent/events.py](backend/src/neoantigen/agent/events.py). The frontend's SSE handler switches on these string values, so adding or renaming one is a cross-cutting change.
+- Generated artefacts (K2 logs, cached downloads, per-case JSON) live in [backend/out/](backend/out/).
+- Regeneron track: the 4-trial registry (`REGENERON_TRIALS`) + structured eligibility predicates live in [backend/src/neoantigen/external/regeneron_rules.py](backend/src/neoantigen/external/regeneron_rules.py). Most `never_in_intake_gates` stay `needs_more_data` until the intake path captures ECOG / prior therapy / RECIST — start there to raise trial-match precision.

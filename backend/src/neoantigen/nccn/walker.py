@@ -18,7 +18,14 @@ from pydantic import BaseModel, Field
 
 from ..agent._llm import has_api_key, split_thinking, stream_with_thinking
 from ..agent.events import EventKind, emit
-from ..models import CitationRef, Mutation, NCCNStep, PathologyFindings
+from ..models import (
+    CitationRef,
+    Mutation,
+    NCCNStep,
+    PathologyFindings,
+    RailwayAlternative,
+    RailwayStep,
+)
 from ..rag import has_store as _rag_available, query_papers
 from .melanoma_v2024 import GRAPH, ROOT, NCCNNode
 
@@ -56,6 +63,17 @@ class PatientState:
 class _DecisionResponse(BaseModel):
     chosen_option_index: int = Field(ge=0)
     one_sentence_rationale: str = ""
+
+
+class _AltReason(BaseModel):
+    option_index: int = Field(ge=0)
+    reason_not_chosen: str = ""
+
+
+class _RailwayDecisionResponse(BaseModel):
+    chosen_option_index: int = Field(ge=0)
+    one_sentence_rationale: str = ""
+    alternative_reasons: list[_AltReason] = Field(default_factory=list)
 
 
 SYSTEM_PROMPT = (
@@ -287,3 +305,262 @@ async def _consume_interrupt() -> str | None:
     if bus is None:
         return None
     return bus.consume_interrupt()
+
+
+# ─────────────────────────────────────────────────────────────
+# Railway walk — same decision flow but also records alternatives
+# ─────────────────────────────────────────────────────────────
+
+
+RAILWAY_SYSTEM_PROMPT = (
+    "You are an oncologist reasoning through the NCCN cutaneous melanoma "
+    "guideline. At each node you will be given the question, the available "
+    "options, and the relevant patient evidence. Think step-by-step inside "
+    "<think>...</think> and then output a JSON object with (1) the chosen "
+    "option index, (2) a one-sentence rationale for the chosen option, and "
+    "(3) one short (≤20 words) rationale per NON-chosen option explaining why "
+    "it was rejected for THIS patient. Be concrete — cite patient-specific "
+    "evidence, not general statements."
+)
+
+
+def _build_railway_prompt(
+    node: NCCNNode,
+    evidence: dict[str, str],
+    citations: list[CitationRef],
+) -> str:
+    options = "\n".join(
+        f"  [{i}] {opt.label} — {opt.description}" for i, opt in enumerate(node.options)
+    )
+    ev_lines = "\n".join(f"  - {k}: {v}" for k, v in evidence.items()) or "  (none)"
+    cite_block = ""
+    if citations:
+        cite_lines = []
+        for i, c in enumerate(citations, 1):
+            head = f"  [{i}] {c.title} ({c.journal} {c.year}, PMID {c.pmid})"
+            cite_lines.append(head)
+            cite_lines.append(f"      {c.snippet}")
+        cite_block = "\nRecent literature (PubMed, top matches):\n" + "\n".join(cite_lines) + "\n"
+    n = len(node.options)
+    return (
+        f"Node: {node.title}\n"
+        f"Question: {node.question}\n\n"
+        f"Patient evidence:\n{ev_lines}\n"
+        f"{cite_block}\n"
+        f"Options:\n{options}\n\n"
+        "Respond with: <think>your reasoning</think>\n"
+        "{\n"
+        '  "chosen_option_index": <int 0-' f"{n-1}" ">,\n"
+        '  "one_sentence_rationale": "why the chosen option fits this patient",\n'
+        '  "alternative_reasons": [\n'
+        '    {"option_index": <int>, "reason_not_chosen": "≤20 words"},\n'
+        "    ...one per non-chosen option\n"
+        "  ]\n"
+        "}"
+    )
+
+
+def _parse_railway_decision(
+    answer: str, n_options: int, chosen_fallback: int = 0,
+) -> _RailwayDecisionResponse:
+    """Best-effort JSON extraction with graceful fallback."""
+    m = re.search(r"\{[\s\S]*\}", answer)
+    if m:
+        try:
+            data = json.loads(m.group(0))
+            return _RailwayDecisionResponse.model_validate(data)
+        except Exception:
+            pass
+    # Fallback: single-number extraction
+    m2 = re.search(r"\b(\d+)\b", answer)
+    idx = (
+        max(0, min(int(m2.group(1)), n_options - 1))
+        if m2 else chosen_fallback
+    )
+    return _RailwayDecisionResponse(
+        chosen_option_index=idx,
+        one_sentence_rationale=answer.strip()[:200],
+        alternative_reasons=[],
+    )
+
+
+def _heuristic_alt_reasons(
+    node: NCCNNode, chosen_idx: int, state: "PatientState"
+) -> list[_AltReason]:
+    """Generic reasons for rejected options when no LLM is available."""
+    out: list[_AltReason] = []
+    for i, _opt in enumerate(node.options):
+        if i == chosen_idx:
+            continue
+        out.append(
+            _AltReason(
+                option_index=i,
+                reason_not_chosen=(
+                    "Not selected by heuristic fallback — configure K2_API_KEY to get "
+                    "patient-specific reasoning for the alternative branches."
+                ),
+            )
+        )
+    return out
+
+
+@dataclass
+class RailwayWalker:
+    state: PatientState
+
+    async def walk(self) -> list[RailwayStep]:
+        """Walk the NCCN graph, building a RailwayStep list with alternatives.
+
+        Emits:
+          * THINKING_DELTA chunks per node (same as classic walk)
+          * RAG_CITATIONS per node when citations were fetched
+          * RAILWAY_STEP per node with the chosen branch + alternatives
+        """
+        current_id: str | None = ROOT
+        visited: set[str] = set()
+        steps: list[RailwayStep] = []
+
+        while current_id is not None and current_id not in visited:
+            visited.add(current_id)
+            node = GRAPH[current_id]
+            evidence = self.state.evidence_for(node.evidence_required)
+
+            if node.is_terminal or not node.options:
+                step = RailwayStep(
+                    node_id=node.id,
+                    title=node.title,
+                    question=node.question,
+                    chosen_option_label=node.question,
+                    chosen_next_id=None,
+                    evidence=evidence,
+                    is_terminal=True,
+                )
+                await emit(
+                    EventKind.RAILWAY_STEP,
+                    f"NCCN ▸ {node.title} (terminal)",
+                    {"step": step.model_dump()},
+                )
+                steps.append(step)
+                break
+
+            citations = _fetch_citations(node, self.state)
+            if citations:
+                await emit(
+                    EventKind.RAG_CITATIONS,
+                    f"{len(citations)} PubMed citations for {node.id}",
+                    {"node_id": node.id, "citations": [c.model_dump() for c in citations]},
+                )
+            user_prompt = _build_railway_prompt(node, evidence, citations)
+
+            await emit(
+                EventKind.TOOL_START,
+                f"NCCN ▸ deciding at {node.id}",
+                {"node_id": node.id, "node_title": node.title, "evidence": evidence},
+            )
+
+            answer_buf = ""
+            think_buf = ""
+            mode: Literal["api", "heuristic"] = "api" if has_api_key() else "heuristic"
+            try:
+                if mode == "api":
+                    async for kind, chunk in stream_with_thinking(
+                        RAILWAY_SYSTEM_PROMPT, user_prompt, max_tokens=900,
+                    ):
+                        if kind == "thinking":
+                            think_buf += chunk
+                            await emit(
+                                EventKind.THINKING_DELTA, "thinking",
+                                {"node_id": node.id, "delta": chunk},
+                            )
+                        else:
+                            answer_buf += chunk
+                            await emit(
+                                EventKind.ANSWER_DELTA, "answer",
+                                {"node_id": node.id, "delta": chunk},
+                            )
+            except Exception as e:
+                await emit(EventKind.LOG, f"NCCN model call failed at {node.id}: {e}; using heuristic")
+                mode = "heuristic"
+
+            if mode == "heuristic":
+                idx, rationale = _heuristic_decision(node, self.state)
+                think_buf = think_buf or rationale
+                answer_buf = json.dumps({
+                    "chosen_option_index": idx,
+                    "one_sentence_rationale": rationale,
+                    "alternative_reasons": [],
+                })
+
+            if not think_buf and answer_buf:
+                think_part, answer_part = split_thinking(answer_buf)
+                think_buf = think_buf or think_part
+                answer_buf = answer_part or answer_buf
+
+            decision = _parse_railway_decision(answer_buf, len(node.options))
+            chosen = node.options[decision.chosen_option_index]
+
+            # Fill in alternative rationales — LLM-provided where possible.
+            alt_reasons_by_idx: dict[int, str] = {
+                a.option_index: a.reason_not_chosen
+                for a in decision.alternative_reasons
+                if 0 <= a.option_index < len(node.options)
+            }
+            # Heuristic fallback for any missing alternative.
+            if not alt_reasons_by_idx:
+                for a in _heuristic_alt_reasons(node, decision.chosen_option_index, self.state):
+                    alt_reasons_by_idx[a.option_index] = a.reason_not_chosen
+
+            alternatives: list[RailwayAlternative] = []
+            for i, opt in enumerate(node.options):
+                if i == decision.chosen_option_index:
+                    continue
+                alternatives.append(
+                    RailwayAlternative(
+                        option_label=opt.label,
+                        option_description=opt.description,
+                        reason_not_chosen=alt_reasons_by_idx.get(i, ""),
+                        next_id=opt.next_id,
+                    )
+                )
+
+            reasoning = (think_buf or decision.one_sentence_rationale).strip()
+            step = RailwayStep(
+                node_id=node.id,
+                title=node.title,
+                question=node.question,
+                chosen_option_label=chosen.label,
+                chosen_option_description=chosen.description,
+                chosen_next_id=chosen.next_id,
+                chosen_rationale=decision.one_sentence_rationale.strip(),
+                reasoning=reasoning,
+                evidence=evidence,
+                citations=citations,
+                alternatives=alternatives,
+                is_terminal=False,
+            )
+            await emit(
+                EventKind.RAILWAY_STEP,
+                f"NCCN ▸ {node.title} → {chosen.label}",
+                {"step": step.model_dump()},
+            )
+            steps.append(step)
+            current_id = chosen.next_id
+
+        return steps
+
+
+def final_recommendation_from_steps(steps: list[RailwayStep]) -> str:
+    """Short English summary combining the last couple of meaningful choices."""
+    if not steps:
+        return "No NCCN path walked."
+    # Skip a trailing terminal "FINAL" / "FOLLOWUP" node since its chosen_option_label
+    # is the node's question text rather than a treatment.
+    meaningful = [s for s in steps if not s.is_terminal]
+    if not meaningful:
+        return steps[-1].title
+    last = meaningful[-1]
+    tail = f"{last.title}: {last.chosen_option_label}"
+    prev = meaningful[-2] if len(meaningful) >= 2 else None
+    if prev is None:
+        return tail
+    return f"{prev.chosen_option_label} → {last.chosen_option_label}"
