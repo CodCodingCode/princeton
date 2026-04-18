@@ -22,6 +22,11 @@ app = typer.Typer(
 console = Console()
 
 
+@app.callback()
+def _root() -> None:
+    """Force Typer into subcommand mode so `neoantigen serve ...` works."""
+
+
 @app.command("serve")
 def serve_command(
     host: Annotated[str, typer.Option(help="Bind host")] = "0.0.0.0",
