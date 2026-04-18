@@ -56,7 +56,7 @@ async def analyze_slide(image_path: Path) -> PathologyFindings:
             system_prompt=SYSTEM_PROMPT,
             user_prompt=USER_PROMPT,
             images=[image_path],
-            max_tokens=900,
+            max_tokens=2500,
         )
     except Exception as e:
         await emit(EventKind.LOG, f"VLM call failed ({type(e).__name__}: {e}); using placeholder")

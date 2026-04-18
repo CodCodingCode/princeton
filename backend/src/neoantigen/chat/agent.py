@@ -174,7 +174,19 @@ async def _node_k2_respond(state: ChatState) -> ChatState:
         "content": SYSTEM_PROMPT + "\n\nCASE SUMMARY:\n" + state.get("case_summary", ""),
     }
     if state.get("rag_hits"):
-        cite_lines = ["PUBMED HITS FROM A FRESH SEARCH (cite these inline):"]
+        cite_lines = [
+            "PUBMED HITS FROM A FRESH SEARCH — these are the authoritative sources "
+            "for this answer. Use them decisively:",
+            "  * State conclusions drawn from these papers directly — do NOT hedge "
+            "with 'the literature may suggest' or 'some studies indicate'.",
+            "  * Reference the paper by title or trial name inline "
+            "(e.g., 'as shown in KEYNOTE-054' or 'per Robert et al.'), not just "
+            "as a bare PMID.",
+            "  * These citations will be rendered as clickable PubMed links "
+            "beneath your answer — the doctor WILL check them, so only claim what "
+            "the snippet supports.",
+            "",
+        ]
         for h in state["rag_hits"]:
             cite_lines.append(f"  [{h['pmid']}] {h['title']} ({h.get('journal','')} {h.get('year','')})")
             if h.get("snippet"):
@@ -345,7 +357,15 @@ class CaseChatAgent:
         try:
             await self._graph.ainvoke(state)
         finally:
-            await self.bus.emit(EventKind.CHAT_DONE, "done", {})
+            last = self.messages[-1] if self.messages else None
+            citations = (
+                list(last.citations)
+                if last is not None and last.role == "assistant"
+                else []
+            )
+            await self.bus.emit(
+                EventKind.CHAT_DONE, "done", {"citations": citations},
+            )
 
         return self.messages[-1]
 

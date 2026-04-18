@@ -113,3 +113,72 @@
 2026-04-18 02:21:35,441 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
 2026-04-18 02:21:35,588 [INFO] neoantigen.llm: stream_with_thinking start user_len=557 images=0
 2026-04-18 02:21:38,710 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 02:28:18,834 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+2026-04-18 02:28:18,837 [INFO] neoantigen.llm: call schema=PathologyFindings images=1 user_len=216
+2026-04-18 02:28:23,227 [INFO] neoantigen.llm: call response schema=PathologyFindings len=3325
+2026-04-18 02:28:23,227 [ERROR] neoantigen.llm: validation failed schema=PathologyFindings err=6 validation errors for PathologyFindings
+melanoma_subtype
+  Input should be 'superficial_spreading', 'nodular', 'lentigo_maligna', 'acral_lentiginous', 'desmoplastic', 'other' or 'unknown' [type=literal_error, input_value='not present', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/literal_error
+breslow_thickness_mm
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='not applicable', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+ulceration
+  Input should be a valid boolean, unable to interpret input [type=bool_parsing, input_value='not present', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/bool_parsing
+mitotic_rate_per_mm2
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='not applicable', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+tils_present
+  Input should be 'absent', 'non_brisk', 'brisk' or 'unknown' [type=literal_error, input_value='not present', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/literal_error
+pdl1_estimate
+  Input should be 'negative', 'low', 'high' or 'unknown' [type=literal_error, input_value='not applicable', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/literal_error data={'melanoma_subtype': 'not present', 'breslow_thickness_mm': 'not applicable', 'ulceration': 'not present', 'mitotic_rate_per_mm2': 'not applicable', 'tils_present': 'not present', 'pdl1_estimate': 'not applicable', 'confidence': 0.15, 'notes': 'Image is highly faded with minimal cellularity; no discernible malignant nests or features of melanoma. No regression, perineural invasion, or satellitosis observed.'}
+2026-04-18 02:29:03,762 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+2026-04-18 02:29:03,764 [INFO] neoantigen.llm: call schema=PathologyFindings images=1 user_len=216
+2026-04-18 02:29:08,367 [INFO] neoantigen.llm: call response schema=PathologyFindings len=3800
+2026-04-18 02:29:08,367 [ERROR] neoantigen.llm: JSON parse failed schema=PathologyFindings raw="Got it, let's analyze this. The image is extremely faint, barely visible. The background is mostly white, with very few indistinct purple spots. H&E staining should show nuclei and cytoplasm, but here there's almost no discernible structure. So, first, can we even see any melanoma? Melanoma would have characteristic features like nests of melanocytes, atypia, etc. But this image doesn't show any clear cell formations, just tiny spots that might be artifacts or random staining. \n\nSince the image is too faint and lacks detail, we can't confidently identify melanoma. So melanoma_subtype is none? "
+2026-04-18 02:29:25,365 [INFO] neoantigen.llm: stream_with_thinking start user_len=557 images=0
+2026-04-18 02:29:28,355 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 02:29:28,355 [INFO] neoantigen.llm: stream_with_thinking start user_len=470 images=0
+2026-04-18 02:29:31,366 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 02:29:31,366 [INFO] neoantigen.llm: stream_with_thinking start user_len=742 images=0
+2026-04-18 02:29:34,371 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 02:29:34,372 [INFO] neoantigen.llm: stream_with_thinking start user_len=461 images=0
+2026-04-18 02:29:36,736 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 02:29:36,736 [INFO] neoantigen.llm: stream_with_thinking start user_len=4111 images=0
+2026-04-18 02:29:39,896 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 02:29:39,898 [INFO] neoantigen.llm: stream_with_thinking start user_len=4336 images=0
+2026-04-18 02:29:43,039 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 02:29:43,039 [INFO] neoantigen.llm: stream_with_thinking start user_len=4276 images=0
+2026-04-18 02:29:46,170 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 02:30:12,287 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+2026-04-18 02:30:12,290 [INFO] neoantigen.llm: call schema=PathologyFindings images=1 user_len=216
+2026-04-18 02:30:18,488 [INFO] neoantigen.llm: call response schema=PathologyFindings len=4456
+2026-04-18 02:30:18,489 [ERROR] neoantigen.llm: validation failed schema=PathologyFindings err=3 validation errors for PathologyFindings
+melanoma_subtype
+  Input should be 'superficial_spreading', 'nodular', 'lentigo_maligna', 'acral_lentiginous', 'desmoplastic', 'other' or 'unknown' [type=literal_error, input_value='superficial spreading melanoma', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/literal_error
+tils_present
+  Input should be 'absent', 'non_brisk', 'brisk' or 'unknown' [type=literal_error, input_value='present', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/literal_error
+pdl1_estimate
+  Input should be 'negative', 'low', 'high' or 'unknown' [type=literal_error, input_value='not assessable (H&E only)', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/literal_error data={'melanoma_subtype': 'superficial spreading melanoma', 'breslow_thickness_mm': 1.2, 'ulceration': 'no', 'mitotic_rate_per_mm2': 2, 'tils_present': 'present', 'pdl1_estimate': 'not assessable (H&E only)', 'confidence': 0.75, 'notes': 'No evident ulceration, regression, perineural invasion, or satellitosis; mitotic rate estimated within 1-3 per mm²; tumor-infiltrating lymphocytes observed.'}
+2026-04-18 02:30:34,600 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+2026-04-18 02:30:34,603 [INFO] neoantigen.llm: call schema=PathologyFindings images=1 user_len=216
+2026-04-18 02:30:39,864 [INFO] neoantigen.llm: call response schema=PathologyFindings len=3632
+2026-04-18 02:30:39,864 [ERROR] neoantigen.llm: validation failed schema=PathologyFindings err=3 validation errors for PathologyFindings
+melanoma_subtype
+  Input should be 'superficial_spreading', 'nodular', 'lentigo_maligna', 'acral_lentiginous', 'desmoplastic', 'other' or 'unknown' [type=literal_error, input_value='Nodular Melanoma', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/literal_error
+tils_present
+  Input should be 'absent', 'non_brisk', 'brisk' or 'unknown' [type=literal_error, input_value='Yes', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/literal_error
+pdl1_estimate
+  Input should be 'negative', 'low', 'high' or 'unknown' [type=literal_error, input_value='Low (1-5%)', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/literal_error data={'melanoma_subtype': 'Nodular Melanoma', 'breslow_thickness_mm': 1.2, 'ulceration': 'No', 'mitotic_rate_per_mm2': 3, 'tils_present': 'Yes', 'pdl1_estimate': 'Low (1-5%)', 'confidence': 0.8, 'notes': 'No ulceration, regression, or perineural invasion observed. Tumor shows solid nodular growth with moderate lymphocytic infiltration. Breslow thickness estimated based on vertical growth relative to epidermal boundary.'}
+2026-04-18 02:31:47,868 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+2026-04-18 02:31:47,871 [INFO] neoantigen.llm: call schema=PathologyFindings images=1 user_len=216
+2026-04-18 02:31:50,548 [INFO] neoantigen.llm: call response schema=PathologyFindings len=1758

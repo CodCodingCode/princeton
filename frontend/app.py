@@ -216,11 +216,38 @@ def _ingest_event(ev: AgentEvent) -> None:
             "content": st.session_state.case_chat_buf_answer.strip(),
             "thinking": st.session_state.case_chat_buf_thinking.strip(),
             "tool_calls": list(st.session_state.case_chat_tool_calls),
+            "citations": p.get("citations", []),
         })
         st.session_state.case_chat_buf_thinking = ""
         st.session_state.case_chat_buf_answer = ""
         st.session_state.case_chat_tool_calls = []
         st.session_state.case_chat_streaming = False
+
+
+# ─────────────────────────────────────────────────────────────
+# Shared citation renderer (used by NCCN panel + chat sidebar)
+# ─────────────────────────────────────────────────────────────
+def _render_citations(citations: list[dict], heading: str = "📚 Supporting literature (PubMed)") -> None:
+    if not citations:
+        return
+    st.markdown(f"**{heading}**")
+    for c in citations:
+        pmid = c.get("pmid", "")
+        title = c.get("title", "")
+        year = c.get("year", "")
+        journal = c.get("journal", "")
+        snippet = c.get("snippet", "")
+        rel = c.get("relevance", 0.0)
+        tail = f"· {journal} {year} · PMID {pmid}"
+        if rel:
+            tail += f" · relevance {rel:.2f}"
+        st.markdown(
+            f"- [{title}](https://pubmed.ncbi.nlm.nih.gov/{pmid}/) "
+            f"<span style='color:#94a3b8'>{tail}</span>",
+            unsafe_allow_html=True,
+        )
+        if snippet:
+            st.caption(snippet)
 
 
 # ─────────────────────────────────────────────────────────────
@@ -349,23 +376,7 @@ def _node_detail(node_id: str) -> None:
             st.code(reasoning, language="markdown")
 
             citations = (step.get("citations") or []) or st.session_state.citations_by_node.get(node_id, [])
-            if citations:
-                st.markdown("**📚 Supporting literature (PubMed)**")
-                for c in citations:
-                    pmid = c.get("pmid", "")
-                    title = c.get("title", "")
-                    year = c.get("year", "")
-                    journal = c.get("journal", "")
-                    snippet = c.get("snippet", "")
-                    rel = c.get("relevance", 0.0)
-                    st.markdown(
-                        f"- [{title}](https://pubmed.ncbi.nlm.nih.gov/{pmid}/) "
-                        f"<span style='color:#94a3b8'>· {journal} {year} · PMID {pmid} · "
-                        f"relevance {rel:.2f}</span>",
-                        unsafe_allow_html=True,
-                    )
-                    if snippet:
-                        st.caption(snippet)
+            _render_citations(citations)
         else:
             st.info("Node not yet visited by the agent.")
 
@@ -898,6 +909,7 @@ with st.sidebar:
                     for tc in msg["tool_calls"]:
                         st.caption(f"🔧 {tc.get('name')}({_short_args(tc.get('arguments'))})")
                 st.markdown(f"🤖 {msg['content']}")
+                _render_citations(msg.get("citations") or [], heading="📚 Sources")
 
     if st.session_state.case_chat_streaming:
         with st.container(border=True):

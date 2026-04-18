@@ -106,25 +106,63 @@ async def _fetch_slide_file_id(client: httpx.AsyncClient, submitter_id: str) -> 
 
 
 def _extract_thumbnail_sync(file_id: str, dest: Path) -> bool:
-    """Pull an H&E thumbnail out of the full SVS via ranged HTTP reads.
+    """Extract a diagnostic-magnification H&E tile from the remote SVS.
 
-    Uses tiffslide + fsspec to lazy-read only the header + thumbnail page
-    from the remote SVS file (~2-5 MB of network traffic instead of 100-500 MB).
-    The ``/auth/.../slide-image`` rendering endpoint is token-gated as of 2026,
-    but ``/data/{file_id}`` is open-access and accepts range requests.
+    The full-slide overview (``slide.get_thumbnail``) is too zoomed out for the
+    VLM to see cellular detail — it's basically a postage stamp with pink
+    tissue blobs. Instead:
+
+    1. Pull an overview (downsampled) thumbnail to locate the tissue.
+    2. Find the centre-of-mass of the tissue (non-white pixels).
+    3. Crop a ``TILE_PX``-square window at level 0 (full magnification)
+       around that point and save it as ``slide.jpg``.
+
+    Uses tiffslide + fsspec for lazy HTTP range reads, so per-slide network
+    usage stays in the low tens of MB instead of downloading the full SVS.
     """
     import fsspec
+    import numpy as np
     import tiffslide
 
     url = f"{GDC}/data/{file_id}"
     try:
         with fsspec.open(url, "rb") as f:
             slide = tiffslide.TiffSlide(f)
-            thumb = slide.get_thumbnail(THUMB_MAX_SIZE)
+            overview = slide.get_thumbnail((512, 512))
+            arr = np.asarray(overview.convert("L"))
+            tissue = (arr < 220).astype(np.uint8)  # dark pixels = tissue
+            if tissue.sum() < 100:
+                return False  # essentially blank slide
+
+            # Find the densest TISSUE patch by sliding a window and picking the
+            # maximum. Centroid/mean fails when there are two tissue fragments
+            # separated by a gap — the mean lands in the blank middle.
+            thumb_tile = 64
+            stride = 16
+            H, W = tissue.shape
+            best_score, best_xy = -1, (W // 2, H // 2)
+            for yy in range(0, max(1, H - thumb_tile), stride):
+                for xx in range(0, max(1, W - thumb_tile), stride):
+                    score = int(tissue[yy:yy + thumb_tile, xx:xx + thumb_tile].sum())
+                    if score > best_score:
+                        best_score = score
+                        best_xy = (xx + thumb_tile // 2, yy + thumb_tile // 2)
+            cx_thumb, cy_thumb = best_xy
+
+            level0_w, level0_h = slide.level_dimensions[0]
+            scale_x = level0_w / overview.size[0]
+            scale_y = level0_h / overview.size[1]
+            cx0 = int(cx_thumb * scale_x)
+            cy0 = int(cy_thumb * scale_y)
+
+            tile_px = 1024
+            x0 = max(0, min(level0_w - tile_px, cx0 - tile_px // 2))
+            y0 = max(0, min(level0_h - tile_px, cy0 - tile_px // 2))
+            tile = slide.read_region((x0, y0), 0, (tile_px, tile_px))
     except Exception:
         return False
     dest.parent.mkdir(parents=True, exist_ok=True)
-    thumb.convert("RGB").save(dest, "JPEG", quality=85)
+    tile.convert("RGB").save(dest, "JPEG", quality=88)
     return dest.exists() and dest.stat().st_size > 0
 
 

@@ -266,12 +266,39 @@ async def _call_json_impl(
 ) -> T:
     """Shared JSON-extracting call. Routed by caller to K2 or MediX."""
     log = get_logger()
-    schema_json = json.dumps(schema.model_json_schema(), indent=2)
+    raw_schema = schema.model_json_schema()
+    # Build compact per-field hints so VL models don't pattern-match the JSON
+    # Schema envelope and echo {description, properties: {...}} back at us.
+    # Critically, we keep enum/literal values so the model knows the allowed
+    # strings — dropping them made it return free-form answers like
+    # "Nodular Melanoma" (which fail Pydantic literal_error validation).
+    defs = raw_schema.get("$defs") or raw_schema.get("definitions") or {}
+
+    def _hint_for(prop: dict) -> str:
+        # Inline a $ref into the referenced schema definition
+        if "$ref" in prop:
+            ref_name = prop["$ref"].rsplit("/", 1)[-1]
+            prop = defs.get(ref_name, prop)
+        if "enum" in prop:
+            return "one of " + " | ".join(repr(v) for v in prop["enum"])
+        if "anyOf" in prop:
+            return " OR ".join(_hint_for(sub) for sub in prop["anyOf"])
+        t = prop.get("type", "any")
+        return t
+
+    props = raw_schema.get("properties", {})
+    field_hints = {name: _hint_for(p) for name, p in props.items()}
+    required = raw_schema.get("required", list(field_hints.keys()))
+    hint_lines = "\n".join(f"  - {k}: {v}" for k, v in field_hints.items())
     augmented_system = (
         system_prompt.rstrip()
-        + "\n\nYou MUST respond with a single JSON object matching this schema:\n"
-        + schema_json
-        + "\n\nReturn ONLY the JSON object after your reasoning. No markdown, no prose."
+        + "\n\nRespond with a single JSON object whose keys are EXACTLY these fields "
+        + "(do NOT wrap them under 'properties' or add a 'description' envelope):\n"
+        + hint_lines
+        + f"\n\nRequired: {', '.join(required)}."
+        + "\nFor enum fields, use one of the literal strings shown above — do not "
+        + "paraphrase (e.g. write 'nodular', not 'Nodular Melanoma')."
+        + "\nReturn ONLY the JSON object after your reasoning. No markdown, no prose, no schema echo."
     )
     user_content = _user_content_with_images(user_prompt, images)
     log.info(
@@ -299,6 +326,14 @@ async def _call_json_impl(
     except json.JSONDecodeError as e:
         log.error("JSON parse failed schema=%s raw=%r", schema.__name__, raw[:600])
         raise ValueError(f"model did not return valid JSON: {raw[:300]!r}") from e
+    # Unwrap JSON-Schema envelope if the model echoed `{description, properties: {...}}`
+    # instead of a flat instance (common failure mode on VL models).
+    if isinstance(data, dict) and isinstance(data.get("properties"), dict):
+        wanted = set(schema.model_json_schema().get("properties", {}).keys())
+        inner_keys = set(data["properties"].keys())
+        if inner_keys & wanted:
+            log.info("unwrapped schema envelope schema=%s", schema.__name__)
+            data = data["properties"]
     try:
         return schema.model_validate(data)
     except ValidationError as e:
