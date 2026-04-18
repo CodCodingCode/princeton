@@ -1,0 +1,95 @@
+{
+  "_notes": "Research-grade mRNA synthesis vendors. Pricing is representative; confirm with vendor before ordering. Lead times reflect typical research-grade turnaround for <1kb IVT mRNA with standard modifications (N1-methylpseudouridine + Cap-1 + polyA).",
+  "vendors": [
+    {
+      "name": "Twist Bioscience",
+      "category": "synthesis",
+      "service": "Gene fragments / synthetic DNA (IVT template)",
+      "website": "https://www.twistbioscience.com/products/genes",
+      "email": "orders@twistbioscience.com",
+      "location": "South San Francisco, CA, USA",
+      "turnaround_days": 10,
+      "price_per_bp_usd": 0.07,
+      "min_order_usd": 39,
+      "notes": "Cheapest DNA template source. mRNA production requires IVT downstream."
+    },
+    {
+      "name": "TriLink BioTechnologies",
+      "category": "synthesis",
+      "service": "CleanCap IVT mRNA with N1-methylpseudouridine",
+      "website": "https://www.trilinkbiotech.com/custom-rna",
+      "email": "custom@trilinkbiotech.com",
+      "location": "San Diego, CA, USA",
+      "turnaround_days": 21,
+      "price_per_mg_usd": 3500,
+      "min_order_usd": 5000,
+      "notes": "Gold standard for research-grade IVT mRNA. CleanCap Cap-1 + modified bases standard."
+    },
+    {
+      "name": "Aldevron (Danaher)",
+      "category": "synthesis",
+      "service": "GMP-grade mRNA manufacturing",
+      "website": "https://www.aldevron.com/products/mrna",
+      "email": "info@aldevron.com",
+      "location": "Fargo, ND, USA",
+      "turnaround_days": 60,
+      "price_per_mg_usd": 25000,
+      "min_order_usd": 50000,
+      "notes": "GMP-grade. Overkill for a single dog; use for multi-patient trials."
+    },
+    {
+      "name": "Maravai LifeSciences",
+      "category": "synthesis",
+      "service": "Custom mRNA with CleanCap",
+      "website": "https://www.maravai.com",
+      "email": "customerservice@maravai.com",
+      "location": "San Diego, CA, USA",
+      "turnaround_days": 28,
+      "price_per_mg_usd": 4200,
+      "min_order_usd": 6000,
+      "notes": "Parent company of TriLink. Good for mid-scale orders."
+    },
+    {
+      "name": "IDT (Integrated DNA Technologies)",
+      "category": "synthesis",
+      "service": "gBlocks gene fragments (IVT template)",
+      "website": "https://www.idtdna.com/pages/products/genes-and-gene-fragments",
+      "email": "custcare@idtdna.com",
+      "location": "Coralville, IA, USA",
+      "turnaround_days": 7,
+      "price_per_bp_usd": 0.09,
+      "min_order_usd": 50,
+      "notes": "Fastest turnaround for DNA templates. Requires downstream IVT."
+    },
+    {
+      "name": "Precision NanoSystems (Cytiva)",
+      "category": "lnp",
+      "service": "LNP formulation instruments and services (GenVoy-ILM)",
+      "website": "https://www.precisionnanosystems.com/lnp-solutions",
+      "email": "support@precision-nano.com",
+      "location": "Vancouver, BC, Canada",
+      "turnaround_days": 14,
+      "notes": "Benchtop NanoAssemblr instrument or contract formulation. Royalty-free ionizable lipid."
+    },
+    {
+      "name": "Acuitas Therapeutics",
+      "category": "lnp",
+      "service": "Proprietary LNP delivery (Moderna/BioNTech-class)",
+      "website": "https://www.acuitastx.com",
+      "email": "info@acuitastx.com",
+      "location": "Vancouver, BC, Canada",
+      "turnaround_days": 90,
+      "notes": "Best-in-class LNP IP. License required; typical for clinical programs, not individual cases."
+    },
+    {
+      "name": "Genevant Sciences",
+      "category": "lnp",
+      "service": "LNP platform licensing + formulation",
+      "website": "https://www.genevant.com",
+      "email": "bd@genevant.com",
+      "location": "Vancouver, BC, Canada",
+      "turnaround_days": 60,
+      "notes": "Alternative LNP licensor with clinically-validated formulations."
+    }
+  ]
+}

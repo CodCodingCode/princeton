@@ -1,0 +1,62 @@
+{
+  "_notes": "Common DLA-88 Class I alleles in domestic dogs with approximate population frequencies (from Ross et al. 2012, Angles et al. 2005, and Kennedy et al. 2007 studies). DLA-88*50101 is the most common and best-characterized. Binding motifs per Barth et al. 2016 and Ross et al. 2018 mass-spec immunopeptidomics.",
+  "alleles": [
+    {
+      "allele": "DLA-88*50101",
+      "frequency": 0.42,
+      "p2_anchors": ["A", "I", "L", "M", "V"],
+      "pc_anchors": ["F", "L", "W", "M", "I", "V"],
+      "preferred_length": [9, 10],
+      "notes": "Most common DLA-88 allele. Hydrophobic groove, HLA-A*02-like motif. Best characterized."
+    },
+    {
+      "allele": "DLA-88*00801",
+      "frequency": 0.11,
+      "p2_anchors": ["E", "D", "Q"],
+      "pc_anchors": ["L", "M", "F", "I"],
+      "preferred_length": [9, 10],
+      "notes": "Acidic P2 preference, distinct from *50101. Common in Golden Retrievers."
+    },
+    {
+      "allele": "DLA-88*00101",
+      "frequency": 0.08,
+      "p2_anchors": ["G", "A", "S"],
+      "pc_anchors": ["L", "V", "I"],
+      "preferred_length": [9],
+      "notes": "Small P2 preference. Common in Labrador Retrievers."
+    },
+    {
+      "allele": "DLA-88*03401",
+      "frequency": 0.06,
+      "p2_anchors": ["L", "F", "Y"],
+      "pc_anchors": ["L", "M", "V"],
+      "preferred_length": [9, 10],
+      "notes": "Aromatic P2 preference. Common in Shepherds."
+    }
+  ],
+  "breed_common_alleles": {
+    "Golden Retriever": ["DLA-88*50101", "DLA-88*00801"],
+    "Labrador Retriever": ["DLA-88*50101", "DLA-88*00101"],
+    "German Shepherd": ["DLA-88*50101", "DLA-88*03401"],
+    "Mixed Breed": ["DLA-88*50101"],
+    "Boxer": ["DLA-88*50101", "DLA-88*03401"],
+    "Rottweiler": ["DLA-88*50101"]
+  },
+  "typing_labs": [
+    {
+      "name": "Genoscoper Laboratories (Wisdom Panel)",
+      "service": "DLA typing via Sanger/NGS",
+      "website": "https://www.wisdompanel.com",
+      "turnaround_days": 14,
+      "estimated_cost_usd": 180
+    },
+    {
+      "name": "UC Davis Veterinary Genetics Laboratory",
+      "service": "DLA typing via sequencing",
+      "website": "https://vgl.ucdavis.edu",
+      "email": "vgl@ucdavis.edu",
+      "turnaround_days": 10,
+      "estimated_cost_usd": 120
+    }
+  ]
+}

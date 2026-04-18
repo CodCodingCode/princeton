@@ -1,0 +1,697 @@
+{
+  "pathology": {
+    "patient_name": "Luna",
+    "species": "canine",
+    "breed": "Golden Retriever",
+    "age_years": 8.0,
+    "weight_kg": 32.4,
+    "sex": null,
+    "cancer_type": "Cutaneous mast cell tumor, Patnaik Grade III (Kiupel high-grade), left hind leg, local recurrence. Deep",
+    "grade": "III",
+    "stage": null,
+    "location": "Toronto, ON, Canada",
+    "owner_location": "Toronto, ON, Canada",
+    "prior_treatments": [
+      "Wide local excision (Nov 2025",
+      "narrow margins)",
+      "Vinblastine/Prednisone chemotherapy",
+      "8 cycles (Dec 2025 -",
+      "Feb 2026)."
+    ],
+    "clinical_notes": "ONTARIO VETERINARY DIAGNOSTIC LABORATORY\nSurgical Pathology Report \u2014 Confidential\n50 Stone Road East, Guelph ON N1G 2W1   |   Tel: (519) 824-4120   |   Fax: (519) 824-5930\nPatient Name:\nLuna\nAccession #:\nOVDL-2026-04710\nSpecies:\nCanine (Canis familiaris)\nDate of Biopsy:\nApril 10, 2026\nBreed:\nGolden Retriever\nDate of Report:\nApril 14, 2026\nAge:\n8 years\nReferring Vet:\nDr. Sarah Chen, DVM\nWeight:\n32.4 kg\nClinic:\nBloor West Animal Hospital\nSex:\nFS (spayed female)\nOwner Location:\nToronto, ON, Canada\nCLINICAL HISTORY\nLuna presented 6 months ago with a firm, ulcerated mass on the left hind leg, proximal to the tarsal joint.\nFine-needle aspiration suggested mast cell neoplasia. The mass was surgically excised on November 12, 2025,\nwith histopathology confirming Patnaik Grade II (Kiupel high-grade)",
+    "dla_alleles": [
+      "DLA-88*50101",
+      "DLA-88*00801"
+    ]
+  },
+  "pipeline": {
+    "mutations": [
+      {
+        "gene": "KIT",
+        "ref_aa": "V",
+        "position": 560,
+        "alt_aa": "D"
+      },
+      {
+        "gene": "KIT",
+        "ref_aa": "D",
+        "position": 816,
+        "alt_aa": "V"
+      },
+      {
+        "gene": "BRAF",
+        "ref_aa": "V",
+        "position": 600,
+        "alt_aa": "E"
+      },
+      {
+        "gene": "BRAF",
+        "ref_aa": "G",
+        "position": 469,
+        "alt_aa": "E"
+      },
+      {
+        "gene": "TP53",
+        "ref_aa": "R",
+        "position": 175,
+        "alt_aa": "H"
+      },
+      {
+        "gene": "TP53",
+        "ref_aa": "R",
+        "position": 248,
+        "alt_aa": "Q"
+      },
+      {
+        "gene": "TP53",
+        "ref_aa": "R",
+        "position": 273,
+        "alt_aa": "H"
+      },
+      {
+        "gene": "KIT",
+        "ref_aa": "K",
+        "position": 642,
+        "alt_aa": "E"
+      },
+      {
+        "gene": "KIT",
+        "ref_aa": "V",
+        "position": 559,
+        "alt_aa": "G"
+      },
+      {
+        "gene": "BRAF",
+        "ref_aa": "G",
+        "position": 464,
+        "alt_aa": "V"
+      }
+    ],
+    "candidates": [
+      {
+        "peptide": {
+          "sequence": "ALMSELEVL",
+          "length": 9,
+          "mutation": {
+            "gene": "KIT",
+            "ref_aa": "K",
+            "position": 642,
+            "alt_aa": "E"
+          },
+          "mutation_index": 6,
+          "score_nm": 1.64
+        },
+        "rank": 1,
+        "binding_rank_percentile": null
+      },
+      {
+        "peptide": {
+          "sequence": "EALMSELEV",
+          "length": 9,
+          "mutation": {
+            "gene": "KIT",
+            "ref_aa": "K",
+            "position": 642,
+            "alt_aa": "E"
+          },
+          "mutation_index": 7,
+          "score_nm": 1.75
+        },
+        "rank": 2,
+        "binding_rank_percentile": null
+      },
+      {
+        "peptide": {
+          "sequence": "QITVGQRIV",
+          "length": 9,
+          "mutation": {
+            "gene": "BRAF",
+            "ref_aa": "G",
+            "position": 464,
+            "alt_aa": "V"
+          },
+          "mutation_index": 8,
+          "score_nm": 1.87
+        },
+        "rank": 3,
+        "binding_rank_percentile": null
+      },
+      {
+        "peptide": {
+          "sequence": "IVSGSFGTV",
+          "length": 9,
+          "mutation": {
+            "gene": "BRAF",
+            "ref_aa": "G",
+            "position": 464,
+            "alt_aa": "V"
+          },
+          "mutation_index": 1,
+          "score_nm": 1.87
+        },
+        "rank": 4,
+        "binding_rank_percentile": null
+      },
+      {
+        "peptide": {
+          "sequence": "VIKNDSNYV",
+          "length": 9,
+          "mutation": {
+            "gene": "KIT",
+            "ref_aa": "D",
+            "position": 816,
+            "alt_aa": "V"
+          },
+          "mutation_index": 0,
+          "score_nm": 2.0
+        },
+        "rank": 5,
+        "binding_rank_percentile": null
+      },
+      {
+        "peptide": {
+          "sequence": "GLATEKSRW",
+          "length": 9,
+          "mutation": {
+            "gene": "BRAF",
+            "ref_aa": "V",
+            "position": 600,
+            "alt_aa": "E"
+          },
+          "mutation_index": 4,
+          "score_nm": 2.0
+        },
+        "rank": 6,
+        "binding_rank_percentile": null
+      },
+      {
+        "peptide": {
+          "sequence": "KICDFGLARV",
+          "length": 10,
+          "mutation": {
+            "gene": "KIT",
+            "ref_aa": "D",
+            "position": 816,
+            "alt_aa": "V"
+          },
+          "mutation_index": 9,
+          "score_nm": 2.55
+        },
+        "rank": 7,
+        "binding_rank_percentile": null
+      },
+      {
+        "peptide": {
+          "sequence": "EALMSELEVL",
+          "length": 10,
+          "mutation": {
+            "gene": "KIT",
+            "ref_aa": "K",
+            "position": 642,
+            "alt_aa": "E"
+          },
+          "mutation_index": 7,
+          "score_nm": 2.55
+        },
+        "rank": 8,
+        "binding_rank_percentile": null
+      },
+      {
+        "peptide": {
+          "sequence": "EVQWKVDEEI",
+          "length": 10,
+          "mutation": {
+            "gene": "KIT",
+            "ref_aa": "V",
+            "position": 560,
+            "alt_aa": "D"
+          },
+          "mutation_index": 6,
+          "score_nm": 2.87
+        },
+        "rank": 9,
+        "binding_rank_percentile": null
+      },
+      {
+        "peptide": {
+          "sequence": "VIKNDSNYVV",
+          "length": 10,
+          "mutation": {
+            "gene": "KIT",
+            "ref_aa": "D",
+            "position": 816,
+            "alt_aa": "V"
+          },
+          "mutation_index": 0,
+          "score_nm": 2.87
+        },
+        "rank": 10,
+        "binding_rank_percentile": null
+      },
+      {
+        "peptide": {
+          "sequence": "EVLSYLGNHM",
+          "length": 10,
+          "mutation": {
+            "gene": "KIT",
+            "ref_aa": "K",
+            "position": 642,
+            "alt_aa": "E"
+          },
+          "mutation_index": 0,
+          "score_nm": 2.87
+        },
+        "rank": 11,
+        "binding_rank_percentile": null
+      },
+      {
+        "peptide": {
+          "sequence": "PMYEVQWKGV",
+          "length": 10,
+          "mutation": {
+            "gene": "KIT",
+            "ref_aa": "V",
+            "position": 559,
+            "alt_aa": "G"
+          },
+          "mutation_index": 8,
+          "score_nm": 2.87
+        },
+        "rank": 12,
+        "binding_rank_percentile": null
+      },
+      {
+        "peptide": {
+          "sequence": "EVQWKGVEEI",
+          "length": 10,
+          "mutation": {
+            "gene": "KIT",
+            "ref_aa": "V",
+            "position": 559,
+            "alt_aa": "G"
+          },
+          "mutation_index": 5,
+          "score_nm": 2.87
+        },
+        "rank": 13,
+        "binding_rank_percentile": null
+      },
+      {
+        "peptide": {
+          "sequence": "RIVSGSFGTV",
+          "length": 10,
+          "mutation": {
+            "gene": "BRAF",
+            "ref_aa": "G",
+            "position": 464,
+            "alt_aa": "V"
+          },
+          "mutation_index": 2,
+          "score_nm": 2.87
+        },
+        "rank": 14,
+        "binding_rank_percentile": null
+      },
+      {
+        "peptide": {
+          "sequence": "RVIKNDSNYV",
+          "length": 10,
+          "mutation": {
+            "gene": "KIT",
+            "ref_aa": "D",
+            "position": 816,
+            "alt_aa": "V"
+          },
+          "mutation_index": 1,
+          "score_nm": 3.05
+        },
+        "rank": 15,
+        "binding_rank_percentile": null
+      }
+    ],
+    "drugs": [],
+    "trials": [],
+    "vaccine": {
+      "epitopes": [
+        "ALMSELEVL",
+        "EALMSELEV",
+        "QITVGQRIV",
+        "IVSGSFGTV",
+        "VIKNDSNYV",
+        "GLATEKSRW",
+        "KICDFGLARV",
+        "EALMSELEVL",
+        "EVQWKVDEEI",
+        "VIKNDSNYVV",
+        "EVLSYLGNHM",
+        "PMYEVQWKGV",
+        "EVQWKGVEEI",
+        "RIVSGSFGTV",
+        "RVIKNDSNYV"
+      ],
+      "linker": "AAY",
+      "nucleotide_sequence": "GCCGCCACCATGGCCCTGATGAGCGAGCTGGAGGTGCTGGCCGCCTACGAGGCCCTGATGAGCGAGCTGGAGGTGGCCGCCTACCAGATCACCGTGGGCCAGCGGATCGTGGCCGCCTACATCGTGAGCGGCAGCTTCGGCACCGTGGCCGCCTACGTGATCAAGAACGACAGCAACTACGTGGCCGCCTACGGCCTGGCCACCGAGAAGAGCCGGTGGGCCGCCTACAAGATCTGCGACTTCGGCCTGGCCCGGGTGGCCGCCTACGAGGCCCTGATGAGCGAGCTGGAGGTGCTGGCCGCCTACGAGGTGCAGTGGAAGGTGGACGAGGAGATCGCCGCCTACGTGATCAAGAACGACAGCAACTACGTGGTGGCCGCCTACGAGGTGCTGAGCTACCTGGGCAACCACATGGCCGCCTACCCCATGTACGAGGTGCAGTGGAAGGGCGTGGCCGCCTACGAGGTGCAGTGGAAGGGCGTGGAGGAGATCGCCGCCTACCGGATCGTGAGCGGCAGCTTCGGCACCGTGGCCGCCTACCGGGTGATCAAGAACGACAGCAACTACGTGTAA",
+      "amino_acid_sequence": "MALMSELEVLAAYEALMSELEVAAYQITVGQRIVAAYIVSGSFGTVAAYVIKNDSNYVAAYGLATEKSRWAAYKICDFGLARVAAYEALMSELEVLAAYEVQWKVDEEIAAYVIKNDSNYVVAAYEVLSYLGNHMAAYPMYEVQWKGVAAYEVQWKGVEEIAAYRIVSGSFGTVAAYRVIKNDSNYV"
+    }
+  },
+  "structures": [],
+  "sequencing_labs": [
+    {
+      "name": "Vidium Animal Health",
+      "category": "sequencing",
+      "address": "Phoenix, AZ, USA",
+      "distance_km": null,
+      "phone": null,
+      "email": "info@vidiumah.com",
+      "website": "https://vidiumah.com",
+      "notes": "Canine tumor WES + RNA-seq. Established veterinary oncology sequencing provider.",
+      "estimated_cost_usd": 800.0,
+      "turnaround_days": 21
+    },
+    {
+      "name": "ImpriMed",
+      "category": "sequencing",
+      "address": "Palo Alto, CA, USA",
+      "distance_km": null,
+      "phone": null,
+      "email": "support@imprimedicine.com",
+      "website": "https://imprimedicine.com",
+      "notes": "AI-guided canine lymphoma diagnostics; expanding to solid tumors.",
+      "estimated_cost_usd": 950.0,
+      "turnaround_days": 14
+    },
+    {
+      "name": "Fidocure",
+      "category": "sequencing",
+      "address": "Mountain View, CA, USA",
+      "distance_km": null,
+      "phone": null,
+      "email": "hello@fidocure.com",
+      "website": "https://fidocure.com",
+      "notes": "Canine tumor genomic profiling + drug recommendation platform.",
+      "estimated_cost_usd": 700.0,
+      "turnaround_days": 14
+    },
+    {
+      "name": "UC Davis Veterinary Genetics Lab",
+      "category": "sequencing",
+      "address": "Davis, CA, USA",
+      "distance_km": null,
+      "phone": null,
+      "email": "vgl@ucdavis.edu",
+      "website": "https://vgl.ucdavis.edu",
+      "notes": "Research-grade sequencing + DLA typing. Academic pricing.",
+      "estimated_cost_usd": 400.0,
+      "turnaround_days": 28
+    },
+    {
+      "name": "Cornell Animal Health Diagnostic Center",
+      "category": "sequencing",
+      "address": "Ithaca, NY, USA",
+      "distance_km": null,
+      "phone": null,
+      "email": "ahdc@cornell.edu",
+      "website": "https://www.vet.cornell.edu/animal-health-diagnostic-center",
+      "notes": "Academic diagnostic center with NGS capabilities.",
+      "estimated_cost_usd": 550.0,
+      "turnaround_days": 21
+    }
+  ],
+  "synthesis_vendors": [
+    {
+      "name": "Twist Bioscience",
+      "category": "synthesis",
+      "address": "South San Francisco, CA, USA",
+      "distance_km": null,
+      "phone": null,
+      "email": "orders@twistbioscience.com",
+      "website": "https://www.twistbioscience.com/products/genes",
+      "notes": "Cheapest DNA template source. mRNA production requires IVT downstream.",
+      "estimated_cost_usd": 40.11,
+      "turnaround_days": 10
+    },
+    {
+      "name": "TriLink BioTechnologies",
+      "category": "synthesis",
+      "address": "San Diego, CA, USA",
+      "distance_km": null,
+      "phone": null,
+      "email": "custom@trilinkbiotech.com",
+      "website": "https://www.trilinkbiotech.com/custom-rna",
+      "notes": "Gold standard for research-grade IVT mRNA. CleanCap Cap-1 + modified bases standard.",
+      "estimated_cost_usd": 5000.0,
+      "turnaround_days": 21
+    },
+    {
+      "name": "Aldevron (Danaher)",
+      "category": "synthesis",
+      "address": "Fargo, ND, USA",
+      "distance_km": null,
+      "phone": null,
+      "email": "info@aldevron.com",
+      "website": "https://www.aldevron.com/products/mrna",
+      "notes": "GMP-grade. Overkill for a single dog; use for multi-patient trials.",
+      "estimated_cost_usd": 50000.0,
+      "turnaround_days": 60
+    },
+    {
+      "name": "Maravai LifeSciences",
+      "category": "synthesis",
+      "address": "San Diego, CA, USA",
+      "distance_km": null,
+      "phone": null,
+      "email": "customerservice@maravai.com",
+      "website": "https://www.maravai.com",
+      "notes": "Parent company of TriLink. Good for mid-scale orders.",
+      "estimated_cost_usd": 6000.0,
+      "turnaround_days": 28
+    },
+    {
+      "name": "IDT (Integrated DNA Technologies)",
+      "category": "synthesis",
+      "address": "Coralville, IA, USA",
+      "distance_km": null,
+      "phone": null,
+      "email": "custcare@idtdna.com",
+      "website": "https://www.idtdna.com/pages/products/genes-and-gene-fragments",
+      "notes": "Fastest turnaround for DNA templates. Requires downstream IVT.",
+      "estimated_cost_usd": 51.57,
+      "turnaround_days": 7
+    },
+    {
+      "name": "Precision NanoSystems (Cytiva)",
+      "category": "synthesis",
+      "address": "Vancouver, BC, Canada",
+      "distance_km": null,
+      "phone": null,
+      "email": "support@precision-nano.com",
+      "website": "https://www.precisionnanosystems.com/lnp-solutions",
+      "notes": "Benchtop NanoAssemblr instrument or contract formulation. Royalty-free ionizable lipid.",
+      "estimated_cost_usd": null,
+      "turnaround_days": 14
+    },
+    {
+      "name": "Acuitas Therapeutics",
+      "category": "synthesis",
+      "address": "Vancouver, BC, Canada",
+      "distance_km": null,
+      "phone": null,
+      "email": "info@acuitastx.com",
+      "website": "https://www.acuitastx.com",
+      "notes": "Best-in-class LNP IP. License required; typical for clinical programs, not individual cases.",
+      "estimated_cost_usd": null,
+      "turnaround_days": 90
+    },
+    {
+      "name": "Genevant Sciences",
+      "category": "synthesis",
+      "address": "Vancouver, BC, Canada",
+      "distance_km": null,
+      "phone": null,
+      "email": "bd@genevant.com",
+      "website": "https://www.genevant.com",
+      "notes": "Alternative LNP licensor with clinically-validated formulations.",
+      "estimated_cost_usd": null,
+      "turnaround_days": 60
+    }
+  ],
+  "vet_oncologists": [
+    {
+      "name": "Ontario Veterinary College \u2014 Mona Campbell Centre",
+      "category": "vet_oncology",
+      "address": "Guelph, ON, Canada",
+      "distance_km": null,
+      "phone": "+1-519-823-8830",
+      "email": null,
+      "website": "https://ovc.uoguelph.ca/oncology",
+      "notes": "Academic oncology service with active immunotherapy trials.",
+      "estimated_cost_usd": null,
+      "turnaround_days": null
+    },
+    {
+      "name": "VCA Canada 404 Veterinary Emergency & Referral Hospital",
+      "category": "vet_oncology",
+      "address": "Newmarket, ON, Canada",
+      "distance_km": null,
+      "phone": "+1-905-953-9500",
+      "email": null,
+      "website": "https://vcacanada.com/404",
+      "notes": "Board-certified oncologists; referral-based.",
+      "estimated_cost_usd": null,
+      "turnaround_days": null
+    },
+    {
+      "name": "Flint Animal Cancer Center \u2014 Colorado State University",
+      "category": "vet_oncology",
+      "address": "Fort Collins, CO, USA",
+      "distance_km": null,
+      "phone": "+1-970-297-1234",
+      "email": null,
+      "website": "https://www.csuanimalcancercenter.org",
+      "notes": "Largest academic veterinary cancer center; runs NCI Comparative Oncology trials.",
+      "estimated_cost_usd": null,
+      "turnaround_days": null
+    },
+    {
+      "name": "PennVet Ryan Veterinary Hospital Oncology",
+      "category": "vet_oncology",
+      "address": "Philadelphia, PA, USA",
+      "distance_km": null,
+      "phone": "+1-215-746-8911",
+      "email": null,
+      "website": "https://www.vet.upenn.edu/veterinary-hospitals/ryan-veterinary-hospital",
+      "notes": "Mason lab immunotherapy trials (HER2 listeria vaccine for osteosarcoma).",
+      "estimated_cost_usd": null,
+      "turnaround_days": null
+    },
+    {
+      "name": "Animal Medical Center NYC Oncology Service",
+      "category": "vet_oncology",
+      "address": "New York, NY, USA",
+      "distance_km": null,
+      "phone": "+1-212-838-7053",
+      "email": null,
+      "website": "https://www.amcny.org/oncology",
+      "notes": "Comprehensive oncology service; clinical trials program.",
+      "estimated_cost_usd": null,
+      "turnaround_days": null
+    }
+  ],
+  "dla_typing_labs": [],
+  "emails": [
+    {
+      "recipient_type": "sequencing_lab",
+      "recipient_name": "Vidium Animal Health",
+      "recipient_email": "info@vidiumah.com",
+      "subject": "Request for tumor sequencing services \u2014 canine oncology case",
+      "body": "Dear Vidium Animal Health,\n\nYou are requesting tumor WES + RNA-seq services for a canine cancer case. Be concise, professional, and include: patient species, cancer type, tissue type, urgency, and a request for pricing + turnaround. Ask for CLIA-grade or research-grade options.\n\nCase summary:\nPatient: Luna, 8-year-old Golden Retriever, 32.4 kg. Grade III mast cell tumor (left hind leg), recurrence after surgery and vinblastine/prednisone chemotherapy. Location: Toronto, ON, Canada. Preliminary VCF analysis identified 10 somatic mutations including KIT K642E. We have generated 15 neoantigen candidates and need confirmatory whole-exome sequencing + RNA-seq to validate mutation burden and expression levels. DLA typing shows DLA-88*50101/DLA-88*00801. Requesting quote for canine tumor WES/RNA-seq with expedited turnaround.\n\nBest regards,\nNeoVax Treatment Coordinator",
+      "attachments": [],
+      "sent": false,
+      "sent_message_id": null
+    },
+    {
+      "recipient_type": "synthesis_vendor",
+      "recipient_name": "TriLink BioTechnologies",
+      "recipient_email": "custom@trilinkbiotech.com",
+      "subject": "mRNA synthesis request \u2014 canine personalized vaccine",
+      "body": "Dear TriLink BioTechnologies,\n\nYou are ordering a research-grade IVT mRNA construct for a veterinary compassionate-use vaccine. Include the construct length, desired modifications (N1-methylpseudouridine, Cap-1, polyA tail), quantity (typical: 500 \u00b5g for dosing), and a request for pricing + lead time. Mention that the sequence will be attached as FASTA.\n\nCase summary:\nPatient: Luna, 8-year-old Golden Retriever with recurrent Grade III mast cell tumor. We have designed a personalized neoantigen vaccine construct (573 bp mRNA) encoding 15 peptide candidates from 10 validated somatic mutations (top candidate: ALMSELEVL from KIT K642E). Requesting research-grade IVT mRNA synthesis with CleanCap Cap-1 and N1-methylpseudouridine modifications, plus LNP formulation guidance. Target DLA allele: DLA-88*50101. Need quote and lead time for custom synthesis.\n\nBest regards,\nNeoVax Treatment Coordinator",
+      "attachments": [],
+      "sent": false,
+      "sent_message_id": null
+    },
+    {
+      "recipient_type": "vet_oncologist",
+      "recipient_name": "Ontario Veterinary College - Mona Campbell Centre",
+      "recipient_email": "ovc@uoguelph.ca",
+      "subject": "Consultation referral \u2014 canine oncology case",
+      "body": "Dear Ontario Veterinary College - Mona Campbell Centre,\n\nYou are seeking a consultation referral for a canine cancer patient with a complex case. Include: patient details, diagnosis, prior treatments, interest in immunotherapy / experimental protocols. Request availability for a 30-minute case review.\n\nCase summary:\nReferral for Luna, 8-year-old spayed female Golden Retriever, 32.4 kg, with recurrent Grade III mast cell tumor (left hind leg). Prior treatments: wide local excision (narrow margins, Nov 2025), vinblastine/prednisone chemotherapy (8 cycles, Dec 2025-Feb 2026). Owner from Toronto seeking compassionate use access to personalized neoantigen vaccine. We have identified 10 somatic mutations (top: KIT K642E) and designed a 15-peptide mRNA vaccine construct. DLA-88*50101 typed. Requesting consultation for immunotherapy protocol integration and clinical trial eligibility assessment.\n\nBest regards,\nNeoVax Treatment Coordinator",
+      "attachments": [],
+      "sent": false,
+      "sent_message_id": null
+    },
+    {
+      "recipient_type": "ethics_board",
+      "recipient_name": "Veterinary Ethics Committee",
+      "recipient_email": "ethics@vetboard.ca",
+      "subject": "Pre-submission inquiry \u2014 compassionate use mRNA vaccine",
+      "body": "Dear Veterinary Ethics Committee,\n\nYou are drafting a compassionate use / INAD pre-submission for a personalized mRNA cancer vaccine in a terminal canine patient. Include: justification (standard of care exhausted), safety rationale, computational evidence, and request for pre-submission meeting guidance.\n\nCase summary:\nCompassionate use application for personalized neoantigen cancer vaccine in Luna, 8-year-old Golden Retriever with recurrent Grade III mast cell tumor. Standard therapies exhausted (surgery + chemotherapy). We have developed a custom mRNA vaccine targeting 15 neoantigens from 10 validated somatic mutations (including KIT K642E). Construct is 573 bp, DLA-88*50101 optimized. Treatment would be administered under veterinary oncologist supervision at Ontario Veterinary College. Owner located in Toronto, ON. Requesting expedited review for compassionate use authorization.\n\nBest regards,\nNeoVax Treatment Coordinator",
+      "attachments": [],
+      "sent": false,
+      "sent_message_id": null
+    }
+  ],
+  "timeline": [
+    {
+      "week": 0,
+      "date_iso": "2026-04-16",
+      "title": "Tumor biopsy shipped",
+      "description": "Overnight to sequencing lab with cold-chain packaging",
+      "location": null
+    },
+    {
+      "week": 1,
+      "date_iso": "2026-04-23",
+      "title": "WES + RNA-seq complete",
+      "description": "Raw data returned from lab; pipeline re-runs with patient-specific VCF",
+      "location": null
+    },
+    {
+      "week": 2,
+      "date_iso": "2026-04-30",
+      "title": "DLA typing returned",
+      "description": "Patient's DLA alleles confirmed; top candidates re-scored with real alleles",
+      "location": null
+    },
+    {
+      "week": 3,
+      "date_iso": "2026-05-07",
+      "title": "Candidate review + synthesis order placed",
+      "description": "Vet oncologist signs off on top 15 epitopes; mRNA ordered",
+      "location": null
+    },
+    {
+      "week": 5,
+      "date_iso": "2026-05-21",
+      "title": "mRNA received + LNP formulation",
+      "description": "QC: RNA integrity, endotoxin, sterility, particle size",
+      "location": null
+    },
+    {
+      "week": 6,
+      "date_iso": "2026-05-28",
+      "title": "First vaccination (prime)",
+      "description": "Intramuscular injection; baseline bloodwork + imaging",
+      "location": null
+    },
+    {
+      "week": 7,
+      "date_iso": "2026-06-04",
+      "title": "Patient monitoring week 1",
+      "description": "Owner-reported symptoms + bloodwork check",
+      "location": null
+    },
+    {
+      "week": 9,
+      "date_iso": "2026-06-18",
+      "title": "Second vaccination (boost)",
+      "description": "Intramuscular boost; ELISpot + TCR-seq if available",
+      "location": null
+    },
+    {
+      "week": 12,
+      "date_iso": "2026-07-09",
+      "title": "Response imaging",
+      "description": "CT or MRI to measure tumor response vs baseline",
+      "location": null
+    },
+    {
+      "week": 16,
+      "date_iso": "2026-08-06",
+      "title": "ctDNA re-sequencing (optional)",
+      "description": "Check for subclonal escape; trigger booster design if needed",
+      "location": null
+    }
+  ],
+  "plain_english": "Hi \u2014 here's what we found for Luna.\n\nThe tumor has several DNA typos (mutations). These typos change tiny parts of proteins inside the cancer cells and make them look different from healthy cells. The most important one we found is KIT K642E.\n\nWe identified 15 strong candidate fragments from these mutations. A personalized vaccine made from these fragments would teach Luna's immune system to recognize and attack cells carrying them \u2014 while leaving healthy cells alone.\n\nNext steps: confirm the plan with a veterinary oncologist, order the mRNA, formulate it into a lipid nanoparticle, and schedule the first injection. The whole process takes about 5-6 weeks.\n\nHonest expectations: personalized cancer vaccines are promising but not guaranteed. Current data (human trials) shows roughly 40-50% of patients see meaningful tumor response. This is best used alongside surgery or standard chemo, not instead of it.\n\nThis is a proposed plan. Any treatment decision should be made with a licensed veterinary oncologist who has examined Luna in person.",
+  "drive_folder_url": null
+}
