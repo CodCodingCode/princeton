@@ -18,7 +18,8 @@ from pydantic import BaseModel, Field
 
 from ..agent._llm import has_api_key, split_thinking, stream_with_thinking
 from ..agent.events import EventKind, emit
-from ..models import Mutation, NCCNStep, PathologyFindings
+from ..models import CitationRef, Mutation, NCCNStep, PathologyFindings
+from ..rag import has_store as _rag_available, query_papers
 from .melanoma_v2024 import GRAPH, ROOT, NCCNNode
 
 
@@ -67,19 +68,59 @@ SYSTEM_PROMPT = (
 )
 
 
-def _build_user_prompt(node: NCCNNode, evidence: dict[str, str]) -> str:
+def _build_user_prompt(
+    node: NCCNNode,
+    evidence: dict[str, str],
+    citations: list[CitationRef],
+) -> str:
     options = "\n".join(
         f"  [{i}] {opt.label} — {opt.description}" for i, opt in enumerate(node.options)
     )
     ev_lines = "\n".join(f"  - {k}: {v}" for k, v in evidence.items()) or "  (none)"
+    cite_block = ""
+    if citations:
+        cite_lines = []
+        for i, c in enumerate(citations, 1):
+            head = f"  [{i}] {c.title} ({c.journal} {c.year}, PMID {c.pmid})"
+            cite_lines.append(head)
+            cite_lines.append(f"      {c.snippet}")
+        cite_block = "\nRecent literature (PubMed, top matches):\n" + "\n".join(cite_lines) + "\n"
     return (
         f"Node: {node.title}\n"
         f"Question: {node.question}\n\n"
-        f"Patient evidence:\n{ev_lines}\n\n"
+        f"Patient evidence:\n{ev_lines}\n"
+        f"{cite_block}\n"
         f"Options:\n{options}\n\n"
         "Respond with: <think>your reasoning</think>\n"
         '{"chosen_option_index": <int>, "one_sentence_rationale": "..."}'
     )
+
+
+def _rag_query_for(node: NCCNNode, state: "PatientState") -> str:
+    drivers = []
+    if state.braf_status != "wild-type":
+        drivers.append(f"BRAF {state.braf_status}")
+    for m in state.mutations[:3]:
+        if m.gene.upper() not in {"BRAF"}:
+            drivers.append(f"{m.gene} {m.label}")
+    driver_str = " ".join(drivers) or "melanoma"
+    return f"{node.title} {driver_str} melanoma treatment"
+
+
+def _fetch_citations(node: NCCNNode, state: "PatientState") -> list[CitationRef]:
+    if not _rag_available():
+        return []
+    try:
+        papers = query_papers(_rag_query_for(node, state), top_k=3)
+    except Exception:
+        return []
+    return [
+        CitationRef(
+            pmid=p.pmid, title=p.title, year=p.year, journal=p.journal,
+            snippet=p.snippet, relevance=p.relevance,
+        )
+        for p in papers
+    ]
 
 
 def _parse_decision(answer: str, n_options: int) -> _DecisionResponse:
@@ -166,7 +207,14 @@ class NCCNWalker:
                 break
 
             interrupt = await _consume_interrupt()
-            user_prompt = _build_user_prompt(node, evidence)
+            citations = _fetch_citations(node, self.state)
+            if citations:
+                await emit(
+                    EventKind.RAG_CITATIONS,
+                    f"📚 {len(citations)} PubMed citations for {node.id}",
+                    {"node_id": node.id, "citations": [c.model_dump() for c in citations]},
+                )
+            user_prompt = _build_user_prompt(node, evidence, citations)
             if interrupt:
                 user_prompt += f"\n\nDoctor interjected: {interrupt!r}\nReconsider in light of this."
 
@@ -221,6 +269,7 @@ class NCCNWalker:
                 next_node_id=chosen.next_id,
                 reasoning=reasoning,
                 evidence=evidence,
+                citations=citations,
             )
             await emit(
                 EventKind.NCCN_NODE_VISITED,

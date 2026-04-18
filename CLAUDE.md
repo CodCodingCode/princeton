@@ -4,39 +4,40 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository layout
 
-Princeton Hacks project — **NeoVax**, a personalized cancer vaccine pipeline.
+Princeton Hacks project — **NeoVax**, a melanoma oncologist copilot. Input: tumour VCF + pathology slide. Output: NCCN-walked treatment plan, molecular landscape (WT/mutant folds + drug co-crystals), ranked neoantigen peptides, mRNA construct, HLA peptide poses, and a TCGA twin-matched survival snapshot.
 
-- [backend/](backend/) — Python package, CLI, pipeline, Claude Agent SDK orchestration, sample data. See [backend/CLAUDE.md](backend/CLAUDE.md) for full architecture and design decisions — it is the authoritative reference for anything under `backend/`.
-- [frontend/](frontend/) — Streamlit dashboards ([frontend/app.py](frontend/app.py) and [frontend/app_agent.py](frontend/app_agent.py)). They import the `neoantigen` package installed from `backend/` and read sample files from `../backend/sample_data/` via `__file__`-anchored paths.
+- [backend/](backend/) — Python package, CLI, pipeline, agent orchestration, sample + TCGA data, RAG store. See [backend/CLAUDE.md](backend/CLAUDE.md) for the authoritative architecture reference.
+- [frontend/](frontend/) — Streamlit three-panel live UI in [frontend/app.py](frontend/app.py). Imports the `neoantigen` package installed from `backend/` and reads sample files from `../backend/sample_data/` via `__file__`-anchored paths.
+- [plan.md](plan.md) — GH200 + vLLM + MediX-R1-30B integration plan. Still valid; K2 Think V2 remains the default fallback URL.
 
-## Running the Streamlit apps
+## Running the Streamlit app
 
-The Streamlit deps ship with the backend's `[agent]` extra, so install once from `backend/` and then run from `frontend/`:
+The Streamlit deps ship with the backend's `[agent]` extra. Install once from the repo root, then run from `frontend/`:
 
 ```bash
-# one-time install (from repo root)
 pip install -e './backend[agent]'
 
-# dashboards
 cd frontend
-streamlit run app.py         # plain pipeline dashboard
-streamlit run app_agent.py   # agent-driven live dashboard (reads backend/.env)
+streamlit run app.py
 ```
 
-`app_agent.py` loads `.env` via `python-dotenv` from the current working directory, so run it from `frontend/` (or copy/symlink the backend's `.env`) if you need `ANTHROPIC_API_KEY` and friends.
-
-## Working in this repo
-
-- Two entry points share the pipeline: the plain CLI/dashboard ([frontend/app.py](frontend/app.py), `neoantigen` CLI) and the agent-driven flow ([frontend/app_agent.py](frontend/app_agent.py), `neoantigen agent-demo`). When changing pipeline behavior, consider both.
-- No test suite exists — `backend/test.py` and `backend/main.py` are empty placeholders.
-- Uploads from `app_agent.py` are written to `backend/out/uploads/`, alongside the rest of the generated artifacts.
+`app.py` explicitly loads `backend/.env` via `python-dotenv` (see [frontend/app.py:37](frontend/app.py#L37)), so env vars work regardless of CWD.
 
 ## LLM layer
 
-Three agent call sites ([pathology.py](backend/src/neoantigen/agent/pathology.py), [emails.py](backend/src/neoantigen/agent/emails.py), [explain.py](backend/src/neoantigen/agent/explain.py)) all route through [backend/src/neoantigen/agent/\_llm.py](backend/src/neoantigen/agent/_llm.py). Current backend is **K2 Think V2** (OpenAI-compatible endpoint at `api.k2think.ai/v1`):
+The medical reasoning model is a Qwen3-VL-based VLM (MediX-R1-30B on GH200 via vLLM) with an OpenAI-compatible endpoint, accessed through [backend/src/neoantigen/agent/\_llm.py](backend/src/neoantigen/agent/_llm.py). It supports `<think>...</think>` streaming blocks surfaced as `THINKING_DELTA` events in the live UI.
 
-- `K2_API_KEY` — required for LLM calls; missing key falls back to heuristics/templates.
-- `NEOVAX_MODEL` — overrides the default `MBZUAI-IFM/K2-Think-v2`.
-- Every K2 request is logged to `backend/out/k2.log` (override with `NEOVAX_LOG_PATH`). Check this first when agent output looks wrong.
+Env vars (all optional — defaults point at the public K2 Think V2 endpoint as a fallback):
 
-A migration to MBZUAI's MediX-R1-30B (medical-RL-trained) is planned — see [plan.md](plan.md) for the GH200 deployment details and which three files are affected.
+- `K2_BASE_URL` — OpenAI-compatible base URL (default `https://api.k2think.ai/v1`). Point at the SSH-tunneled vLLM endpoint, e.g. `http://localhost:8000/v1`.
+- `K2_API_KEY` — required by the OpenAI client; vLLM ignores its value but one must be set.
+- `NEOVAX_MODEL` — served model name, e.g. `medix-r1-30b`. Default `MBZUAI-IFM/K2-Think-v2`.
+- `NEOVAX_LOG_PATH` — every model call is logged here (default `backend/out/k2.log`). **Check this first when agent output looks wrong.**
+
+Call surfaces in `_llm.py`: `call_for_json`, `call_with_vision` (image input), `stream_with_thinking` (async iterator of `("thinking", chunk)` / `("answer", chunk)` tuples).
+
+## Working in this repo
+
+- Two entry points share the pipeline: the pure-pipeline CLI (`neoantigen run` / `neoantigen demo`) and the full agent flow (`neoantigen melanoma-demo` + [frontend/app.py](frontend/app.py)). Changes to pipeline behaviour should be considered against both.
+- No test suite exists — [backend/test.py](backend/test.py) and [backend/main.py](backend/main.py) are empty placeholders.
+- Generated artefacts (case JSON, logs, cached downloads) live in `backend/out/`.

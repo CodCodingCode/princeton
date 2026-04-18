@@ -20,11 +20,23 @@ from pathlib import Path
 
 from rich.console import Console
 
+from ..cohort import (
+    has_cohort,
+    load_cohort,
+    mutations_for_patient,
+    find_twins,
+    kaplan_meier,
+)
+from ..cohort.tcga import TCGAPatient
+from ..cohort.twins import QueryPatient
 from ..models import (
+    CohortSnapshot,
     MelanomaCase,
     Mutation,
     PathologyFindings,
     PipelineResult,
+    SurvivalPoint,
+    TwinMatchRef,
 )
 from ..nccn.walker import NCCNWalker, PatientState
 from ..pipeline.parser import parse as parse_mutations
@@ -45,6 +57,7 @@ class MelanomaOrchestrator:
     vcf_path: Path
     bus: EventBus = field(default_factory=EventBus)
     hla_allele: str = DEFAULT_HLA
+    tcga_patient_id: str | None = None
 
     async def run(self) -> MelanomaCase:
         set_current_bus(self.bus)
@@ -59,7 +72,11 @@ class MelanomaOrchestrator:
 
             # 2. Mutations
             mutations: list[Mutation] = []
-            if self.vcf_path.exists():
+            source_label = "VCF"
+            if self.tcga_patient_id and has_cohort():
+                source_label = f"TCGA-SKCM ({self.tcga_patient_id})"
+                mutations = mutations_for_patient(self.tcga_patient_id)
+            elif self.vcf_path.exists():
                 try:
                     mutations = parse_mutations(self.vcf_path)
                 except Exception as e:
@@ -67,7 +84,7 @@ class MelanomaOrchestrator:
             case.mutations = mutations
             await self.bus.emit(
                 EventKind.TOOL_RESULT,
-                f"🧬 Parsed {len(mutations)} mutations from VCF",
+                f"🧬 Loaded {len(mutations)} mutations from {source_label}",
                 {"mutations": [m.model_dump() for m in mutations]},
             )
             await self.bus.emit(
@@ -123,6 +140,10 @@ class MelanomaOrchestrator:
             elif pipeline_task is not None:
                 pipeline_task.cancel()
 
+            # 6. Cohort match (Panel 4) — only when running on a TCGA patient.
+            if self.tcga_patient_id and has_cohort():
+                case.cohort = await self._build_cohort_snapshot(case)
+
             await self.bus.emit(EventKind.DONE, "✅ Case complete", {"case": case.model_dump()})
         except Exception as e:
             await self.bus.emit(EventKind.TOOL_ERROR, f"Orchestrator error: {e}")
@@ -166,7 +187,96 @@ class MelanomaOrchestrator:
         return poses
 
 
+    async def _build_cohort_snapshot(self, case: MelanomaCase) -> CohortSnapshot | None:
+        await self.bus.emit(EventKind.TOOL_START, "🧑‍🤝‍🧑 Twin-matching against TCGA-SKCM cohort")
+        try:
+            cohort = load_cohort()
+        except Exception as e:
+            await self.bus.emit(EventKind.TOOL_ERROR, f"Cohort load failed: {e}")
+            return None
+        if not cohort:
+            return None
+
+        demo = next((p for p in cohort if p.submitter_id == self.tcga_patient_id), None)
+        others = [p for p in cohort if p.submitter_id != self.tcga_patient_id]
+
+        query = QueryPatient(
+            braf_v600e=demo.braf_v600e if demo else any(
+                m.gene == "BRAF" and m.position == 600 and m.alt_aa == "E" for m in case.mutations
+            ),
+            nras_q61=demo.nras_q61 if demo else any(
+                m.gene == "NRAS" and m.position == 61 for m in case.mutations
+            ),
+            kit_mutant=demo.kit_mutant if demo else any(m.gene == "KIT" for m in case.mutations),
+            nf1_mutant=demo.nf1_mutant if demo else any(m.gene == "NF1" for m in case.mutations),
+            stage_bucket=demo.stage_bucket if demo else "Unknown",
+            age=demo.age_at_diagnosis if demo else None,
+            mutated_genes={m.gene for m in case.mutations},
+        )
+
+        twin_matches = find_twins(query, others, top_k=10)
+        twins_for_curve = [t.patient for t in twin_matches]
+        overall_curve = kaplan_meier(others)
+        twin_curve = kaplan_meier(twins_for_curve)
+
+        snapshot = CohortSnapshot(
+            cohort_size=len(others),
+            twins=[
+                TwinMatchRef(
+                    submitter_id=t.patient.submitter_id,
+                    similarity=t.similarity,
+                    matching_features=t.matching_features,
+                    stage=t.patient.stage,
+                    age_at_diagnosis=t.patient.age_at_diagnosis,
+                    vital_status=t.patient.vital_status,
+                    survival_days=t.patient.survival_days,
+                    mutated_drivers=sorted(
+                        g for g in t.patient.mutated_genes
+                        if g in {"BRAF", "NRAS", "KIT", "NF1", "TP53", "PTEN", "CDKN2A"}
+                    ),
+                )
+                for t in twin_matches
+            ],
+            overall_curve=[
+                SurvivalPoint(days=p.days, survival=p.survival, at_risk=p.at_risk, events_so_far=p.events_so_far)
+                for p in overall_curve
+            ],
+            twin_curve=[
+                SurvivalPoint(days=p.days, survival=p.survival, at_risk=p.at_risk, events_so_far=p.events_so_far)
+                for p in twin_curve
+            ],
+            median_survival_days=_median_survival(overall_curve),
+            twin_median_survival_days=_median_survival(twin_curve),
+        )
+
+        await self.bus.emit(
+            EventKind.COHORT_TWINS_READY,
+            f"🧑‍🤝‍🧑 {len(snapshot.twins)} twins matched (median sim {twin_matches[0].similarity if twin_matches else 0:.2f})",
+            {"twins": [t.model_dump() for t in snapshot.twins]},
+        )
+        await self.bus.emit(
+            EventKind.SURVIVAL_CURVE_READY,
+            f"📈 KM curve ready (cohort n={snapshot.cohort_size}, twin median {snapshot.twin_median_survival_days}d)",
+            {
+                "overall_curve": [p.model_dump() for p in snapshot.overall_curve],
+                "twin_curve": [p.model_dump() for p in snapshot.twin_curve],
+                "median_survival_days": snapshot.median_survival_days,
+                "twin_median_survival_days": snapshot.twin_median_survival_days,
+                "cohort_size": snapshot.cohort_size,
+            },
+        )
+        return snapshot
+
+
 def _estimate_tmb(mutations: list[Mutation]) -> float:
     """Crude proxy: missense count / 1 Mb. Real TMB needs full-exome context;
     this is enough for the demo to drive 'high TMB' branches when relevant."""
     return float(len(mutations))
+
+
+def _median_survival(curve) -> int | None:
+    """First time the KM step function crosses 0.5."""
+    for pt in curve:
+        if pt.survival <= 0.5:
+            return pt.days
+    return None

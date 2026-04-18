@@ -63,6 +63,8 @@ DEFAULTS = {
     "pathology": None,
     "mutations": [],
     "selected_node": None,
+    "citations_by_node": {},
+    "cohort": None,
 }
 for key, default in DEFAULTS.items():
     if key not in st.session_state:
@@ -72,11 +74,22 @@ for key, default in DEFAULTS.items():
 # ─────────────────────────────────────────────────────────────
 # Background agent runner
 # ─────────────────────────────────────────────────────────────
-def run_agent_in_background(slide_path: Path, vcf_path: Path, event_q: queue.Queue, bus_holder: dict) -> None:
+def run_agent_in_background(
+    slide_path: Path,
+    vcf_path: Path,
+    event_q: queue.Queue,
+    bus_holder: dict,
+    tcga_patient_id: str | None = None,
+) -> None:
     async def _bridge():
         bus = EventBus()
         bus_holder["bus"] = bus
-        orch = MelanomaOrchestrator(slide_path=slide_path, vcf_path=vcf_path, bus=bus)
+        orch = MelanomaOrchestrator(
+            slide_path=slide_path,
+            vcf_path=vcf_path,
+            bus=bus,
+            tcga_patient_id=tcga_patient_id,
+        )
 
         async def _drain():
             async for ev in bus.stream():
@@ -139,6 +152,22 @@ def _ingest_event(ev: AgentEvent) -> None:
         st.session_state.poses.append(p.get("pose"))
     elif ev.kind == EventKind.CASE_UPDATE and "mutations" in p:
         st.session_state.mutations = p.get("mutations", [])
+    elif ev.kind == EventKind.RAG_CITATIONS:
+        nid = p.get("node_id")
+        if nid:
+            st.session_state.citations_by_node[nid] = p.get("citations", [])
+    elif ev.kind == EventKind.COHORT_TWINS_READY:
+        cohort = dict(st.session_state.cohort or {})
+        cohort["twins"] = p.get("twins", [])
+        st.session_state.cohort = cohort
+    elif ev.kind == EventKind.SURVIVAL_CURVE_READY:
+        cohort = dict(st.session_state.cohort or {})
+        cohort["overall_curve"] = p.get("overall_curve", [])
+        cohort["twin_curve"] = p.get("twin_curve", [])
+        cohort["median_survival_days"] = p.get("median_survival_days")
+        cohort["twin_median_survival_days"] = p.get("twin_median_survival_days")
+        cohort["cohort_size"] = p.get("cohort_size", 0)
+        st.session_state.cohort = cohort
 
 
 # ─────────────────────────────────────────────────────────────
@@ -265,6 +294,25 @@ def _node_detail(node_id: str) -> None:
             reasoning = step.get("reasoning") or "(no reasoning recorded)"
             st.markdown("**Model reasoning**")
             st.code(reasoning, language="markdown")
+
+            citations = (step.get("citations") or []) or st.session_state.citations_by_node.get(node_id, [])
+            if citations:
+                st.markdown("**📚 Supporting literature (PubMed)**")
+                for c in citations:
+                    pmid = c.get("pmid", "")
+                    title = c.get("title", "")
+                    year = c.get("year", "")
+                    journal = c.get("journal", "")
+                    snippet = c.get("snippet", "")
+                    rel = c.get("relevance", 0.0)
+                    st.markdown(
+                        f"- [{title}](https://pubmed.ncbi.nlm.nih.gov/{pmid}/) "
+                        f"<span style='color:#94a3b8'>· {journal} {year} · PMID {pmid} · "
+                        f"relevance {rel:.2f}</span>",
+                        unsafe_allow_html=True,
+                    )
+                    if snippet:
+                        st.caption(snippet)
         else:
             st.info("Node not yet visited by the agent.")
 
@@ -403,9 +451,80 @@ def _render_construct_bar(vaccine: dict) -> None:
 
 
 # ─────────────────────────────────────────────────────────────
+# Panel 4 — twin cohort + Kaplan-Meier survival
+# ─────────────────────────────────────────────────────────────
+def _render_cohort_panel() -> None:
+    cohort = st.session_state.cohort
+    if not cohort:
+        st.info(
+            "Twin matching runs after the NCCN walker when the demo is launched on a TCGA "
+            "patient. Build the cohort with `python backend/scripts/fetch_tcga_skcm.py`."
+        )
+        return
+
+    cohort_size = cohort.get("cohort_size", 0)
+    twins = cohort.get("twins", [])
+    overall = cohort.get("overall_curve", [])
+    twin_curve = cohort.get("twin_curve", [])
+    median_overall = cohort.get("median_survival_days")
+    median_twins = cohort.get("twin_median_survival_days")
+
+    cols = st.columns(3)
+    cols[0].metric("Cohort size", cohort_size)
+    cols[1].metric("Median OS (cohort)", f"{median_overall}d" if median_overall else "—")
+    cols[2].metric("Median OS (twins)", f"{median_twins}d" if median_twins else "—")
+
+    fig = go.Figure()
+    if overall:
+        fig.add_trace(go.Scatter(
+            x=[p["days"] for p in overall],
+            y=[p["survival"] for p in overall],
+            mode="lines",
+            line=dict(color="#94a3b8", width=2, shape="hv"),
+            name=f"Full TCGA-SKCM (n={cohort_size})",
+            hovertemplate="day %{x}<br>survival %{y:.2%}<extra></extra>",
+        ))
+    if twin_curve:
+        fig.add_trace(go.Scatter(
+            x=[p["days"] for p in twin_curve],
+            y=[p["survival"] for p in twin_curve],
+            mode="lines",
+            line=dict(color="#10b981", width=3, shape="hv"),
+            name=f"Top {len(twins)} twins",
+            hovertemplate="day %{x}<br>survival %{y:.2%}<extra></extra>",
+        ))
+    fig.update_layout(
+        height=320,
+        margin=dict(l=10, r=10, t=10, b=10),
+        xaxis=dict(title="Days from diagnosis", gridcolor="#e5e7eb"),
+        yaxis=dict(title="Overall survival", tickformat=".0%", gridcolor="#e5e7eb", range=[0, 1.02]),
+        plot_bgcolor="#ffffff",
+        legend=dict(orientation="h", y=-0.2),
+    )
+    st.plotly_chart(fig, use_container_width=True, key="km_curve")
+
+    if twins:
+        rows = []
+        for t in twins:
+            rows.append({
+                "Submitter ID": t.get("submitter_id"),
+                "Similarity": t.get("similarity"),
+                "Matching": ", ".join(t.get("matching_features", [])),
+                "Stage": t.get("stage") or "—",
+                "Age": t.get("age_at_diagnosis"),
+                "Vital status": t.get("vital_status"),
+                "Survival (days)": t.get("survival_days"),
+                "Drivers": ", ".join(t.get("mutated_drivers", [])),
+            })
+        st.dataframe(rows, hide_index=True, use_container_width=True)
+    else:
+        st.caption("No twin candidates found.")
+
+
+# ─────────────────────────────────────────────────────────────
 # Sidebar — inputs + thinking feed + chat
 # ─────────────────────────────────────────────────────────────
-def _start_run(slide_path: Path, vcf_path: Path) -> None:
+def _start_run(slide_path: Path, vcf_path: Path, tcga_patient_id: str | None = None) -> None:
     event_q: queue.Queue = queue.Queue()
     bus_holder: dict = {"bus": None}
     st.session_state.event_queue = event_q
@@ -419,12 +538,14 @@ def _start_run(slide_path: Path, vcf_path: Path) -> None:
     st.session_state.pathology = None
     st.session_state.mutations = []
     st.session_state.chat_messages = []
+    st.session_state.citations_by_node = {}
+    st.session_state.cohort = None
     st.session_state.running = True
     st.session_state.done = False
     st.session_state.started_at = time.time()
     thread = threading.Thread(
         target=run_agent_in_background,
-        args=(slide_path, vcf_path, event_q, bus_holder),
+        args=(slide_path, vcf_path, event_q, bus_holder, tcga_patient_id),
         daemon=True,
     )
     thread.start()
@@ -454,7 +575,18 @@ with st.sidebar:
             _start_run(slide_path, vcf_path)
     with col_b:
         if st.button("Run TCGA demo", type="primary", disabled=st.session_state.running, use_container_width=True):
-            _start_run(DEMO_SLIDE, DEMO_VCF)
+            tcga_id: str | None = None
+            slide_for_demo = DEMO_SLIDE
+            try:
+                from neoantigen.cohort import has_cohort, demo_patient_id
+                if has_cohort():
+                    tcga_id = demo_patient_id()
+                    tcga_slide = BACKEND_DIR / "data" / "tcga_skcm" / "demo_slide.jpg"
+                    if tcga_slide.exists():
+                        slide_for_demo = tcga_slide
+            except Exception:
+                pass
+            _start_run(slide_for_demo, DEMO_VCF, tcga_patient_id=tcga_id)
 
     if st.session_state.done and st.button("↻ New case", use_container_width=True):
         for k in list(DEFAULTS.keys()):
@@ -535,6 +667,11 @@ st.divider()
 st.markdown("### Panel 3 · Vaccine designer")
 with st.container(border=True):
     _render_vaccine_panel()
+st.divider()
+
+st.markdown("### Panel 4 · Twin cohort & survival (TCGA-SKCM)")
+with st.container(border=True):
+    _render_cohort_panel()
 
 status_label = "▶ Running" if st.session_state.running else "✅ Complete"
 st.caption(f"{status_label} · {len(st.session_state.events)} events · NCCN nodes walked: {len(st.session_state.nccn_steps)}")

@@ -35,6 +35,10 @@ class EventKind(str, Enum):
     STRUCTURE_READY = "structure_ready"
     CASE_UPDATE = "case_update"
 
+    RAG_CITATIONS = "rag_citations"
+    COHORT_TWINS_READY = "cohort_twins_ready"
+    SURVIVAL_CURVE_READY = "survival_curve_ready"
+
 
 @dataclass
 class AgentEvent:

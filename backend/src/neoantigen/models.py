@@ -119,6 +119,19 @@ class PathologyFindings(BaseModel):
 # ─────────────────────────────────────────────────────────────
 
 
+class CitationRef(BaseModel):
+    pmid: str
+    title: str
+    year: str = ""
+    journal: str = ""
+    snippet: str = ""
+    relevance: float = 0.0
+
+    @property
+    def url(self) -> str:
+        return f"https://pubmed.ncbi.nlm.nih.gov/{self.pmid}/"
+
+
 class NCCNStep(BaseModel):
     """One step of the NCCN walker — node visited, decision made, reasoning shown."""
 
@@ -128,6 +141,34 @@ class NCCNStep(BaseModel):
     next_node_id: str | None
     reasoning: str = ""
     evidence: dict[str, str] = Field(default_factory=dict)
+    citations: list[CitationRef] = Field(default_factory=list)
+
+
+class TwinMatchRef(BaseModel):
+    submitter_id: str
+    similarity: float
+    matching_features: list[str] = Field(default_factory=list)
+    stage: str | None = None
+    age_at_diagnosis: int | None = None
+    vital_status: str | None = None
+    survival_days: int | None = None
+    mutated_drivers: list[str] = Field(default_factory=list)
+
+
+class SurvivalPoint(BaseModel):
+    days: int
+    survival: float
+    at_risk: int
+    events_so_far: int
+
+
+class CohortSnapshot(BaseModel):
+    cohort_size: int = 0
+    twins: list[TwinMatchRef] = Field(default_factory=list)
+    overall_curve: list[SurvivalPoint] = Field(default_factory=list)
+    twin_curve: list[SurvivalPoint] = Field(default_factory=list)
+    median_survival_days: int | None = None
+    twin_median_survival_days: int | None = None
 
 
 # ─────────────────────────────────────────────────────────────
@@ -180,3 +221,4 @@ class MelanomaCase(BaseModel):
     molecules: list[MoleculeView] = Field(default_factory=list)
     pipeline: PipelineResult | None = None
     poses: list[StructurePose] = Field(default_factory=list)
+    cohort: CohortSnapshot | None = None

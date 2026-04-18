@@ -24,6 +24,15 @@ agent = [
     "py3Dmol>=2.0",
     "networkx>=3.2",
 ]
+rag = [
+    "chromadb>=0.5",
+    "sentence-transformers>=3.0",
+    "lxml>=5.0",
+]
+prep = [
+    "pandas>=2.0",
+    "tqdm>=4.66",
+]
 
 [project.scripts]
 neoantigen = "neoantigen.cli:app"

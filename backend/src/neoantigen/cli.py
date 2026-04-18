@@ -37,6 +37,8 @@ SAMPLE_DIR = Path(__file__).resolve().parent.parent.parent / "sample_data"
 SAMPLE_BRAF = SAMPLE_DIR / "braf_v600e.tsv"
 SAMPLE_MELANOMA_VCF = SAMPLE_DIR / "tcga_skcm_demo.vcf"
 SAMPLE_MELANOMA_SLIDE = SAMPLE_DIR / "tcga_skcm_demo_slide.jpg"
+TCGA_DIR = Path(__file__).resolve().parent.parent.parent / "data" / "tcga_skcm"
+TCGA_DEMO_SLIDE = TCGA_DIR / "demo_slide.jpg"
 
 
 def _render_mutations(result: PipelineResult) -> Table:
@@ -163,25 +165,48 @@ def fetch_gene_command(gene: str, force: bool = typer.Option(False, "--force")) 
 
 @app.command("melanoma-demo")
 def melanoma_demo_command(
-    slide: Annotated[Path, typer.Option("--slide", help="Pathology slide image")] = SAMPLE_MELANOMA_SLIDE,
-    vcf: Annotated[Path, typer.Option("--vcf", help="Tumour VCF")] = SAMPLE_MELANOMA_VCF,
+    slide: Annotated[Path | None, typer.Option("--slide", help="Pathology slide image")] = None,
+    vcf: Annotated[Path | None, typer.Option("--vcf", help="Tumour VCF")] = None,
+    tcga_patient: Annotated[str | None, typer.Option("--tcga-patient", help="TCGA submitter id (overrides --vcf)")] = None,
     output: Annotated[Path, typer.Option("--output", help="Where to write the case JSON")] = Path("out/melanoma_case.json"),
 ) -> None:
-    """End-to-end melanoma agent: VLM pathology → NCCN walk → molecular landscape → vaccine."""
+    """End-to-end melanoma agent: VLM pathology → NCCN walk → molecular landscape → vaccine → twin cohort.
+
+    If the TCGA-SKCM cohort has been pre-built (``backend/scripts/fetch_tcga_skcm.py``)
+    the demo defaults to running on the bundled BRAF V600E demo patient. Otherwise
+    it falls back to the synthetic VCF + sample slide.
+    """
     import asyncio
 
     from .agent import EventBus, EventKind
     from .agent.melanoma_orchestrator import MelanomaOrchestrator
+    from .cohort import has_cohort, demo_patient_id
 
-    if not vcf.exists():
-        console.print(f"[red]VCF not found:[/red] {vcf}")
+    chosen_tcga: str | None = tcga_patient
+    if chosen_tcga is None and has_cohort():
+        chosen_tcga = demo_patient_id()
+        if chosen_tcga:
+            console.print(f"[cyan]→ using TCGA-SKCM demo patient[/cyan] {chosen_tcga}")
+
+    chosen_slide = slide
+    if chosen_slide is None:
+        chosen_slide = TCGA_DEMO_SLIDE if TCGA_DEMO_SLIDE.exists() else SAMPLE_MELANOMA_SLIDE
+    chosen_vcf = vcf if vcf is not None else SAMPLE_MELANOMA_VCF
+
+    if chosen_tcga is None and not chosen_vcf.exists():
+        console.print(f"[red]VCF not found:[/red] {chosen_vcf}")
         raise typer.Exit(1)
-    if not slide.exists():
-        console.print(f"[yellow]Slide not found:[/yellow] {slide} — VLM will fall back to placeholder.")
+    if not chosen_slide.exists():
+        console.print(f"[yellow]Slide not found:[/yellow] {chosen_slide} — VLM will fall back to placeholder.")
 
     async def runit():
         bus = EventBus()
-        orch = MelanomaOrchestrator(slide_path=slide, vcf_path=vcf, bus=bus)
+        orch = MelanomaOrchestrator(
+            slide_path=chosen_slide,
+            vcf_path=chosen_vcf,
+            bus=bus,
+            tcga_patient_id=chosen_tcga,
+        )
 
         async def drain():
             async for ev in bus.stream():
@@ -192,6 +217,9 @@ def melanoma_demo_command(
                     EventKind.NCCN_NODE_VISITED: "[magenta]🩺[/magenta]",
                     EventKind.MOLECULE_READY: "[blue]🧬[/blue]",
                     EventKind.STRUCTURE_READY: "[magenta]🔭[/magenta]",
+                    EventKind.RAG_CITATIONS: "[yellow]📚[/yellow]",
+                    EventKind.COHORT_TWINS_READY: "[cyan]🧑‍🤝‍🧑[/cyan]",
+                    EventKind.SURVIVAL_CURVE_READY: "[cyan]📈[/cyan]",
                     EventKind.DONE: "[bold green]🎉[/bold green]",
                 }.get(ev.kind, "·")
                 if ev.kind in {EventKind.THINKING_DELTA, EventKind.ANSWER_DELTA}:
