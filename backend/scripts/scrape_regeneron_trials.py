@@ -109,7 +109,7 @@ CONDITION_TO_CANCER_TYPE: dict[str, str] = {
     "diffuse large b cell": "lymphoma_dlbcl",
     "dlbcl": "lymphoma_dlbcl",
     "multiple myeloma": "multiple_myeloma",
-    # Out-of-taxonomy — explicitly bucket as "other" so we still surface the trial.
+    # Out-of-taxonomy - explicitly bucket as "other" so we still surface the trial.
     "basal cell carcinoma": "other",
     "cutaneous squamous cell": "other",
     "follicular lymphoma": "other",
@@ -298,7 +298,7 @@ async def structure_predicates(meta: dict) -> StructuredPredicates:
     structured payload; defaults on LLM failure."""
     if not has_api_key():
         return StructuredPredicates(
-            notes=["K2_API_KEY unset — eligibility could not be structured"]
+            notes=["K2_API_KEY unset - eligibility could not be structured"]
         )
 
     user_prompt = (
@@ -441,14 +441,14 @@ async def amain(limit: int | None, dry_run: bool) -> int:
         print(f"  (limited to {limit} trials)")
 
     if dry_run:
-        print("\nDRY RUN — trials that would be written:")
+        print("\nDRY RUN - trials that would be written:")
         for m in coerced:
             print(f"  {m['nct_id']} · {m['phase']} · {m['cancer_types']} · {m['title_short'][:70]}")
         return 0
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
 
-    # Wipe old per-trial files — the subpackage is the source of truth.
+    # Wipe old per-trial files - the subpackage is the source of truth.
     for p in OUT_DIR.glob("nct*.py"):
         p.unlink()
         print(f"  removed stale {p.name}")
@@ -470,7 +470,7 @@ async def amain(limit: int | None, dry_run: bool) -> int:
     print(f"\n✓ wrote {written} trial files to {OUT_DIR.relative_to(_REPO_ROOT)}")
     if unmapped:
         print(
-            f"⚠ {len(unmapped)} conditions bucketed as 'other' — "
+            f"⚠ {len(unmapped)} conditions bucketed as 'other' - "
             f"consider extending CONDITION_TO_CANCER_TYPE:"
         )
         for c in sorted(unmapped):

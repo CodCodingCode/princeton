@@ -23,6 +23,13 @@ class CaseRecord:
     bus: EventBus = field(default_factory=EventBus)
     replay: list[AgentEvent] = field(default_factory=list)
     done: bool = False
+    # Chat agent lives on the record so the PDF report builder can read the
+    # transcript without reaching across route modules. Typed Any to avoid a
+    # storage → chat → storage import cycle.
+    chat_agent: Any | None = None
+    # Memoize narrative prose (Assessment / Treatment Plan) generated at
+    # PDF-build time so re-downloading the report doesn't re-hit the LLM.
+    narrative_cache: dict[str, list[str]] = field(default_factory=dict)
     # Fanout queues so multiple subscribers (multiple open tabs) can all receive
     # the same events. New subscribers get the replay first, then live events.
     _subscribers: list[asyncio.Queue[AgentEvent | None]] = field(default_factory=list)

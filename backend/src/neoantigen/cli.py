@@ -1,4 +1,4 @@
-"""Terminal interface for NeoVax — currently just boots the FastAPI server."""
+"""Terminal interface for NeoVax - currently just boots the FastAPI server."""
 
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ import typer
 from rich.console import Console
 
 app = typer.Typer(
-    help="NeoVax — pathology PDF → NCCN railway → Kimi chat → oncologist report + trial-site map.",
+    help="NeoVax - pathology PDF → NCCN railway → Kimi chat → oncologist report + trial-site map.",
     add_completion=False,
     no_args_is_help=True,
 )

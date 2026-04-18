@@ -1,17 +1,17 @@
 """Kimi K2 client for the post-run chat agent.
 
-Reuses the same env vars as the orchestrator — one key, one endpoint:
+Reuses the same env vars as the orchestrator - one key, one endpoint:
 
-    K2_API_KEY     required
+    KIMI_API_KEY   required (legacy K2_API_KEY also accepted)
     K2_BASE_URL    default https://api.k2think.ai/v1
     NEOVAX_MODEL   default MBZUAI-IFM/K2-Think-v2
 
 Two functions:
 
-* ``k2_stream_with_thinking(...)`` — async generator yielding
+* ``k2_stream_with_thinking(...)`` - async generator yielding
   ``("thinking", chunk)`` and ``("answer", chunk)`` tuples. Used for the
   final user-visible response.
-* ``k2_call_with_tools(...)`` — single-shot tool-aware call returning the
+* ``k2_call_with_tools(...)`` - single-shot tool-aware call returning the
   parsed `ChatCompletion` with `.choices[0].message.tool_calls` populated.
   Used by the LangGraph router to decide which tools to invoke.
 """
@@ -35,17 +35,21 @@ def _model_name() -> str:
     return os.environ.get("NEOVAX_MODEL", "MBZUAI-IFM/K2-Think-v2")
 
 
+def _kimi_key() -> str | None:
+    return os.environ.get("KIMI_API_KEY") or os.environ.get("K2_API_KEY")
+
+
 def has_kimi_key() -> bool:
-    return bool(os.environ.get("K2_API_KEY"))
+    return bool(_kimi_key())
 
 
 @lru_cache(maxsize=1)
 def _client():
     from openai import AsyncOpenAI
 
-    key = os.environ.get("K2_API_KEY")
+    key = _kimi_key()
     if not key:
-        raise RuntimeError("K2_API_KEY not set — chat agent disabled")
+        raise RuntimeError("KIMI_API_KEY not set - chat agent disabled")
     return AsyncOpenAI(base_url=_base_url(), api_key=key)
 
 
@@ -58,9 +62,9 @@ async def k2_stream_with_thinking(
     """Stream K2 reply, splitting on `<think>...</think>` boundaries.
 
     Yields:
-      ("thinking", str_chunk)   — content inside <think>
-      ("answer",   str_chunk)   — content after </think>
-      ("tool_call", payload)    — full tool call (only emitted at end of stream
+      ("thinking", str_chunk)   - content inside <think>
+      ("answer",   str_chunk)   - content after </think>
+      ("tool_call", payload)    - full tool call (only emitted at end of stream
                                   if K2 chose tools instead of free text).
     """
     client = _client()
@@ -86,7 +90,7 @@ async def k2_stream_with_thinking(
             continue
         delta = chunk.choices[0].delta
 
-        # Tool calls first — K2/OpenAI streams them in fragments per index
+        # Tool calls first - K2/OpenAI streams them in fragments per index
         for tc in (delta.tool_calls or []):
             slot = tool_call_accum.setdefault(
                 tc.index,

@@ -3,7 +3,7 @@
 **Patient (canonical):** Margaret A. O'Brien, DOB 03/15/1957, F
 **Primary Dx:** Non-Small Cell Lung Cancer (Adenocarcinoma), EGFR exon 19 deletion
 **Disease course:** Stage IIIB → IV (progression with CNS and bone mets)
-**Time span:** Jun 2023 — Feb 2026
+**Time span:** Jun 2023 - Feb 2026
 
 > ⚠️ **ALL DATA IS 100% SYNTHETIC.** No real PHI. Any resemblance to a real patient is coincidental. Do not use for clinical decisions. Names, MRNs, accession numbers, providers, and facilities are fabricated.
 
@@ -13,15 +13,15 @@
 
 This is a deliberately messy, multi-source synthetic oncology record designed to stress-test data extraction, abstraction, and clinical summarization pipelines. It mirrors the real-world pain points that make oncology data abstraction hard:
 
-- **Identifier drift** — patient's name and MRN vary across institutions and systems
-- **Document heterogeneity** — structured labs CSV, formal path reports, narrative progress notes, a faxed/OCR'd outside record
-- **Amendments and contradictions** — an amended pathology report; contradictory staging in the initial CT vs. the multidisciplinary tumor board note
-- **Biomarker data buried in free text** — EGFR, PD-L1, TMB scattered across 3 different reports with different formats
-- **Temporal misalignment** — dates in MM/DD/YYYY, DD-MMM-YYYY, ISO, and narrative ("last March") formats
-- **Missing data** — a progress note where molecular results are still "pending"
-- **Noisy OCR** — simulated faxed-scan document with character substitutions (l↔1, O↔0, rn↔m)
-- **Unit inconsistency** — tumor sizes in cm in one report, mm in another; labs with different reference ranges across labs
-- **Duplicate-but-different records** — two versions of the same pathology with a date correction
+- **Identifier drift** - patient's name and MRN vary across institutions and systems
+- **Document heterogeneity** - structured labs CSV, formal path reports, narrative progress notes, a faxed/OCR'd outside record
+- **Amendments and contradictions** - an amended pathology report; contradictory staging in the initial CT vs. the multidisciplinary tumor board note
+- **Biomarker data buried in free text** - EGFR, PD-L1, TMB scattered across 3 different reports with different formats
+- **Temporal misalignment** - dates in MM/DD/YYYY, DD-MMM-YYYY, ISO, and narrative ("last March") formats
+- **Missing data** - a progress note where molecular results are still "pending"
+- **Noisy OCR** - simulated faxed-scan document with character substitutions (l↔1, O↔0, rn↔m)
+- **Unit inconsistency** - tumor sizes in cm in one report, mm in another; labs with different reference ranges across labs
+- **Duplicate-but-different records** - two versions of the same pathology with a date correction
 
 ---
 
@@ -44,7 +44,7 @@ This is a deliberately messy, multi-source synthetic oncology record designed to
 | 13 | `13_liquid_biopsy_guardant360.pdf` | Guardant Health (vendor) | ctDNA report PDF |
 | 14 | `14_ed_visit_headache.pdf` | ED EHR | Narrative note PDF |
 | 15 | `15_hospital_discharge_summary.pdf` | Inpatient EHR | Narrative note PDF |
-| — | `GROUND_TRUTH.json` | — | Canonical structured truth for eval |
+| - | `GROUND_TRUTH.json` | - | Canonical structured truth for eval |
 
 ---
 
@@ -52,14 +52,14 @@ This is a deliberately messy, multi-source synthetic oncology record designed to
 
 Use `GROUND_TRUTH.json` as the answer key when testing extraction.
 
-1. **Document 01 (demographics)** lists DOB as **03/15/1975** — a digit transposition typo. Every other document has **03/15/1957**. Extractors should prefer majority / cross-reference with age.
-2. **Document 02 (pathology)** is an **amended** report — the original reported Stage IIIA, the amendment (signed 3 days later) corrects to Stage IIIB after additional nodal review. Both versions present.
-3. **Document 02 and 03** use slightly different tumor size measurements (2.8 cm vs. 28 mm) — same lesion.
+1. **Document 01 (demographics)** lists DOB as **03/15/1975** - a digit transposition typo. Every other document has **03/15/1957**. Extractors should prefer majority / cross-reference with age.
+2. **Document 02 (pathology)** is an **amended** report - the original reported Stage IIIA, the amendment (signed 3 days later) corrects to Stage IIIB after additional nodal review. Both versions present.
+3. **Document 02 and 03** use slightly different tumor size measurements (2.8 cm vs. 28 mm) - same lesion.
 4. **Document 11 (faxed outside record)** has OCR-grade corruption: "O'Brien" appears as "0'Brien" and "0'8rien"; "EGFR" as "EGFF" in one place; "adenocarcinoma" as "adenocarcinonna". MRN is different (outside facility).
-5. **Document 08 (med onc consult)** records PD-L1 as "pending" — the actual result is in Document 03, dated 4 days later.
-6. **Document 12 (labs CSV)** includes two labs (creatinine, CA 19-9) with reference ranges from different labs — watch the units column.
-7. **Documents 05 and 08** disagree on the mediastinal LN station involved (4R vs. 7) — the MDT in Doc 10 resolves to 4R+7 after PET.
-8. **Document 13 (Guardant)** shows EGFR T790M resistance mutation emerging — clinically significant progression biomarker not captured in any narrative note.
+5. **Document 08 (med onc consult)** records PD-L1 as "pending" - the actual result is in Document 03, dated 4 days later.
+6. **Document 12 (labs CSV)** includes two labs (creatinine, CA 19-9) with reference ranges from different labs - watch the units column.
+7. **Documents 05 and 08** disagree on the mediastinal LN station involved (4R vs. 7) - the MDT in Doc 10 resolves to 4R+7 after PET.
+8. **Document 13 (Guardant)** shows EGFR T790M resistance mutation emerging - clinically significant progression biomarker not captured in any narrative note.
 9. **Patient name** appears as: "O'Brien", "OBRIEN", "Obrien", "O Brien", "Margret" (typo, Doc 11), "Maggie" (nickname, Doc 08 social hx).
 10. **MRNs**: Main hospital `MRN 10284756`. Outside facility `MRN# 44-2019-C`. Imaging center `ACC 7781205`.
 

@@ -5,7 +5,7 @@ Each tool:
   * emits a ``CHAT_*`` event so the UI can react (scroll, highlight, open pane)
   * returns a short JSON string so K2 can keep reasoning
 
-Tools never mutate the underlying ``PatientCase`` — UI side-effects only.
+Tools never mutate the underlying ``PatientCase`` - UI side-effects only.
 """
 
 from __future__ import annotations

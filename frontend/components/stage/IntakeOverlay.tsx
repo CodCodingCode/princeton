@@ -1,6 +1,6 @@
 "use client";
 
-// Intake overlay — centered card with drag-drop + folder/file pickers, queued
+// Intake overlay - centered card with drag-drop + folder/file pickers, queued
 // file list, and submit. Upload mechanics (isPdfFile, walkEntry, etc.) lifted
 // from the former `app/upload/page.tsx`.
 
@@ -19,16 +19,40 @@ export function IntakeOverlay({ onUploaded }: Props) {
   const folderInputRef = useRef<HTMLInputElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  function isPdfFile(f: File): boolean {
-    return (
-      f.type === "application/pdf" || f.name.toLowerCase().endsWith(".pdf")
-    );
+  // The pipeline accepts a messy mix: PDFs (primary), text-like notes
+  // (.txt/.md/.csv/.json/.html/.log/.rtf), and images (.png/.jpg/.jpeg/.webp/
+  // .tiff/.bmp/.gif). The backend routes each by extension.
+  const SUPPORTED_EXTS = [
+    ".pdf",
+    ".txt",
+    ".md",
+    ".csv",
+    ".json",
+    ".html",
+    ".htm",
+    ".log",
+    ".rtf",
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".webp",
+    ".tiff",
+    ".tif",
+    ".bmp",
+    ".gif",
+  ];
+
+  function isSupportedFile(f: File): boolean {
+    const name = f.name.toLowerCase();
+    // Skip OS junk files.
+    if (name === ".ds_store" || name.startsWith("._")) return false;
+    return SUPPORTED_EXTS.some((ext) => name.endsWith(ext));
   }
 
-  function mergePdfs(pdfs: File[]) {
-    if (!pdfs.length) {
+  function mergeFiles(files: File[]) {
+    if (!files.length) {
       setError(
-        "No PDFs detected in that drop. Expected at least one .pdf file.",
+        "No supported files detected. Expected PDFs, text (.txt/.md/.csv/.json), or images.",
       );
       return;
     }
@@ -36,14 +60,14 @@ export function IntakeOverlay({ onUploaded }: Props) {
     setPicked((prev) => {
       const seen = new Set(prev.map((p) => p.name));
       const merged = [...prev];
-      for (const p of pdfs) if (!seen.has(p.name)) merged.push(p);
+      for (const p of files) if (!seen.has(p.name)) merged.push(p);
       return merged;
     });
   }
 
   function addFiles(fileList: FileList | null | undefined) {
     if (!fileList) return;
-    mergePdfs(Array.from(fileList).filter(isPdfFile));
+    mergeFiles(Array.from(fileList).filter(isSupportedFile));
   }
 
   async function addFromDataTransfer(dt: DataTransfer) {
@@ -61,9 +85,9 @@ export function IntakeOverlay({ onUploaded }: Props) {
       return;
     }
 
-    const pdfs: File[] = [];
-    await Promise.all(entries.map((e) => walkEntry(e, pdfs)));
-    mergePdfs(pdfs);
+    const files: File[] = [];
+    await Promise.all(entries.map((e) => walkEntry(e, files)));
+    mergeFiles(files);
   }
 
   async function walkEntry(entry: FileSystemEntry, out: File[]): Promise<void> {
@@ -74,7 +98,7 @@ export function IntakeOverlay({ onUploaded }: Props) {
           () => resolve(null),
         );
       });
-      if (file && isPdfFile(file)) out.push(file);
+      if (file && isSupportedFile(file)) out.push(file);
       return;
     }
     if (entry.isDirectory) {
@@ -114,13 +138,15 @@ export function IntakeOverlay({ onUploaded }: Props) {
 
   return (
     <div className="absolute inset-0 flex items-center justify-center p-6 pointer-events-none">
-      <div className="pointer-events-auto max-w-xl w-full rounded-2xl bg-white/95 backdrop-blur shadow-2xl p-8">
-        <div className="text-[10px] uppercase tracking-[0.25em] text-neutral-500 font-semibold mb-2">
-          Step 1 · share your records
-        </div>
-        <h2 className="text-2xl font-semibold tracking-tight text-black leading-tight mb-5">
-          Drop your medical PDFs
+      <div className="pointer-events-auto max-w-xl w-full rounded-2xl bg-white/40 backdrop-blur-2xl backdrop-saturate-150 border border-white/50 ring-1 ring-black/5 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.25)] p-8">
+        <div className="eyebrow mb-2">Step 1 · share your records</div>
+        <h2 className="text-2xl font-semibold tracking-tight text-black leading-tight mb-1">
+          Drop your medical records
         </h2>
+        <p className="text-xs text-neutral-500 mb-5">
+          PDFs, scans, notes - .pdf · .txt · .md · .csv · .json · .png · .jpg ·
+          .tiff
+        </p>
 
         <div
           onDragOver={(e) => {
@@ -133,17 +159,17 @@ export function IntakeOverlay({ onUploaded }: Props) {
             setDragOver(false);
             addFromDataTransfer(e.dataTransfer);
           }}
-          className={`border border-dashed rounded-xl p-8 text-center transition ${
+          className={`border border-dashed rounded-xl p-8 text-center transition backdrop-blur-sm ${
             dragOver
-              ? "border-black bg-neutral-50"
-              : "border-neutral-300 bg-white"
+              ? "border-black bg-white/60"
+              : "border-white/60 bg-white/20 hover:bg-white/30"
           }`}
         >
           <input
             ref={folderInputRef}
             type="file"
             multiple
-            accept="application/pdf,.pdf"
+            accept=".pdf,.txt,.md,.csv,.json,.html,.htm,.log,.rtf,.png,.jpg,.jpeg,.webp,.tiff,.tif,.bmp,.gif,application/pdf,text/plain,application/json,image/*"
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             // @ts-ignore
             webkitdirectory=""
@@ -155,13 +181,13 @@ export function IntakeOverlay({ onUploaded }: Props) {
             ref={fileInputRef}
             type="file"
             multiple
-            accept="application/pdf,.pdf"
+            accept=".pdf,.txt,.md,.csv,.json,.html,.htm,.log,.rtf,.png,.jpg,.jpeg,.webp,.tiff,.tif,.bmp,.gif,application/pdf,text/plain,application/json,image/*"
             className="sr-only"
             onChange={(e) => addFiles(e.target.files)}
           />
           {busy ? (
             <p className="text-neutral-600 text-sm">
-              Uploading {picked.length} PDFs…
+              Uploading {picked.length} file{picked.length === 1 ? "" : "s"}…
             </p>
           ) : (
             <>
@@ -173,16 +199,16 @@ export function IntakeOverlay({ onUploaded }: Props) {
                 <button
                   type="button"
                   onClick={() => folderInputRef.current?.click()}
-                  className="px-4 py-2 rounded-full border border-black text-black hover:bg-black hover:text-white text-xs transition"
+                  className="px-4 py-2 rounded-full border border-black bg-black/80 backdrop-blur text-white hover:bg-black text-xs transition"
                 >
                   Select folder
                 </button>
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="px-4 py-2 rounded-full border border-neutral-300 text-neutral-700 hover:border-black hover:text-black text-xs transition"
+                  className="px-4 py-2 rounded-full border border-white/60 bg-white/30 backdrop-blur text-neutral-800 hover:border-black hover:bg-white/60 hover:text-black text-xs transition"
                 >
-                  Select PDFs
+                  Select files
                 </button>
               </div>
             </>
@@ -204,7 +230,7 @@ export function IntakeOverlay({ onUploaded }: Props) {
                 clear
               </button>
             </div>
-            <ul className="text-xs space-y-1 max-h-36 overflow-y-auto border border-neutral-200 rounded-lg p-2">
+            <ul className="text-xs space-y-1 max-h-36 overflow-y-auto border border-white/60 bg-white/30 backdrop-blur rounded-lg p-2">
               {picked.map((f, i) => (
                 <li
                   key={`${f.name}-${i}`}
@@ -223,7 +249,9 @@ export function IntakeOverlay({ onUploaded }: Props) {
               disabled={busy || !picked.length}
               className="mt-4 w-full px-4 py-3 rounded-full bg-brand-700 hover:bg-brand-900 text-white text-sm font-medium disabled:opacity-30 disabled:cursor-not-allowed transition"
             >
-              {busy ? "Starting…" : `Analyze ${picked.length} PDFs`}
+              {busy
+                ? "Starting…"
+                : `Analyze ${picked.length} document${picked.length === 1 ? "" : "s"}`}
             </button>
           </div>
         )}

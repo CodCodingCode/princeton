@@ -8,17 +8,18 @@ endpoint. It supports:
 
 Three call surfaces:
 
-* `call_for_json(schema, system, user)` — single-shot JSON extraction.
-* `call_with_vision(images, system, user, schema)` — same, but with image inputs.
-* `stream_with_thinking(system, user)` — async iterator yielding
+* `call_for_json(schema, system, user)` - single-shot JSON extraction.
+* `call_with_vision(images, system, user, schema)` - same, but with image inputs.
+* `stream_with_thinking(system, user)` - async iterator yielding
   `("thinking", chunk)` and `("answer", chunk)` tuples for live UI rendering.
 
 Backend selection is env-driven so we can swap K2 → MediX without touching code:
 
-* `K2_BASE_URL` (default `https://api.k2think.ai/v1`) — point at the SSH-tunneled
+* `K2_BASE_URL` (default `https://api.k2think.ai/v1`) - point at the SSH-tunneled
   vLLM endpoint, e.g. `http://localhost:8000/v1`.
-* `K2_API_KEY` — required by the OpenAI client (vLLM ignores its value).
-* `NEOVAX_MODEL` — served model name, e.g. `medix-r1-30b`.
+* `KIMI_API_KEY` - required by the OpenAI client (vLLM ignores its value).
+  Legacy `K2_API_KEY` is still read as a fallback.
+* `NEOVAX_MODEL` - served model name, e.g. `medix-r1-30b`.
 """
 
 from __future__ import annotations
@@ -37,11 +38,13 @@ from typing import AsyncIterator, Literal, TypeVar
 
 from pydantic import BaseModel, ValidationError
 
+from .audit import audit
+
 
 K2_BASE_URL = os.environ.get("K2_BASE_URL", "https://api.k2think.ai/v1")
 DEFAULT_MODEL = os.environ.get("NEOVAX_MODEL_DEFAULT", "MBZUAI-IFM/K2-Think-v2")
 
-# MediX-R1-30B (Qwen3-VL-based) on the GH200 SSH tunnel — used for any call that
+# MediX-R1-30B (Qwen3-VL-based) on the GH200 SSH tunnel - used for any call that
 # needs vision (pathology slide reading). Defaults assume the tunnel is up at
 # localhost:8000 (set up via `ssh -L 8000:localhost:8000 gh200-vm`).
 MEDIX_BASE_URL = os.environ.get("MEDIX_BASE_URL", "http://localhost:8000/v1")
@@ -71,17 +74,23 @@ def get_logger() -> logging.Logger:
     return logger
 
 
+def _k2_api_key() -> str | None:
+    # Single source of truth: prefer KIMI_API_KEY, fall back to legacy K2_API_KEY
+    # so existing .env files keep working during the transition.
+    return os.environ.get("KIMI_API_KEY") or os.environ.get("K2_API_KEY")
+
+
 def has_api_key() -> bool:
-    return bool(os.environ.get("K2_API_KEY"))
+    return bool(_k2_api_key())
 
 
 def has_medix_key() -> bool:
-    """MediX (vLLM on GH200) accepts any non-empty key string.
+    """Legacy name kept for callers that gate on "vision-capable model available".
 
-    We treat ``MEDIX_API_KEY`` being set (even to ``"dummy"``) as the operator's
-    intent to route vision calls to the GH200 tunnel.
+    Everything - text and vision - now routes through K2-Think via
+    ``KIMI_API_KEY``, so this collapses to the same check as ``has_api_key()``.
     """
-    return bool(os.environ.get("MEDIX_API_KEY"))
+    return has_api_key()
 
 
 def _model_name() -> str:
@@ -100,23 +109,23 @@ MEDIX_TIMEOUT_S = float(os.environ.get("NEOVAX_MEDIX_TIMEOUT_S", "60"))
 
 @lru_cache(maxsize=1)
 def _openai_client():
-    """K2 cloud client — used for text reasoning (NCCN walker, JSON tasks)."""
+    """K2 cloud client - used for text reasoning (NCCN walker, JSON tasks)."""
     from openai import AsyncOpenAI
 
-    api_key = os.environ.get("K2_API_KEY")
+    api_key = _k2_api_key()
     if not api_key:
-        raise RuntimeError("K2_API_KEY not set")
+        raise RuntimeError("KIMI_API_KEY not set")
     return AsyncOpenAI(base_url=K2_BASE_URL, api_key=api_key, timeout=K2_TIMEOUT_S)
 
 
 @lru_cache(maxsize=1)
 def _medix_client():
-    """MediX-R1-30B on the GH200 vLLM tunnel — used for vision (pathology slides)."""
+    """MediX-R1-30B on the GH200 vLLM tunnel - used for vision (pathology slides)."""
     from openai import AsyncOpenAI
 
     api_key = os.environ.get("MEDIX_API_KEY")
     if not api_key:
-        raise RuntimeError("MEDIX_API_KEY not set — bring up the GH200 tunnel first")
+        raise RuntimeError("MEDIX_API_KEY not set - bring up the GH200 tunnel first")
     return AsyncOpenAI(
         base_url=MEDIX_BASE_URL, api_key=api_key, timeout=MEDIX_TIMEOUT_S
     )
@@ -153,11 +162,25 @@ def split_thinking(text: str) -> tuple[str, str]:
 
 
 def _extract_json(text: str) -> str:
-    """Pull the first valid top-level JSON object out of a model response."""
-    cleaned = strip_think(text)
+    """Pull the first valid top-level JSON object out of a model response.
+
+    Handles four common model output patterns:
+      1. Clean JSON (maybe after a ``<think>`` block).
+      2. Markdown-fenced JSON (``` ```json ... ``` ```).
+      3. JSON embedded inside prose (depth-scan for balanced braces).
+      4. Truncated JSON - model hit ``max_tokens`` mid-object. We try to
+         repair by closing unclosed strings, arrays, and objects at the end.
+
+    Noisy-document pages used to trip (3) → ``ValueError`` which surfaced in
+    the Documents tab as "(VLM call failed: ValueError)". The repair pass in
+    (4) catches the truncation case before it gets there.
+    """
+    cleaned = strip_think(text).strip()
+    # Strip markdown fences in a few common shapes.
     if cleaned.startswith("```"):
-        cleaned = re.sub(r"^```(?:json)?\n", "", cleaned)
-        cleaned = re.sub(r"\n```$", "", cleaned)
+        cleaned = re.sub(r"^```(?:json)?\s*\n?", "", cleaned)
+        cleaned = re.sub(r"\n?```\s*$", "", cleaned)
+    cleaned = cleaned.strip()
 
     try:
         json.loads(cleaned)
@@ -165,6 +188,7 @@ def _extract_json(text: str) -> str:
     except json.JSONDecodeError:
         pass
 
+    # Depth-scan for a balanced {...} somewhere in the prose.
     depth = 0
     start = -1
     for i, c in enumerate(cleaned):
@@ -183,7 +207,102 @@ def _extract_json(text: str) -> str:
                     return candidate
                 except json.JSONDecodeError:
                     start = -1
+
+    # Truncation repair. If the model started a JSON object but ran out of
+    # tokens, close unclosed strings/arrays/objects and try to parse the
+    # result. This recovers a partial but validly-typed object - Pydantic's
+    # defaults then fill the unset fields.
+    obj_start = cleaned.find("{")
+    if obj_start != -1:
+        repaired = _repair_truncated_json(cleaned[obj_start:])
+        if repaired is not None:
+            try:
+                json.loads(repaired)
+                return repaired
+            except json.JSONDecodeError:
+                pass
+
     raise json.JSONDecodeError("no valid JSON object found in response", cleaned, 0)
+
+
+def _repair_truncated_json(snippet: str) -> str | None:
+    """Repair a truncated JSON snippet by rewinding to the last safe
+    truncation point and closing any still-open containers.
+
+    Safe truncation points (walked in one pass):
+      * Right after ``{`` or ``[`` - empty container is always valid.
+      * Right before a ``,`` at container depth - keeps all prior elements.
+      * Right after ``}`` or ``]`` - closes a completed container.
+
+    After rewinding, we re-walk the kept prefix to compute the still-open
+    brace/bracket stack, then append matching closers.
+    """
+    # --- Pass 1: find the last safe truncation point ------------------------
+    stack: list[str] = []
+    in_str = False
+    escape = False
+    safe_len = 0  # Exclusive-end index; 0 means "nothing safe yet".
+
+    for i, c in enumerate(snippet):
+        if escape:
+            escape = False
+            continue
+        if in_str:
+            if c == "\\":
+                escape = True
+            elif c == '"':
+                in_str = False
+            continue
+        if c == '"':
+            in_str = True
+            continue
+        if c in "{[":
+            stack.append(c)
+            safe_len = i + 1
+        elif c in "}]":
+            if not stack:
+                return None
+            opener = stack[-1]
+            if (opener == "{" and c != "}") or (opener == "[" and c != "]"):
+                return None
+            stack.pop()
+            safe_len = i + 1
+        elif c == "," and stack:
+            # Truncate BEFORE the comma, preserving prior elements.
+            safe_len = i
+
+    if safe_len == 0:
+        return None
+
+    # --- Pass 2: recompute stack depth at safe_len --------------------------
+    d_stack: list[str] = []
+    d_in_str = False
+    d_escape = False
+    for j in range(safe_len):
+        c = snippet[j]
+        if d_escape:
+            d_escape = False
+            continue
+        if d_in_str:
+            if c == "\\":
+                d_escape = True
+            elif c == '"':
+                d_in_str = False
+            continue
+        if c == '"':
+            d_in_str = True
+            continue
+        if c in "{[":
+            d_stack.append(c)
+        elif c in "}]":
+            if d_stack:
+                d_stack.pop()
+
+    body = snippet[:safe_len].rstrip().rstrip(",").rstrip()
+    while d_stack:
+        opener = d_stack.pop()
+        body += "}" if opener == "{" else "]"
+    return body
 
 
 # ─────────────────────────────────────────────────────────────
@@ -388,11 +507,10 @@ async def call_with_vision(
     images: list[Path | bytes] | None = None,
     max_tokens: int = 2000,
 ) -> T:
-    """Vision-capable JSON call routed to MediX-R1-30B on the GH200 tunnel.
+    """Vision-capable JSON call routed to K2-Think via ``KIMI_API_KEY``.
 
-    K2 has no vision; this is the only call surface that handles ``image_url``
-    content blocks. Requires ``MEDIX_API_KEY`` and an open SSH tunnel
-    (default ``MEDIX_BASE_URL=http://localhost:8000/v1``).
+    This is the only call surface that handles ``image_url`` content blocks.
+    Uses the same K2-Think endpoint as text calls - one model, one key.
     """
     findings, _raw = await call_with_vision_raw(
         schema=schema,
@@ -423,8 +541,8 @@ async def call_with_vision_raw(
         user_prompt=user_prompt,
         images=images,
         max_tokens=max_tokens,
-        client=_medix_client(),
-        model=_medix_model_name(),
+        client=_openai_client(),
+        model=_model_name(),
         return_raw=True,
     )
 
@@ -450,7 +568,7 @@ async def _call_json_impl(
     # Build compact per-field hints so VL models don't pattern-match the JSON
     # Schema envelope and echo {description, properties: {...}} back at us.
     # Critically, we keep enum/literal values so the model knows the allowed
-    # strings — dropping them made it return free-form answers like
+    # strings - dropping them made it return free-form answers like
     # "Nodular Melanoma" (which fail Pydantic literal_error validation).
     defs = raw_schema.get("$defs") or raw_schema.get("definitions") or {}
 
@@ -476,7 +594,7 @@ async def _call_json_impl(
         + "(do NOT wrap them under 'properties' or add a 'description' envelope):\n"
         + hint_lines
         + f"\n\nRequired: {', '.join(required)}."
-        + "\nFor enum fields, use one of the literal strings shown above — do not "
+        + "\nFor enum fields, use one of the literal strings shown above - do not "
         + "paraphrase (e.g. write 'nodular', not 'Nodular Melanoma')."
         + "\nReturn ONLY the JSON object after your reasoning. No markdown, no prose, no schema echo."
     )
@@ -485,7 +603,16 @@ async def _call_json_impl(
         "call schema=%s images=%d user_len=%d",
         schema.__name__, len(images or []), len(user_prompt),
     )
+    audit(
+        "llm_call", "start",
+        schema=schema.__name__, model=model, max_tokens=max_tokens,
+        user_len=len(user_prompt), has_images=bool(images and len(images) > 0),
+        image_count=len(images or []),
+        user_slice=user_prompt[:2000],
+    )
+    import time as _time
     async def _attempt(messages: list[dict]) -> tuple[T, str]:
+        t0 = _time.time()
         try:
             resp = await client.chat.completions.create(
                 model=model,
@@ -495,13 +622,33 @@ async def _call_json_impl(
         except Exception as e:
             log.error("call HTTP error schema=%s model=%s err=%s: %s",
                       schema.__name__, model, type(e).__name__, e)
+            audit(
+                "llm_call", "http_error",
+                schema=schema.__name__, model=model, max_tokens=max_tokens,
+                error_type=type(e).__name__, error=str(e),
+                latency_ms=int((_time.time() - t0) * 1000),
+            )
             raise
         raw = resp.choices[0].message.content or ""
+        finish_reason = getattr(resp.choices[0], "finish_reason", None)
         log.info("call response schema=%s len=%d", schema.__name__, len(raw))
+        audit(
+            "llm_call", "done",
+            schema=schema.__name__, model=model,
+            raw_len=len(raw), finish_reason=finish_reason,
+            latency_ms=int((_time.time() - t0) * 1000),
+            raw_response_slice=raw,
+        )
         try:
             data = json.loads(_extract_json(raw))
         except json.JSONDecodeError as e:
             log.error("JSON parse failed schema=%s raw=%r", schema.__name__, raw[:600])
+            audit(
+                "llm_call", "parse_fail",
+                schema=schema.__name__, raw_len=len(raw),
+                error=str(e),
+                raw_full=raw,
+            )
             raise ValueError(f"model did not return valid JSON: {raw[:300]!r}") from e
         # Unwrap JSON-Schema envelope if the model echoed `{description, properties: {...}}`
         # instead of a flat instance (common failure mode on VL models).
@@ -516,6 +663,12 @@ async def _call_json_impl(
             validated = schema.model_validate(coerced)
         except ValidationError as e:
             log.error("validation failed schema=%s err=%s data=%s", schema.__name__, e, coerced)
+            audit(
+                "llm_call", "validation_fail",
+                schema=schema.__name__,
+                error=str(e),
+                coerced_slice=json.dumps(coerced, default=str)[:3000] if isinstance(coerced, (dict, list)) else str(coerced)[:3000],
+            )
             raise
         return validated, raw
 
@@ -533,14 +686,14 @@ async def _call_json_impl(
         )
         messages.append({
             "role": "assistant",
-            "content": "(previous response omitted — failed validation)",
+            "content": "(previous response omitted - failed validation)",
         })
         messages.append({
             "role": "user",
             "content": (
                 f"Your previous JSON failed validation:\n{err_text}\n\n"
                 "Return a corrected JSON object using the literal values listed in the "
-                "schema above. Output ONLY the JSON object — no <think> block, no "
+                "schema above. Output ONLY the JSON object - no <think> block, no "
                 "markdown, no prose."
             ),
         })
@@ -572,13 +725,26 @@ async def stream_with_thinking(
     client = _openai_client()
     user_content = _user_content_with_images(user_prompt, images)
     log.info("stream_with_thinking start user_len=%d images=%d", len(user_prompt), len(images or []))
+    import time as _time
+    t0 = _time.time()
+    model_name = _model_name()
+    audit(
+        "llm_call", "stream_start",
+        model=model_name, max_tokens=max_tokens,
+        user_len=len(user_prompt), image_count=len(images or []),
+        user_slice=user_prompt[:2000],
+    )
+    # Accumulate both buffers for the final audit line so we can see exactly
+    # what the model produced even when no caller saved the chunks.
+    think_accum: list[str] = []
+    answer_accum: list[str] = []
 
     state: Literal["pre", "thinking", "answer"] = "pre"
     buffer = ""
 
     try:
         stream = await client.chat.completions.create(
-            model=_model_name(),
+            model=model_name,
             max_tokens=max_tokens,
             stream=True,
             messages=[
@@ -588,54 +754,83 @@ async def stream_with_thinking(
         )
     except Exception as e:
         log.error("stream HTTP error: %s: %s", type(e).__name__, e)
+        audit(
+            "llm_call", "stream_error",
+            model=model_name, error_type=type(e).__name__, error=str(e),
+            latency_ms=int((_time.time() - t0) * 1000),
+        )
         raise
 
-    async for chunk in stream:
-        if not chunk.choices:
-            continue
-        delta = chunk.choices[0].delta.content or ""
-        if not delta:
-            continue
-        buffer += delta
+    finish_reason: str | None = None
+    try:
+        async for chunk in stream:
+            if not chunk.choices:
+                continue
+            choice = chunk.choices[0]
+            if getattr(choice, "finish_reason", None):
+                finish_reason = choice.finish_reason
+            delta = choice.delta.content or ""
+            if not delta:
+                continue
+            buffer += delta
 
-        while True:
-            if state == "pre":
-                idx = buffer.find(_THINK_OPEN)
-                if idx == -1:
+            while True:
+                if state == "pre":
+                    idx = buffer.find(_THINK_OPEN)
+                    if idx == -1:
+                        if buffer:
+                            state = "answer"
+                            emit_text, buffer = buffer, ""
+                            if emit_text:
+                                answer_accum.append(emit_text)
+                                yield ("answer", emit_text)
+                        break
+                    pre_text = buffer[:idx]
+                    buffer = buffer[idx + len(_THINK_OPEN):]
+                    state = "thinking"
+                    if pre_text:
+                        answer_accum.append(pre_text)
+                        yield ("answer", pre_text)
+                    continue
+
+                if state == "thinking":
+                    idx = buffer.find(_THINK_CLOSE)
+                    if idx == -1:
+                        safe_len = max(0, len(buffer) - (len(_THINK_CLOSE) - 1))
+                        if safe_len > 0:
+                            emit_text, buffer = buffer[:safe_len], buffer[safe_len:]
+                            think_accum.append(emit_text)
+                            yield ("thinking", emit_text)
+                        break
+                    think_text = buffer[:idx]
+                    buffer = buffer[idx + len(_THINK_CLOSE):]
+                    state = "answer"
+                    if think_text:
+                        think_accum.append(think_text)
+                        yield ("thinking", think_text)
+                    continue
+
+                if state == "answer":
                     if buffer:
-                        state = "answer"
                         emit_text, buffer = buffer, ""
-                        if emit_text:
-                            yield ("answer", emit_text)
+                        answer_accum.append(emit_text)
+                        yield ("answer", emit_text)
                     break
-                pre_text = buffer[:idx]
-                buffer = buffer[idx + len(_THINK_OPEN):]
-                state = "thinking"
-                if pre_text:
-                    yield ("answer", pre_text)
-                continue
 
-            if state == "thinking":
-                idx = buffer.find(_THINK_CLOSE)
-                if idx == -1:
-                    safe_len = max(0, len(buffer) - (len(_THINK_CLOSE) - 1))
-                    if safe_len > 0:
-                        emit_text, buffer = buffer[:safe_len], buffer[safe_len:]
-                        yield ("thinking", emit_text)
-                    break
-                think_text = buffer[:idx]
-                buffer = buffer[idx + len(_THINK_CLOSE):]
-                state = "answer"
-                if think_text:
-                    yield ("thinking", think_text)
-                continue
-
-            if state == "answer":
-                if buffer:
-                    emit_text, buffer = buffer, ""
-                    yield ("answer", emit_text)
-                break
-
-    if buffer:
-        yield (state if state != "pre" else "answer", buffer)
+        if buffer:
+            tail_kind = state if state != "pre" else "answer"
+            (think_accum if tail_kind == "thinking" else answer_accum).append(buffer)
+            yield (tail_kind, buffer)
+    finally:
+        think_full = "".join(think_accum)
+        answer_full = "".join(answer_accum)
+        audit(
+            "llm_call", "stream_done",
+            model=model_name, max_tokens=max_tokens,
+            think_len=len(think_full), answer_len=len(answer_full),
+            finish_reason=finish_reason,
+            latency_ms=int((_time.time() - t0) * 1000),
+            think_slice=think_full,
+            answer_slice=answer_full,
+        )
     log.info("stream_with_thinking done")

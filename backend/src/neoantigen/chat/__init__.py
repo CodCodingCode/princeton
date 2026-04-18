@@ -1,4 +1,4 @@
-"""Post-run chat agent — LangGraph + Kimi K2."""
+"""Post-run chat agent - LangGraph + Kimi K2."""
 
 from .agent import CaseChatAgent
 from .state import ChatMessage, ToolCall

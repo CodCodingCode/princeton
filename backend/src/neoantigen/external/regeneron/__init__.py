@@ -1,4 +1,4 @@
-"""Registry of Regeneron-sponsored oncology trials — one ``.py`` per trial.
+"""Registry of Regeneron-sponsored oncology trials - one ``.py`` per trial.
 
 Each ``nct<id>.py`` module in this package exports a module-level ``TRIAL``
 constant bound to a ``TrialRule`` instance. This ``__init__`` globs the

@@ -6,25 +6,27 @@ always contain overlapping and sometimes contradictory fields
 (pathology report says Breslow 2.1 mm, a separate addendum says 2.3 mm, etc.).
 This module hands every per-doc finding to Kimi K2 and asks it to:
 
-  1. Reconcile conflicts — pick the most authoritative value and list the
+  1. Reconcile conflicts - pick the most authoritative value and list the
      others under ``conflicts``.
   2. Deduplicate mutations across reports.
   3. Emit a single canonical ``PathologyFindings`` + ``ClinicianIntake`` +
      ``list[Mutation]`` plus per-field ``provenance`` pointing to the source
      document and page.
 
-Falls back cleanly when Kimi is unavailable — merges by first-non-null with a
+Falls back cleanly when Kimi is unavailable - merges by first-non-null with a
 placeholder provenance.
 """
 
 from __future__ import annotations
 
 import asyncio
+import os
 import re
 
 from pydantic import BaseModel, Field
 
 from ..agent._llm import call_for_json, has_api_key
+from ..agent.audit import audit
 from ..agent.events import EventKind, emit
 from ..models import (
     ClinicianIntake,
@@ -37,7 +39,7 @@ from ..models import (
 
 
 # ─────────────────────────────────────────────────────────────
-# Kimi K2 aggregator schema — the canonical patient record
+# Kimi K2 aggregator schema - the canonical patient record
 # ─────────────────────────────────────────────────────────────
 
 
@@ -91,10 +93,10 @@ SYSTEM_PROMPT = """You are an oncology chart reconciler. You will be given the
 per-page findings extracted from a patient's full document folder (pathology
 reports, IHC addenda, NGS reports, imaging reports, H&P notes). Multiple pages
 and multiple PDFs often mention the same field with slightly different values.
-The patient may have any cancer type — melanoma, lung, breast, colorectal,
-etc. — so do NOT force fields into a melanoma frame.
+The patient may have any cancer type - melanoma, lung, breast, colorectal,
+etc. - so do NOT force fields into a melanoma frame.
 
-Field priority tier 1 — cancer identity. These drive downstream literature
+Field priority tier 1 - cancer identity. These drive downstream literature
 retrieval, so a wrong value here poisons the whole railway:
 
   primary_cancer_type, histology, primary_site
@@ -106,7 +108,7 @@ pancreatic_carcinoma, prostate_carcinoma, ovarian_carcinoma, renal_cell_carcinom
 hepatocellular_carcinoma, bladder_carcinoma, head_neck_scc, glioblastoma,
 lymphoma_dlbcl, multiple_myeloma, other).
 
-Field priority tier 2 — clinical pathology fields used by the melanoma
+Field priority tier 2 - clinical pathology fields used by the melanoma
 NCCN-style reasoning path when applicable:
 
   melanoma_subtype, breslow_thickness_mm, ulceration, mitotic_rate_per_mm2,
@@ -116,9 +118,9 @@ For these, prefer the primary pathology report or IHC addendum over a
 clinical-note summary, even when the note is more recent. A consult note
 saying "Breslow ~2 mm" must lose to the pathology report saying "Breslow
 2.1 mm". An IHC addendum must win over a consult note that says "PD-L1
-pending". For non-melanoma cases most of these stay null — that is fine.
+pending". For non-melanoma cases most of these stay null - that is fine.
 
-Field priority tier 3 — trial-eligibility, prefer the most recent clinical
+Field priority tier 3 - trial-eligibility, prefer the most recent clinical
 note since these change over time: ajcc_stage, age_years, ecog,
 measurable_disease_recist, life_expectancy_months, prior_systemic_therapy,
 prior_anti_pd1.
@@ -126,13 +128,13 @@ prior_anti_pd1.
 Your job:
   * Pick ONE authoritative value per field following the priority above.
   * For every field you emit, record the source filename and page_number.
-  * Deduplicate mutations — if BRAF V600E appears on pages 2 and 7 of the
+  * Deduplicate mutations - if BRAF V600E appears on pages 2 and 7 of the
     NGS report and again in a summary, emit it once with the most specific
     source (prefer the NGS report over a summary).
   * When two sources truly contradict, pick the most authoritative per the
     priority above, emit that value, and add a one-line entry to `conflicts`
     describing the disagreement (e.g. "Breslow: path report 2.1 mm vs consult
-    note 'approx 2 mm' — used path report").
+    note 'approx 2 mm' - used path report").
   * Leave a field's value null if NONE of the pages mentioned it. Do not guess.
   * Enum fields:
       - melanoma_subtype ∈ {superficial_spreading, nodular, lentigo_maligna,
@@ -140,7 +142,7 @@ Your job:
       - tils_present ∈ {absent, non_brisk, brisk, unknown}
       - pdl1_estimate ∈ {negative, low, high, unknown}
   * Numeric fields: return as strings so you can include units ("2.1", "2.1 mm"
-    are both fine — we parse them). For booleans, return "true" or "false".
+    are both fine - we parse them). For booleans, return "true" or "false".
   * Output ONLY the JSON object. No prose. No markdown.
 """
 
@@ -285,7 +287,7 @@ def _payload_to_models(
 
 
 # ─────────────────────────────────────────────────────────────
-# Fallback aggregator (no LLM) — first-non-null merge
+# Fallback aggregator (no LLM) - first-non-null merge
 # ─────────────────────────────────────────────────────────────
 
 
@@ -294,8 +296,9 @@ _MUT_RE = re.compile(r"\b([A-Z][A-Z0-9]{1,9})\s+([A-Z])(\d{1,4})([A-Z])\b")
 
 def _heuristic_aggregate(
     docs: list[DocumentExtraction],
+    reason: str = "Heuristic merge - reason unspecified.",
 ) -> tuple[PathologyFindings, ClinicianIntake, list[Mutation], list[ProvenanceEntry]]:
-    pathology = PathologyFindings(confidence=0.3, notes="Heuristic merge — Kimi unavailable.")
+    pathology = PathologyFindings(confidence=0.3, notes=reason)
     intake = ClinicianIntake()
     provenance: list[ProvenanceEntry] = []
     mutations: list[Mutation] = []
@@ -413,11 +416,20 @@ async def aggregate_documents(
     )
 
     if not has_api_key() or not docs:
-        pathology, intake, muts, provenance = _heuristic_aggregate(docs)
+        if not docs:
+            reason = "Heuristic merge — no documents extracted."
+        else:
+            reason = "Heuristic merge — no API key configured (set KIMI_API_KEY)."
+        pathology, intake, muts, provenance = _heuristic_aggregate(docs, reason=reason)
+        audit(
+            "aggregator", "fallback",
+            reason=reason, doc_count=len(docs),
+            had_api_key=has_api_key(),
+        )
         await emit(
             EventKind.AGGREGATION_DONE,
             f"Heuristic merge · {len(muts)} mutations · {len(provenance)} provenance entries",
-            {"fallback": True},
+            {"fallback": True, "reason": reason},
         )
         return pathology, intake, muts, provenance, []
 
@@ -427,26 +439,62 @@ async def aggregate_documents(
         "record. Use the per-field source_filename + source_page to cite where "
         "each value came from. List any conflicts.\n\n"
         f"{prompt_body}\n"
-        "Return the JSON now."
+        "Keep your reasoning brief - at most one short paragraph - then emit the "
+        "JSON. If your thinking starts running long, cut it short and return the "
+        "JSON; a partial JSON is useless."
     )
 
+    # K2-Think's reasoning budget scales with document count. Seventeen docs
+    # with ~20 fields each can burn 4-8k tokens on thinking alone before the
+    # JSON block starts. 3000 was enough for single-doc cases and nothing else -
+    # the model would truncate mid-reasoning and the caller saw "model did not
+    # return valid JSON" with prose tail. Cap sits below the 8192 max_total
+    # ceiling of the current vLLM server so we don't 400 on BadRequestError;
+    # bump via NEOVAX_AGG_MAX_TOKENS if the backend is swapped to a larger
+    # context window.
+    # Aggregator input prompt for a typical case runs ~2500 tokens; with the
+    # 8192-token ceiling on the vLLM-served model, leave safe headroom for
+    # output. 6000 was observed to 400 on larger prompts.
+    agg_max_tokens = int(os.environ.get("NEOVAX_AGG_MAX_TOKENS", "3500"))
+    import time as _time
+    t0 = _time.time()
+    audit(
+        "aggregator", "call_start",
+        doc_count=len(docs), user_len=len(user_prompt),
+        max_tokens=agg_max_tokens,
+    )
     try:
         payload = await call_for_json(
             schema=_AggPayload,
             system_prompt=SYSTEM_PROMPT,
             user_prompt=user_prompt,
-            max_tokens=3000,
+            max_tokens=agg_max_tokens,
         )
     except Exception as e:
-        pathology, intake, muts, provenance = _heuristic_aggregate(docs)
+        err_msg = str(e)[:400]
+        reason = f"Heuristic merge — LLM call failed: {type(e).__name__}: {err_msg}"
+        pathology, intake, muts, provenance = _heuristic_aggregate(docs, reason=reason)
+        audit(
+            "aggregator", "fallback",
+            reason=reason, doc_count=len(docs),
+            user_len=len(user_prompt), max_tokens=agg_max_tokens,
+            error_type=type(e).__name__, error=str(e),
+            latency_ms=int((_time.time() - t0) * 1000),
+        )
         await emit(
             EventKind.AGGREGATION_DONE,
-            f"Kimi aggregator failed ({type(e).__name__}) — used heuristic merge",
-            {"fallback": True, "error": str(e)},
+            f"Kimi aggregator failed ({type(e).__name__}) - used heuristic merge",
+            {"fallback": True, "error": str(e), "reason": reason},
         )
         return pathology, intake, muts, provenance, [f"aggregator_error: {e}"]
 
     pathology, intake, muts, provenance = _payload_to_models(payload)
+    audit(
+        "aggregator", "done",
+        mutations=len(muts), provenance=len(provenance),
+        conflicts=len(payload.conflicts),
+        latency_ms=int((_time.time() - t0) * 1000),
+    )
     await emit(
         EventKind.AGGREGATION_DONE,
         f"{len(muts)} mutations · {len(provenance)} provenance entries · "

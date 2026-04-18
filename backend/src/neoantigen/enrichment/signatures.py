@@ -10,12 +10,12 @@ its reverse-complement G→A) SNVs where the VCF ``REF`` column paired with
 the immediately preceding ``REF`` in genomic order forms a pyrimidine-pyrimidine
 dinucleotide. Because we read the VCF without a reference FASTA, we
 approximate the 5′ flanking base using the **POS ordering within the same
-chromosome** — consecutive MAF rows are usually independent events, so the
+chromosome** - consecutive MAF rows are usually independent events, so the
 approximation mostly captures same-codon / same-locus dipyrimidines. For
 the Regeneron demo this is enough to surface a qualitative "UV-high" chip.
 
 Pass-through when the VCF has placeholder coords (everything on chr1 pos
-100+i A→T) — the function detects that case and returns ``None`` so the
+100+i A→T) - the function detects that case and returns ``None`` so the
 caller can show "signature n/a" instead of a misleading 0%.
 """
 
@@ -106,7 +106,7 @@ def _read_snvs(path: Path) -> list[_VCFRow]:
             continue
         ref = cols[3].strip().upper()
         alt = cols[4].strip().upper()
-        # Only single-nucleotide variants — indels / multiallelic skip.
+        # Only single-nucleotide variants - indels / multiallelic skip.
         if len(ref) != 1 or len(alt) != 1:
             continue
         out.append(_VCFRow(chrom=chrom, pos=pos, ref=ref, alt=alt))

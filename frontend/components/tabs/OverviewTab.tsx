@@ -83,16 +83,16 @@ export function OverviewTab({
   return (
     <div className="space-y-6">
       {extracting && fileRows.length > 0 && (
-        <section className="rounded-2xl border border-neutral-200 bg-neutral-50 p-4">
+        <section className="card-muted p-5">
           <div className="flex items-center justify-between mb-3">
-            <div className="text-[11px] uppercase tracking-widest text-neutral-600 font-semibold flex items-center gap-2">
+            <div className="eyebrow flex items-center gap-2 text-neutral-700">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-black opacity-40" />
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-black" />
               </span>
               Extracting your uploaded documents
             </div>
-            <div className="text-[11px] tabular-nums text-neutral-500">
+            <div className="meta-mono">
               {extractProgress!.done}/{extractProgress!.total} · {overallPct}%
             </div>
           </div>
@@ -105,7 +105,7 @@ export function OverviewTab({
             />
           </div>
 
-          {/* Per-file rows — each with its own bar */}
+          {/* Per-file rows - each with its own bar */}
           <div
             ref={feedRef}
             className="max-h-64 overflow-y-auto space-y-2 pr-1"
@@ -152,9 +152,7 @@ export function OverviewTab({
 
       {/* Diagnosis summary */}
       <section>
-        <div className="text-[11px] uppercase tracking-widest text-neutral-500 font-semibold mb-2">
-          Diagnosis
-        </div>
+        <div className="eyebrow mb-2">Diagnosis</div>
         <h2 className="text-2xl font-semibold tracking-tight text-black leading-tight">
           {friendly.diagnosisHeadline}
         </h2>
@@ -164,10 +162,8 @@ export function OverviewTab({
       </section>
 
       {/* Recommended next step */}
-      <section className="rounded-2xl border border-neutral-200 p-5">
-        <div className="text-[11px] uppercase tracking-widest text-neutral-500 font-semibold mb-2">
-          Recommended next step
-        </div>
+      <section className="card p-5">
+        <div className="eyebrow mb-2">Recommended next step</div>
         <div className="text-base font-medium text-black leading-snug mb-2">
           {friendly.recommendedAction}
         </div>
@@ -178,9 +174,7 @@ export function OverviewTab({
 
         {friendly.nextSteps.length > 0 && (
           <div>
-            <div className="text-[11px] uppercase tracking-widest text-neutral-500 mb-1">
-              Plan at a glance
-            </div>
+            <div className="eyebrow mb-2">Plan at a glance</div>
             <ol className="text-sm text-neutral-800 space-y-1">
               {friendly.nextSteps.map((s, i) => (
                 <li key={i} className="flex gap-2">
@@ -197,18 +191,14 @@ export function OverviewTab({
 
       {/* About you */}
       <section>
-        <div className="text-[11px] uppercase tracking-widest text-neutral-500 font-semibold mb-3">
-          About you
-        </div>
+        <div className="eyebrow mb-3">About you</div>
         <ul className="space-y-3">
           {friendly.aboutYou.map((item, i) => (
             <li
               key={i}
               className="border-b border-neutral-100 pb-2 last:border-none"
             >
-              <div className="text-[11px] uppercase tracking-wider text-neutral-500">
-                {item.label}
-              </div>
+              <div className="eyebrow-xs">{item.label}</div>
               <div className="text-sm text-black leading-snug mt-0.5">
                 {item.value}
               </div>
@@ -218,11 +208,11 @@ export function OverviewTab({
       </section>
 
       {caseData.conflicts.length > 0 && (
-        <div className="rounded-lg bg-amber-50 border border-amber-200 p-3 text-xs text-amber-800">
+        <div className="rounded-2xl bg-amber-50 border border-amber-200 p-4 text-xs text-amber-800">
           <span className="font-semibold">Worth reviewing:</span>{" "}
           {caseData.conflicts.length} fact
           {caseData.conflicts.length === 1 ? "" : "s"} disagreed between your
-          documents — see the Documents tab.
+          documents - see the Documents tab.
         </div>
       )}
     </div>

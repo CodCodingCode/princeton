@@ -1,4 +1,4 @@
-// Plain-English translators — take the structured PatientCase and produce
+// Plain-English translators - take the structured PatientCase and produce
 // short human sentences a layman can understand.
 //
 // Cancer-agnostic: uses primary_cancer_type when available, falls back to
@@ -74,7 +74,7 @@ function finalStepEnglish(step: RailwayStep | undefined): string {
 
 function nextStepsFromRailway(steps: RailwayStep[] | undefined): string[] {
   if (!steps?.length) return [];
-  // Prefer the systemic-therapy phase when present — that's the decision the
+  // Prefer the systemic-therapy phase when present - that's the decision the
   // patient usually wants spelled out. Fall back to the last 3 steps.
   const systemic = steps.filter((s) => s.phase_id === "systemic");
   const pool = systemic.length ? systemic : steps.filter((s) => !s.is_terminal);
@@ -89,10 +89,10 @@ function trialsSentence(matches: TrialMatch[]): string {
   const elig = matches.filter((m) => m.status === "eligible");
   const maybe = matches.filter((m) => m.status === "needs_more_data");
   if (elig.length)
-    return `${elig.length} trial${elig.length > 1 ? "s" : ""} you may qualify for — ask your oncologist to screen you.`;
+    return `${elig.length} trial${elig.length > 1 ? "s" : ""} you may qualify for - ask your oncologist to screen you.`;
   if (maybe.length)
-    return `${maybe.length} trial${maybe.length > 1 ? "s" : ""} might fit — your oncologist needs a few more data points to confirm.`;
-  return "No matching trials today — your oncologist can re-check after more testing.";
+    return `${maybe.length} trial${maybe.length > 1 ? "s" : ""} might fit - your oncologist needs a few more data points to confirm.`;
+  return "No matching trials today - your oncologist can re-check after more testing.";
 }
 
 function diagnosisHeadline(c: PatientCase): string {
@@ -111,7 +111,7 @@ function diagnosisHeadline(c: PatientCase): string {
 
   const label =
     CANCER_TYPE_EN[cancerType] || cancerType?.replace(/_/g, " ") || "cancer";
-  const site = c.pathology.primary_site ? ` — ${c.pathology.primary_site}` : "";
+  const site = c.pathology.primary_site ? ` - ${c.pathology.primary_site}` : "";
   const stage = c.intake.ajcc_stage ? ` · Stage ${c.intake.ajcc_stage}` : "";
   return `${capitalize(label)}${site}${stage}`;
 }
@@ -166,19 +166,19 @@ export function toPatientFriendly(c: PatientCase): PatientFriendly {
     if (brafMut) {
       aboutYou.push({
         label: "BRAF gene",
-        value: `BRAF mutation (${brafMut.ref_aa}${brafMut.position}${brafMut.alt_aa}) — both targeted therapy and immunotherapy are options.`,
+        value: `BRAF mutation (${brafMut.ref_aa}${brafMut.position}${brafMut.alt_aa}) - both targeted therapy and immunotherapy are options.`,
       });
     } else {
       aboutYou.push({
         label: "BRAF gene",
         value:
-          "No common BRAF mutation — immunotherapy is usually the first choice.",
+          "No common BRAF mutation - immunotherapy is usually the first choice.",
       });
     }
   } else if (egfrMut) {
     aboutYou.push({
       label: "Driver mutation",
-      value: `EGFR — targeted therapy (EGFR TKIs such as osimertinib) is the standard first-line approach.`,
+      value: `EGFR - targeted therapy (EGFR TKIs such as osimertinib) is the standard first-line approach.`,
     });
   }
 
@@ -188,7 +188,7 @@ export function toPatientFriendly(c: PatientCase): PatientFriendly {
   if (c.intake.ecog != null) {
     aboutYou.push({
       label: "Performance status",
-      value: `ECOG ${c.intake.ecog} — ${ecogEnglish(c.intake.ecog)}`,
+      value: `ECOG ${c.intake.ecog} - ${ecogEnglish(c.intake.ecog)}`,
     });
   }
   if (c.mutations.length) {

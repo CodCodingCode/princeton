@@ -6,7 +6,7 @@ that drives the most consequential treatment decisions and let the medical
 reasoning model fill in the nuance per node.
 
 Each node represents one decision point. The walker (walker.py) traverses the
-graph by asking the model — given the patient's pathology + mutation profile —
+graph by asking the model - given the patient's pathology + mutation profile -
 which option fits best at each step. The node's `evidence_required` list tells
 the walker which fields from `PatientState` to surface in the prompt.
 """
@@ -61,7 +61,7 @@ GRAPH: dict[str, NCCNNode] = {n.id: n for n in [
         "Has melanoma been confirmed on the H&E slide and what is the primary descriptor?",
         [
             ("Confirmed primary cutaneous melanoma", "STAGE_T", "Proceed to T-stage assignment"),
-            ("Insufficient material — re-biopsy", "REBIOPSY", "Diagnostic tissue inadequate"),
+            ("Insufficient material - re-biopsy", "REBIOPSY", "Diagnostic tissue inadequate"),
         ],
         evidence=["melanoma_subtype", "confidence"],
     ),
@@ -99,17 +99,17 @@ GRAPH: dict[str, NCCNNode] = {n.id: n for n in [
     ),
     _node(
         "STAGE_I_II",
-        "Stage I/II — local disease",
+        "Stage I/II - local disease",
         "What is the post-resection plan for localized disease?",
         [
             ("Wide local excision + observation", "FOLLOWUP", "Stage IA / low risk"),
-            ("Wide local excision + adjuvant immunotherapy", "BRAF_TEST", "Stage IIB/IIC — high risk"),
+            ("Wide local excision + adjuvant immunotherapy", "BRAF_TEST", "Stage IIB/IIC - high risk"),
         ],
         evidence=["t_stage", "ulceration"],
     ),
     _node(
         "STAGE_III",
-        "Stage III — regional disease",
+        "Stage III - regional disease",
         "What is the adjuvant therapy plan?",
         [
             ("Adjuvant anti-PD-1 (nivolumab or pembrolizumab)", "BRAF_TEST", "Standard of care for IIIA-IIID"),
@@ -120,11 +120,11 @@ GRAPH: dict[str, NCCNNode] = {n.id: n for n in [
     ),
     _node(
         "STAGE_IV",
-        "Stage IV — metastatic disease",
+        "Stage IV - metastatic disease",
         "Are CNS metastases present?",
         [
-            ("Yes — CNS-directed therapy first", "BRAIN_METS", "Brain mets change drug selection"),
-            ("No — proceed to systemic therapy", "BRAF_TEST", "Standard systemic workflow"),
+            ("Yes - CNS-directed therapy first", "BRAIN_METS", "Brain mets change drug selection"),
+            ("No - proceed to systemic therapy", "BRAF_TEST", "Standard systemic workflow"),
         ],
         evidence=["notes"],
     ),
@@ -142,8 +142,8 @@ GRAPH: dict[str, NCCNNode] = {n.id: n for n in [
         "BRAF mutation testing",
         "Does the tumor harbor a targetable BRAF V600 mutation (V600E or V600K)?",
         [
-            ("BRAF V600 mutant — both targeted and IO are options", "BRAF_MUT_TX", ""),
-            ("BRAF wild-type — IO is preferred", "BRAF_WT_TX", ""),
+            ("BRAF V600 mutant - both targeted and IO are options", "BRAF_MUT_TX", ""),
+            ("BRAF wild-type - IO is preferred", "BRAF_WT_TX", ""),
         ],
         evidence=["mutations", "braf_status"],
     ),
@@ -155,7 +155,7 @@ GRAPH: dict[str, NCCNNode] = {n.id: n for n in [
             ("Anti-PD-1 monotherapy (preferred for high TMB / PD-L1+)", "VACCINE_CANDIDATE", "Hold targeted in reserve"),
             ("Ipilimumab + nivolumab combo IO", "VACCINE_CANDIDATE", "Aggressive disease, no contraindication"),
             ("BRAF + MEK inhibitor (dabrafenib + trametinib)", "VACCINE_CANDIDATE", "Rapid response needed; symptomatic"),
-            ("Nivolumab + relatlimab (anti-LAG-3) combo", "VACCINE_CANDIDATE", "LAG-3 IHC positive — Regeneron fianlimab thesis"),
+            ("Nivolumab + relatlimab (anti-LAG-3) combo", "VACCINE_CANDIDATE", "LAG-3 IHC positive - Regeneron fianlimab thesis"),
         ],
         evidence=["mutations", "tils_present", "pdl1_estimate", "tumor_mutational_burden", "lag3_ihc_percent"],
     ),
@@ -175,8 +175,8 @@ GRAPH: dict[str, NCCNNode] = {n.id: n for n in [
         "Personalized neoantigen vaccine candidacy",
         "Is the patient a candidate for an investigational personalized neoantigen mRNA vaccine adjunct?",
         [
-            ("Yes — design vaccine and add to systemic therapy", "FINAL", "Triggers Panel 3 vaccine pipeline"),
-            ("No — sufficient response expected from chosen systemic therapy alone", "FOLLOWUP", "Skip vaccine workup"),
+            ("Yes - design vaccine and add to systemic therapy", "FINAL", "Triggers Panel 3 vaccine pipeline"),
+            ("No - sufficient response expected from chosen systemic therapy alone", "FOLLOWUP", "Skip vaccine workup"),
         ],
         evidence=["mutations", "tumor_mutational_burden", "t_stage"],
     ),

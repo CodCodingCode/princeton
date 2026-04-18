@@ -1,4 +1,4 @@
-"""SSE helpers — bridge an ``EventBus`` (or a fanout subscriber queue) to a
+"""SSE helpers - bridge an ``EventBus`` (or a fanout subscriber queue) to a
 Server-Sent Events stream the frontend can consume via ``EventSource``.
 """
 

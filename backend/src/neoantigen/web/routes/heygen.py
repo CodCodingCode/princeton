@@ -1,7 +1,7 @@
 """LiveAvatar session-token minting.
 
 HeyGen's legacy Streaming Avatar API (/v1/streaming.*) was retired and returns
-401 with a deprecation notice. The replacement is LiveAvatar — a separate
+401 with a deprecation notice. The replacement is LiveAvatar - a separate
 product on api.liveavatar.com with its own keys.
 
 The API key never leaves the backend. The frontend calls

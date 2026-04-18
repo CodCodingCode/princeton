@@ -5,7 +5,7 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Single accent: deep navy. Used sparingly — only for the primary
+        // Single accent: deep navy. Used sparingly - only for the primary
         // CTA, active states, and one hero status dot. Everything else leans
         // on neutrals so hierarchy comes from typography + weight, not color.
         brand: {
@@ -16,7 +16,7 @@ export default {
           900: "#061630",
         },
         // Teal is retained as a key so stray references don't break the
-        // build, but every shade points at a neutral — there is no remaining
+        // build, but every shade points at a neutral - there is no remaining
         // colored saturation from the old palette.
         teal: {
           50: "#fafafa",

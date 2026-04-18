@@ -24,7 +24,7 @@ def _safe_id(raw: str) -> str:
 
 
 def _mermaid_label(s: str, max_len: int = 80) -> str:
-    """Mermaid label — escape quotes + truncate. Double-quoted so spaces/punct survive."""
+    """Mermaid label - escape quotes + truncate. Double-quoted so spaces/punct survive."""
     s = s.replace('"', "'").replace("\n", " ").strip()
     if len(s) > max_len:
         s = s[: max_len - 1].rstrip() + "…"
@@ -80,7 +80,7 @@ def to_mermaid(rmap: RailwayMap) -> str:
     for i in range(len(step_ids) - 1):
         lines.append(f"    {step_ids[i]} ==> {step_ids[i + 1]}")
 
-    # Alternatives — dashed spurs. Placed outside any subgraph so they sit
+    # Alternatives - dashed spurs. Placed outside any subgraph so they sit
     # beside their parent node in the final layout.
     alt_counter = 0
     for s in rmap.steps:
@@ -101,7 +101,7 @@ def to_mermaid(rmap: RailwayMap) -> str:
         lines.append(f'    {final_id}["{label}"]:::final')
         lines.append(f"    {step_ids[-1]} ==> {final_id}")
 
-    # Styling classes — consumed by the frontend's mermaid theme.
+    # Styling classes - consumed by the frontend's mermaid theme.
     lines.extend(
         [
             "    classDef chosen fill:#0ea5a4,stroke:#0d9488,color:#ffffff,stroke-width:2px;",

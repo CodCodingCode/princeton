@@ -5,10 +5,32 @@ import type {
   PathologyFindings,
 } from "@/lib/types";
 
+// Shared formatters — keep presentation consistent with the PDF report so
+// the downloaded document and the on-screen clinical tab use the same
+// capitalization and the same human labels.
+const UNKNOWN_TOKENS = new Set(["unknown", "", "none", "n/a", "na"]);
+
 function isEmpty(value: unknown): boolean {
-  return (
-    value === null || value === undefined || value === "unknown" || value === ""
-  );
+  if (value === null || value === undefined) return true;
+  if (
+    typeof value === "string" &&
+    UNKNOWN_TOKENS.has(value.trim().toLowerCase())
+  )
+    return true;
+  return false;
+}
+
+function prettyEnum(val: string | null | undefined): string | null {
+  if (val == null) return null;
+  const s = val.trim();
+  if (!s || UNKNOWN_TOKENS.has(s.toLowerCase())) return null;
+  const spaced = s.replace(/_/g, " ");
+  return spaced.charAt(0).toUpperCase() + spaced.slice(1);
+}
+
+function prettyCancerType(t: string | null | undefined): string | null {
+  if (!t || UNKNOWN_TOKENS.has(t.toLowerCase())) return null;
+  return prettyEnum(t);
 }
 
 function Row({ label, value }: { label: string; value: unknown }) {
@@ -17,15 +39,10 @@ function Row({ label, value }: { label: string; value: unknown }) {
     <div className="flex justify-between gap-4 py-1 text-sm border-b border-neutral-100 last:border-none">
       <span className="text-neutral-600">{label}</span>
       <span className="text-black text-right">
-        {empty ? <span className="text-neutral-400">—</span> : String(value)}
+        {empty ? <span className="text-neutral-400">-</span> : String(value)}
       </span>
     </div>
   );
-}
-
-function prettyCancerType(t: string | null | undefined): string {
-  if (!t || t === "unknown") return "—";
-  return t.replace(/_/g, " ");
 }
 
 export function ExtractedFields({
@@ -43,18 +60,24 @@ export function ExtractedFields({
   primaryCancerType: string;
   tStage: string;
 }) {
-  const isMelanoma = primaryCancerType === "cutaneous_melanoma";
+  // Pathology subsection only renders when at least one melanoma-shaped field
+  // is populated. For non-melanoma cancers it would otherwise show a wall of
+  // dashes, which reads as "broken" instead of "not applicable to this case".
+  const hasMelanomaFields =
+    pathology.melanoma_subtype !== "unknown" ||
+    pathology.breslow_thickness_mm !== null ||
+    pathology.ulceration !== null ||
+    pathology.mitotic_rate_per_mm2 !== null ||
+    (pathology.tils_present && pathology.tils_present !== "unknown") ||
+    (pathology.pdl1_estimate && pathology.pdl1_estimate !== "unknown") ||
+    pathology.lag3_ihc_percent !== null;
 
   return (
-    <div className="rounded-xl border border-neutral-200 bg-white p-5">
-      <h2 className="text-[11px] font-semibold text-neutral-500 uppercase tracking-widest mb-1">
-        Extracted oncology data
-      </h2>
+    <div className="card p-5">
+      <h2 className="eyebrow mb-1">Extracted oncology data</h2>
 
       <div className="mt-4">
-        <div className="text-xs uppercase tracking-wider text-neutral-500 mb-1">
-          Diagnosis
-        </div>
+        <div className="eyebrow mb-1">Diagnosis</div>
         <p className="text-xs text-neutral-500 mb-2">
           Drives the dynamic railway and RAG retrieval from the phase-2+ trial
           corpus.
@@ -67,8 +90,11 @@ export function ExtractedFields({
                 primaryCancerType || pathology.primary_cancer_type,
               )}
             />
-            <Row label="Histology" value={pathology.histology} />
-            <Row label="Primary site" value={pathology.primary_site} />
+            <Row label="Histology" value={prettyEnum(pathology.histology)} />
+            <Row
+              label="Primary site"
+              value={prettyEnum(pathology.primary_site)}
+            />
           </div>
           <div>
             <Row
@@ -103,60 +129,62 @@ export function ExtractedFields({
         )}
       </div>
 
-      <div className="mt-6">
-        <div className="text-xs uppercase tracking-wider text-neutral-500 mb-1">
-          Melanoma-specific pathology
-        </div>
-        <p className="text-xs text-neutral-500 mb-2">
-          {isMelanoma
-            ? "Fields used by the melanoma NCCN framework."
-            : "Populated only for melanoma cases — expect these to be empty for other tumor types."}
-        </p>
-        <div className="grid md:grid-cols-2 gap-x-8">
-          <div>
-            <Row label="Subtype" value={pathology.melanoma_subtype} />
-            <Row
-              label="Breslow"
-              value={
-                pathology.breslow_thickness_mm !== null
-                  ? `${pathology.breslow_thickness_mm} mm`
-                  : null
-              }
-            />
-            <Row
-              label="Ulceration"
-              value={
-                pathology.ulceration === null
-                  ? null
-                  : pathology.ulceration
-                    ? "Yes"
-                    : "No"
-              }
-            />
-            <Row label="Mitoses/mm²" value={pathology.mitotic_rate_per_mm2} />
-            <Row label="TILs" value={pathology.tils_present} />
+      {hasMelanomaFields && (
+        <div className="mt-6">
+          <div className="eyebrow mb-1">Pathology details</div>
+          <p className="text-xs text-neutral-500 mb-2">
+            Tumor-specific fields extracted from this case.
+          </p>
+          <div className="grid md:grid-cols-2 gap-x-8">
+            <div>
+              <Row
+                label="Subtype"
+                value={prettyEnum(pathology.melanoma_subtype)}
+              />
+              <Row
+                label="Breslow thickness"
+                value={
+                  pathology.breslow_thickness_mm !== null
+                    ? `${pathology.breslow_thickness_mm} mm`
+                    : null
+                }
+              />
+              <Row
+                label="Ulceration"
+                value={
+                  pathology.ulceration === null
+                    ? null
+                    : pathology.ulceration
+                      ? "Yes"
+                      : "No"
+                }
+              />
+              <Row
+                label="Mitoses per mm²"
+                value={pathology.mitotic_rate_per_mm2}
+              />
+              <Row label="TILs" value={prettyEnum(pathology.tils_present)} />
+            </div>
+            <div>
+              <Row label="PD-L1" value={prettyEnum(pathology.pdl1_estimate)} />
+              <Row
+                label="LAG-3 IHC"
+                value={
+                  pathology.lag3_ihc_percent !== null
+                    ? `${pathology.lag3_ihc_percent}%`
+                    : null
+                }
+              />
+              <Row label="Derived T-stage" value={tStage} />
+            </div>
           </div>
-          <div>
-            <Row label="PD-L1" value={pathology.pdl1_estimate} />
-            <Row
-              label="LAG-3 IHC"
-              value={
-                pathology.lag3_ihc_percent !== null
-                  ? `${pathology.lag3_ihc_percent}%`
-                  : null
-              }
-            />
-            <Row label="Derived T-stage" value={tStage} />
-          </div>
         </div>
-      </div>
+      )}
 
       <div className="mt-6">
-        <div className="text-xs uppercase tracking-wider text-neutral-500 mb-1">
-          Trial eligibility
-        </div>
+        <div className="eyebrow mb-1">Trial eligibility</div>
         <p className="text-xs text-neutral-500 mb-2">
-          Inputs the Regeneron trial matcher reads. Separate from the railway —
+          Inputs the Regeneron trial matcher reads. Separate from the railway -
           missing values here do not block phase-level recommendations.
         </p>
         <div className="grid md:grid-cols-2 gap-x-8">
@@ -165,7 +193,7 @@ export function ExtractedFields({
             <Row label="Age" value={intake.age_years} />
             <Row label="ECOG" value={intake.ecog} />
             <Row
-              label="Measurable (RECIST)"
+              label="Measurable disease (RECIST)"
               value={
                 intake.measurable_disease_recist === null
                   ? null
@@ -177,7 +205,7 @@ export function ExtractedFields({
           </div>
           <div>
             <Row
-              label="Prior systemic Rx"
+              label="Prior systemic therapy"
               value={
                 intake.prior_systemic_therapy === null
                   ? null
@@ -200,7 +228,7 @@ export function ExtractedFields({
               label="Life expectancy"
               value={
                 intake.life_expectancy_months
-                  ? `${intake.life_expectancy_months} mo`
+                  ? `${intake.life_expectancy_months} months`
                   : null
               }
             />

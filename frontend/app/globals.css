@@ -2,6 +2,55 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ─────────────────────────────────────────────────────────────
+   Design tokens
+   ─────────────────────────────────────────────────────────────
+   One canonical token per role. Apply via @apply so Tailwind
+   treats them as first-class utilities in IntelliSense and so
+   downstream classes can still override on a case-by-case basis.
+
+   Roles:
+     .eyebrow / .eyebrow-xs - tracked-caps subhead above titles
+     .mono-tag              - monospace micro-label (node_id, code)
+     .card / .card-muted    - primary card shell variants
+     .meta / .meta-mono     - secondary numerics + helper text
+     .divider               - horizontal rule inside cards
+
+   Tokens chosen:
+     * Eyebrow: 10px / 0.2em tracking / neutral-500 / font-semibold
+     * Card shell: rounded-2xl / border-neutral-200 / bg-white
+     * Inner divider: border-neutral-100
+     * Border on inputs/interactive: neutral-300
+     * Body text default: neutral-600
+     * Primary text: black (#0a0a0a)
+*/
+@layer components {
+  .eyebrow {
+    @apply text-[10px] uppercase tracking-[0.2em] text-neutral-500 font-semibold;
+  }
+  .eyebrow-xs {
+    @apply text-[9px] uppercase tracking-[0.2em] text-neutral-500 font-semibold;
+  }
+  .mono-tag {
+    @apply font-mono text-[10px] uppercase tracking-[0.15em] text-neutral-400;
+  }
+  .card {
+    @apply rounded-2xl border border-neutral-200 bg-white;
+  }
+  .card-muted {
+    @apply rounded-2xl border border-neutral-200 bg-neutral-50/60;
+  }
+  .meta {
+    @apply text-[11px] text-neutral-500;
+  }
+  .meta-mono {
+    @apply text-[11px] font-mono tabular-nums text-neutral-500;
+  }
+  .divider {
+    @apply border-t border-neutral-100;
+  }
+}
+
 :root {
   color-scheme: light;
 }
@@ -41,7 +90,7 @@ body {
   }
 }
 
-/* Indeterminate progress bar — a shimmer sweeping left-to-right, for files
+/* Indeterminate progress bar - a shimmer sweeping left-to-right, for files
    actively being extracted where we can't report true percentage. */
 .bar-indeterminate {
   position: relative;

@@ -75,7 +75,7 @@ collection_date,ordered_by,lab_source,test_name,value,unit,reference_range,flag,
 2025-09-12,Whitaker B,UVA_Lab,Potassium,4.1,mmol/L,3.5-5.0,,
 2025-09-12,Whitaker B,UVA_Lab,Creatinine,0.8,mg/dL,0.6-1.1,,
 2025-09-12,Whitaker B,UVA_Lab,Glucose,104,mg/dL,70-99,H,Nonfasting
-2025-09-24,Park L,Guardant360,ctDNA_TumorFraction,8.4,%,—,,Plasma liquid biopsy
+2025-09-24,Park L,Guardant360,ctDNA_TumorFraction,8.4,%,-,,Plasma liquid biopsy
 2025-10-15,Park L,UVA_Lab,WBC,5.9,x10^9/L,3.5-10.5,,Pre 2L C1D1
 2025-10-15,Park L,UVA_Lab,Hemoglobin,11.3,g/dL,12.0-16.0,L,
 2025-10-15,Park L,UVA_Lab,Platelets,218,x10^9/L,150-450,,
@@ -95,4 +95,4 @@ collection_date,ordered_by,lab_source,test_name,value,unit,reference_range,flag,
 2026-01-28,Park L,UVA_Lab,ALT,31,U/L,7-56,,
 2026-01-28,Park L,UVA_Lab,CEA,6.8,ng/mL,<3.0,H,Rising - correlated w/ imaging
 2026-01-28,Park L,UVA_Lab,Calcium,9.2,mg/dL,8.5-10.5,,
-2026-01-28,Park L,UVA_Lab,CA_19-9,0.42,ng/mL,<37,,NOTE: result in ng/mL not U/mL — lab error flagged, retest
+2026-01-28,Park L,UVA_Lab,CA_19-9,0.42,ng/mL,<37,,NOTE: result in ng/mL not U/mL - lab error flagged, retest

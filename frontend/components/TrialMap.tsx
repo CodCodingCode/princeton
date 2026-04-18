@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import { GoogleMap, Marker, useJsApiLoader } from "@react-google-maps/api";
 import type { TrialSite } from "@/lib/types";
+import type { UserLocation } from "@/lib/geo";
 
 const MAP_STYLE = [
   { elementType: "geometry", stylers: [{ color: "#f5f5f5" }] },
@@ -33,10 +34,12 @@ export function TrialMap({
   sites,
   selected,
   onSelect,
+  userLocation,
 }: {
   sites: TrialSite[];
   selected: string | null;
   onSelect: (nct: string | null) => void;
+  userLocation?: UserLocation | null;
 }) {
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
   const { isLoaded } = useJsApiLoader({
@@ -55,8 +58,13 @@ export function TrialMap({
     [sites, selected],
   );
 
+  // Priority: center on the user when we know where they are. Otherwise
+  // average the filtered sites. Fallback to a US centroid if we know nothing.
   const center = useMemo(() => {
-    if (!filtered.length) return { lat: 39.5, lng: -98.35 }; // US centroid
+    if (userLocation) {
+      return { lat: userLocation.lat, lng: userLocation.lng };
+    }
+    if (!filtered.length) return { lat: 39.5, lng: -98.35 };
     const avg = filtered.reduce(
       (acc, s) => ({
         lat: acc.lat + (s.lat ?? 0),
@@ -68,14 +76,16 @@ export function TrialMap({
       lat: avg.lat / filtered.length,
       lng: avg.lng / filtered.length,
     };
-  }, [filtered]);
+  }, [filtered, userLocation]);
+
+  // Default zoom: tighter when the user has a location OR when only one
+  // trial is filtered in; otherwise a continental view.
+  const zoom = userLocation ? 6 : filtered.length === 1 ? 10 : 3;
 
   if (!apiKey) {
     return (
-      <div className="rounded-xl border border-neutral-200 bg-white p-4">
-        <h3 className="text-[11px] uppercase tracking-widest font-semibold text-neutral-500 mb-2">
-          Trial sites
-        </h3>
+      <div className="card p-5">
+        <h3 className="eyebrow mb-2">Trial sites</h3>
         <p className="text-xs text-neutral-600 mb-2">
           Set{" "}
           <code className="text-black">NEXT_PUBLIC_GOOGLE_MAPS_API_KEY</code> to
@@ -87,10 +97,8 @@ export function TrialMap({
               key={`${s.nct_id}-${i}`}
               className={`truncate ${selected && selected !== s.nct_id ? "opacity-40" : ""}`}
             >
-              <span className="text-neutral-500 font-mono text-xs">
-                {s.nct_id}
-              </span>{" "}
-              {s.facility} · {s.city}, {s.state}
+              <span className="mono-tag">{s.nct_id}</span> {s.facility} ·{" "}
+              {s.city}, {s.state}
             </li>
           ))}
         </ul>
@@ -100,15 +108,13 @@ export function TrialMap({
 
   if (!isLoaded) {
     return (
-      <div className="rounded-xl border border-neutral-200 bg-white p-6 text-neutral-500 text-sm">
-        Loading map…
-      </div>
+      <div className="card p-5 text-neutral-500 text-sm">Loading map…</div>
     );
   }
 
   return (
-    <div className="rounded-xl border border-neutral-200 bg-white overflow-hidden">
-      <div className="flex items-center justify-between px-4 py-2 text-xs text-neutral-600 border-b border-neutral-200">
+    <div className="card overflow-hidden">
+      <div className="flex items-center justify-between px-4 py-2.5 text-xs text-neutral-600 border-b border-neutral-100">
         <span>
           Trial sites ({filtered.length}
           {selected ? ` · filtered ${selected}` : ""})
@@ -124,7 +130,7 @@ export function TrialMap({
       </div>
       <GoogleMap
         mapContainerStyle={{ width: "100%", height: "22rem" }}
-        zoom={filtered.length === 1 ? 10 : 3}
+        zoom={zoom}
         center={center}
         options={{
           disableDefaultUI: true,
@@ -140,6 +146,22 @@ export function TrialMap({
             title={`${s.nct_id}\n${s.facility}\n${s.city}, ${s.state}`}
           />
         ))}
+        {userLocation && (
+          <Marker
+            position={{ lat: userLocation.lat, lng: userLocation.lng }}
+            title={userLocation.label || "You are here"}
+            // Distinct styling so the user pin stands out from trial-site pins.
+            icon={{
+              path: "M 0,-7 7,7 0,4 -7,7 z",
+              fillColor: "#0b2545",
+              fillOpacity: 1,
+              strokeColor: "#ffffff",
+              strokeWeight: 2,
+              scale: 1.2,
+            }}
+            zIndex={1000}
+          />
+        )}
       </GoogleMap>
     </div>
   );

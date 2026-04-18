@@ -1,23 +1,28 @@
 "use client";
 
 import type { PatientCase, RailwayStep } from "@/lib/types";
-import { RailwayMermaid } from "@/components/RailwayMermaid";
+import { RailwayChart } from "@/components/RailwayChart";
 
 export function PlanTab({ caseData }: { caseData: PatientCase }) {
-  const mermaid = caseData.railway?.mermaid ?? "";
   const steps = caseData.railway?.steps ?? [];
+  const finalRec =
+    caseData.railway?.final_recommendation ||
+    caseData.final_recommendation ||
+    "";
 
   return (
     <div className="space-y-5">
       <div>
-        <div className="text-[11px] uppercase tracking-widest text-neutral-500 font-semibold mb-2">
-          Treatment railway
-        </div>
+        <div className="eyebrow mb-2">Treatment railway</div>
         <p className="text-sm text-neutral-600 leading-relaxed mb-4">
           Four-phase dynamic railway grounded in phase-2+ trial literature. Ask
           the avatar to explain any branch.
         </p>
-        <RailwayMermaid mermaidSource={mermaid} empty={!mermaid} />
+        <RailwayChart
+          steps={steps}
+          finalRecommendation={finalRec}
+          empty={!steps.length}
+        />
       </div>
 
       {steps.length > 0 && <RailwayStepsTable steps={steps} />}
@@ -45,16 +50,13 @@ function RailwayStepsTable({ steps }: { steps: RailwayStep[] }) {
   return (
     <div className="space-y-3">
       {grouped.map((group) => (
-        <div
-          key={group.phaseId}
-          className="rounded-xl border border-neutral-200 bg-white"
-        >
+        <div key={group.phaseId} className="card">
           {group.phaseTitle && (
-            <div className="px-3 py-2 border-b border-neutral-200 text-[11px] uppercase tracking-widest text-neutral-500 font-semibold">
+            <div className="eyebrow px-4 py-2.5 border-b border-neutral-100">
               {group.phaseTitle}
             </div>
           )}
-          <div className="divide-y divide-neutral-200">
+          <div className="divide-y divide-neutral-100">
             {group.steps.map((s) => (
               <details key={s.node_id} className="p-3 group">
                 <summary className="cursor-pointer flex items-start gap-3 list-none">
@@ -89,7 +91,7 @@ function RailwayStepsTable({ steps }: { steps: RailwayStep[] }) {
                           {a.option_label}:
                         </span>{" "}
                         <span className="text-neutral-500">
-                          {a.reason_not_chosen || "—"}
+                          {a.reason_not_chosen || "-"}
                         </span>
                       </div>
                     ))}
@@ -105,7 +107,7 @@ function RailwayStepsTable({ steps }: { steps: RailwayStep[] }) {
                         rel="noreferrer"
                         className="block text-brand-700 hover:text-black underline decoration-neutral-300 hover:decoration-black truncate"
                       >
-                        PMID {c.pmid} — {c.title}
+                        PMID {c.pmid} - {c.title}
                       </a>
                     ))}
                   </div>

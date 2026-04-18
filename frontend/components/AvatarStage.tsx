@@ -9,7 +9,7 @@
 //   await stage.current?.speak("Hi there.");
 //   await stage.current?.stop();
 //
-// API key stays on the backend — this component POSTs /api/heygen/token and
+// API key stays on the backend - this component POSTs /api/heygen/token and
 // never sees the long-lived key.
 
 import {
@@ -20,12 +20,15 @@ import {
   useState,
 } from "react";
 import {
-  LiveAvatarSession,
-  SessionEvent,
-  AgentEventsEnum,
-} from "@heygen/liveavatar-web-sdk";
+  start as startSession,
+  stop as stopSession,
+  speak as speakSession,
+  subscribe as subscribeSession,
+  attachVideo,
+  type AvatarStatus,
+} from "@/lib/avatar-session";
 
-export type AvatarStatus = "idle" | "connecting" | "live" | "error";
+export type { AvatarStatus };
 
 export interface AvatarStageHandle {
   start: () => Promise<void>;
@@ -46,8 +49,6 @@ export const AvatarStage = forwardRef<AvatarStageHandle, Props>(
     ref,
   ) {
     const videoRef = useRef<HTMLVideoElement | null>(null);
-    const sessionRef = useRef<LiveAvatarSession | null>(null);
-
     const [status, setStatus] = useState<AvatarStatus>("idle");
     const [speaking, setSpeaking] = useState(false);
     const [caption, setCaption] = useState<string>("");
@@ -60,95 +61,48 @@ export const AvatarStage = forwardRef<AvatarStageHandle, Props>(
       onSpeakingChange?.(speaking);
     }, [speaking, onSpeakingChange]);
 
+    // Subscribe to the singleton and mirror its state into local React state.
+    // Critically: the cleanup does NOT stop the session - it just unsubscribes.
+    // That's what lets Fast Refresh / remounts happen without killing WebRTC.
     useEffect(() => {
+      const unsubscribe = subscribeSession({
+        onStatus: setStatus,
+        onSpeaking: setSpeaking,
+        onCaption: setCaption,
+        onError: setError,
+      });
+      // Bind whichever <video> element this mount happens to own. If a session
+      // is already live (Fast Refresh mid-call), this re-attaches the stream.
+      attachVideo(videoRef.current);
       return () => {
-        sessionRef.current?.stop().catch(() => {});
-        sessionRef.current = null;
+        unsubscribe();
+        // Deliberately DO NOT call stop() here.
       };
     }, []);
 
-    const start = async () => {
-      if (status === "connecting" || status === "live") return;
-      setError(null);
-      setStatus("connecting");
-      try {
-        const r = await fetch("/api/heygen/token", { method: "POST" });
-        if (!r.ok) {
-          const detail = await r.text().catch(() => "");
-          throw new Error(
-            `token mint failed (${r.status}): ${detail.slice(0, 180)}`,
-          );
-        }
-        const { token } = (await r.json()) as { token: string };
-
-        const session = new LiveAvatarSession(token, { voiceChat: false });
-        sessionRef.current = session;
-
-        session.on(SessionEvent.SESSION_STREAM_READY, () => {
-          if (videoRef.current) session.attach(videoRef.current);
-          setStatus("live");
-        });
-        session.on(SessionEvent.SESSION_DISCONNECTED, () => {
-          setStatus("idle");
-          setSpeaking(false);
-          setCaption("");
-          if (videoRef.current) videoRef.current.srcObject = null;
-        });
-        session.on(AgentEventsEnum.AVATAR_SPEAK_STARTED, () =>
-          setSpeaking(true),
-        );
-        session.on(AgentEventsEnum.AVATAR_SPEAK_ENDED, () =>
-          setSpeaking(false),
-        );
-
-        await session.start();
-      } catch (e) {
-        setError(e instanceof Error ? e.message : String(e));
-        setStatus("error");
-        sessionRef.current = null;
-      }
-    };
-
-    const stop = async () => {
-      try {
-        await sessionRef.current?.stop();
-      } catch {
-        /* ignore */
-      }
-      sessionRef.current = null;
-      setStatus("idle");
-      setSpeaking(false);
-      setCaption("");
-    };
-
-    const speak = async (text: string) => {
-      const t = text.trim();
-      const session = sessionRef.current;
-      if (!session || !t) return;
-      setCaption(t);
-      try {
-        session.repeat(t);
-      } catch (e) {
-        console.warn("avatar.repeat failed", e);
-      }
-    };
-
-    useImperativeHandle(ref, () => ({ start, stop, speak }), []);
-
-    const statusLabel =
-      status === "live"
-        ? speaking
-          ? "SPEAKING"
-          : "LIVE"
-        : status.toUpperCase();
+    useImperativeHandle(
+      ref,
+      () => ({
+        start: startSession,
+        stop: stopSession,
+        speak: speakSession,
+      }),
+      [],
+    );
 
     return (
-      <div className="relative w-full h-full bg-black overflow-hidden">
+      <div
+        className={`relative w-full h-full bg-black overflow-hidden rounded-2xl border transition-all duration-300 ${
+          status === "live" && speaking
+            ? "border-brand-500/50 shadow-lg shadow-brand-500/20"
+            : "border-neutral-200 shadow-sm"
+        }`}
+      >
         <video
           ref={videoRef}
           autoPlay
           playsInline
-          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${
+          className={`absolute inset-0 w-full h-full object-contain transition-opacity duration-700 ${
             status === "live" ? "opacity-100" : "opacity-0"
           }`}
         />
@@ -177,38 +131,17 @@ export const AvatarStage = forwardRef<AvatarStageHandle, Props>(
           </div>
         )}
 
-        <div
-          className={`absolute top-4 left-4 flex items-center gap-2 bg-black/55 backdrop-blur text-white rounded-full px-2.5 py-1 ${
-            compact ? "text-[10px]" : "text-[11px]"
-          }`}
-        >
-          <span
-            className={`inline-block w-1.5 h-1.5 rounded-full ${
-              status === "live"
-                ? speaking
-                  ? "bg-brand-500 animate-pulse"
-                  : "bg-emerald-400"
-                : status === "connecting"
-                  ? "bg-amber-400 animate-pulse"
-                  : status === "error"
-                    ? "bg-red-500"
-                    : "bg-neutral-500"
-            }`}
-          />
-          {statusLabel}
-        </div>
-
         {status === "live" && (
           <button
-            onClick={stop}
-            className="absolute top-4 right-4 text-[11px] text-white/80 hover:text-white bg-black/55 backdrop-blur rounded-full px-3 py-1 transition"
+            onClick={stopSession}
+            className="absolute top-32 left-4 text-[11px] font-medium tracking-[0.1em] uppercase text-white/80 hover:text-white bg-black/55 backdrop-blur rounded-full px-3 py-1 ring-1 ring-white/15 shadow-lg shadow-black/30 transition"
           >
             End session
           </button>
         )}
 
         {status === "live" && caption && (
-          <div className="pointer-events-none absolute bottom-6 left-1/2 -translate-x-1/2 max-w-[min(80vw,720px)] bg-black/60 backdrop-blur text-white rounded-lg px-4 py-2 text-sm leading-snug text-center">
+          <div className="pointer-events-none absolute bottom-10 left-1/2 -translate-x-1/2 max-w-[min(90vw,1100px)] bg-black/65 backdrop-blur-md text-white rounded-2xl px-8 py-5 text-xl md:text-2xl leading-relaxed text-center ring-1 ring-white/15 shadow-2xl shadow-black/40">
             {caption}
           </div>
         )}

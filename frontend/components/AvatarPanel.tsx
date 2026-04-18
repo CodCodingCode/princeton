@@ -2,7 +2,7 @@
 
 // HeyGen streaming-avatar panel.
 //
-// The avatar is a "puppet" — we do not use HeyGen's built-in LLM. Everything
+// The avatar is a "puppet" - we do not use HeyGen's built-in LLM. Everything
 // the avatar says comes from text we pass in via `speak({ task_type: REPEAT })`.
 // For now the input box routes directly to the avatar; once the Kimi chat is
 // wired, the flow becomes: user → Kimi → text → avatar.speak(...).
@@ -123,7 +123,7 @@ export function AvatarPanel() {
     idle: "Start a session to talk with your virtual oncologist",
     connecting: "Connecting to HeyGen…",
     live: speaking ? "Session live · speaking" : "Session live · listening",
-    error: "Error — see below",
+    error: "Error - see below",
   };
 
   return (
@@ -230,7 +230,7 @@ export function AvatarPanel() {
           <button
             type="button"
             disabled
-            title="Voice input — coming soon"
+            title="Voice input - coming soon"
             className="w-11 h-11 rounded-full border border-neutral-200 bg-white text-neutral-300 flex items-center justify-center cursor-not-allowed"
             aria-label="Voice input (coming soon)"
           >

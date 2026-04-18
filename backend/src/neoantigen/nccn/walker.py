@@ -1,4 +1,4 @@
-"""NCCN walker — drives the medical model through the decision graph.
+"""NCCN walker - drives the medical model through the decision graph.
 
 At each node, the walker constructs a prompt containing (a) the node's question
 and option labels, and (b) the slice of `PatientState` listed in
@@ -81,7 +81,7 @@ SYSTEM_PROMPT = (
     "guideline. At each node you will be given the question, the available "
     "options, and the relevant patient evidence. Think step-by-step inside "
     "<think>...</think> and then output a JSON object with the chosen option "
-    "index and a one-sentence rationale. Be honest when evidence is missing — "
+    "index and a one-sentence rationale. Be honest when evidence is missing - "
     "default to the safest standard-of-care option."
 )
 
@@ -92,7 +92,7 @@ def _build_user_prompt(
     citations: list[CitationRef],
 ) -> str:
     options = "\n".join(
-        f"  [{i}] {opt.label} — {opt.description}" for i, opt in enumerate(node.options)
+        f"  [{i}] {opt.label} - {opt.description}" for i, opt in enumerate(node.options)
     )
     ev_lines = "\n".join(f"  - {k}: {v}" for k, v in evidence.items()) or "  (none)"
     cite_block = ""
@@ -158,7 +158,7 @@ def _parse_decision(answer: str, n_options: int) -> _DecisionResponse:
 
 
 def _heuristic_decision(node: NCCNNode, state: PatientState) -> tuple[int, str]:
-    """Fallback when no API key is configured — picks the safest standard option."""
+    """Fallback when no API key is configured - picks the safest standard option."""
     if node.id == "START":
         return 0, "Heuristic: assume primary cutaneous melanoma confirmed."
     if node.id == "STAGE_T":
@@ -308,7 +308,7 @@ async def _consume_interrupt() -> str | None:
 
 
 # ─────────────────────────────────────────────────────────────
-# Railway walk — same decision flow but also records alternatives
+# Railway walk - same decision flow but also records alternatives
 # ─────────────────────────────────────────────────────────────
 
 
@@ -319,7 +319,7 @@ RAILWAY_SYSTEM_PROMPT = (
     "<think>...</think> and then output a JSON object with (1) the chosen "
     "option index, (2) a one-sentence rationale for the chosen option, and "
     "(3) one short (≤20 words) rationale per NON-chosen option explaining why "
-    "it was rejected for THIS patient. Be concrete — cite patient-specific "
+    "it was rejected for THIS patient. Be concrete - cite patient-specific "
     "evidence, not general statements."
 )
 
@@ -330,7 +330,7 @@ def _build_railway_prompt(
     citations: list[CitationRef],
 ) -> str:
     options = "\n".join(
-        f"  [{i}] {opt.label} — {opt.description}" for i, opt in enumerate(node.options)
+        f"  [{i}] {opt.label} - {opt.description}" for i, opt in enumerate(node.options)
     )
     ev_lines = "\n".join(f"  - {k}: {v}" for k, v in evidence.items()) or "  (none)"
     cite_block = ""
@@ -396,7 +396,7 @@ def _heuristic_alt_reasons(
             _AltReason(
                 option_index=i,
                 reason_not_chosen=(
-                    "Not selected by heuristic fallback — configure K2_API_KEY to get "
+                    "Not selected by heuristic fallback - configure KIMI_API_KEY to get "
                     "patient-specific reasoning for the alternative branches."
                 ),
             )
@@ -499,7 +499,7 @@ class RailwayWalker:
             decision = _parse_railway_decision(answer_buf, len(node.options))
             chosen = node.options[decision.chosen_option_index]
 
-            # Fill in alternative rationales — LLM-provided where possible.
+            # Fill in alternative rationales - LLM-provided where possible.
             alt_reasons_by_idx: dict[int, str] = {
                 a.option_index: a.reason_not_chosen
                 for a in decision.alternative_reasons

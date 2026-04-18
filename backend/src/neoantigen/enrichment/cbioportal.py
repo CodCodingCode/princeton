@@ -7,12 +7,12 @@ one "unknown" criterion from the Regeneron eligibility check.
 
 Design:
   * Public API, no auth, small disk cache.
-  * Wrapped in ``fetch_prior_therapies`` which *never raises* — silent failure
+  * Wrapped in ``fetch_prior_therapies`` which *never raises* - silent failure
     matches the rest of the pipeline's "degrade gracefully" contract.
 
 Environment:
-  * ``NEOVAX_CBIOPORTAL_BASE`` — override base URL (default public instance).
-  * ``NEOVAX_CBIOPORTAL_DISABLED=1`` — hard-skip (e.g. CI offline).
+  * ``NEOVAX_CBIOPORTAL_BASE`` - override base URL (default public instance).
+  * ``NEOVAX_CBIOPORTAL_DISABLED=1`` - hard-skip (e.g. CI offline).
 """
 
 from __future__ import annotations

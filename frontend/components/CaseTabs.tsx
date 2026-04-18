@@ -62,7 +62,7 @@ export function CaseTabs({
   }
 
   return (
-    <aside className="flex flex-col bg-white min-h-0">
+    <aside className="flex flex-col h-full bg-white min-h-0">
       <div className="border-b border-neutral-200 px-2 flex overflow-x-auto">
         {TABS.map((tab) => {
           const isActive = active === tab.id;

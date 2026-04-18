@@ -5,13 +5,13 @@
 // pane with the case data tabs.
 //
 // Phases:
-//   welcome     — full-screen avatar + Welcome overlay. Needs a user gesture
+//   welcome     - full-screen avatar + Welcome overlay. Needs a user gesture
 //                 to unlock audio autoplay → clicking "Begin" starts the
 //                 session and speaks the greeting.
-//   intake      — full-screen avatar + Intake overlay (PDF drop zone).
-//   processing  — full-screen avatar + Processing overlay (status ticker).
+//   intake      - full-screen avatar + Intake overlay (PDF drop zone).
+//   processing  - full-screen avatar + Processing overlay (status ticker).
 //                 Avatar narrates milestone events via EVENT_NARRATION.
-//   ready       — grid split: avatar left, ResultsSidebar right.
+//   ready       - grid split: avatar left, ResultsSidebar right.
 
 import {
   Suspense,
@@ -28,7 +28,10 @@ import {
   EVENT_NARRATION,
   GREETING,
   INTAKE_PROMPT,
+  PROJECT_EXPLAINERS,
+  STAGE_START_NARRATION,
   UPLOAD_ACK,
+  buildResultsNarration,
 } from "@/lib/narration";
 import type {
   AgentEvent,
@@ -88,6 +91,21 @@ function ExperiencePage() {
   const [firedMilestones, setFiredMilestones] = useState<Set<EventKind>>(
     () => new Set(),
   );
+  const firedStagesRef = useRef<Set<string>>(new Set());
+  // Tracks the last time we queued any speech (milestone / stage / filler).
+  // The filler interval only fires when this is > ~20s old, so milestones
+  // naturally push fillers back instead of stacking on top of them.
+  const lastSpokeAtRef = useRef<number>(0);
+  const fillerIdxRef = useRef<number>(0);
+  const [stageLog, setStageLog] = useState<
+    Array<{
+      stage: string;
+      phase: "start" | "done" | "fail";
+      message: string;
+      seconds?: number;
+      at: number;
+    }>
+  >([]);
 
   // URL-sync on mount: if ?case=<id> is present, skip welcome/intake.
   useEffect(() => {
@@ -96,7 +114,7 @@ function ExperiencePage() {
       setCaseId(fromUrl);
       setPhase("processing");
     }
-    // run once — deliberate
+    // run once - deliberate
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -131,6 +149,23 @@ function ExperiencePage() {
       const phaseField = payload?.phase as string | undefined;
       const stageField = payload?.stage as string | undefined;
       if (stageField && phaseField === "start") setCurrentStage(stageField);
+      if (
+        stageField &&
+        (phaseField === "start" ||
+          phaseField === "done" ||
+          phaseField === "fail")
+      ) {
+        setStageLog((prev) => [
+          ...prev,
+          {
+            stage: stageField,
+            phase: phaseField as "start" | "done" | "fail",
+            message: ev.label,
+            seconds: payload?.seconds as number | undefined,
+            at: Date.now(),
+          },
+        ]);
+      }
       if (phaseField === "extract_start") {
         const total = Number(payload?.total ?? 0);
         setExtractProgress({ done: 0, total, latest: "" });
@@ -235,8 +270,15 @@ function ExperiencePage() {
   // Narration + phase-transition pump. Walks only new events since the last
   // render to avoid re-narrating on every update.
   useEffect(() => {
+    const narrate = (text: string) => {
+      lastSpokeAtRef.current = Date.now();
+      stageRef.current?.speak(text).catch(() => {});
+    };
+
     for (let i = lastProcessedRef.current; i < events.length; i++) {
       const ev = events[i];
+
+      // Milestone narration (completion of a pipeline step).
       const phrase = EVENT_NARRATION[ev.kind];
       if (phrase && !firedMilestones.has(ev.kind)) {
         setFiredMilestones((prev) => {
@@ -244,14 +286,62 @@ function ExperiencePage() {
           next.add(ev.kind);
           return next;
         });
-        stageRef.current?.speak(phrase).catch(() => {});
+        narrate(phrase);
       }
+
+      // Stage-start narration - keeps the avatar talking through the long
+      // silent waits (stage 1 extraction, stage 2 reconciliation, NCCN walk).
+      // Fires at most once per stage per case.
+      if (ev.kind === "log") {
+        const payload = ev.payload as Record<string, unknown> | undefined;
+        if (payload?.phase === "start") {
+          const stage = String(payload.stage ?? "");
+          const stagePhrase = STAGE_START_NARRATION[stage];
+          if (stage && stagePhrase && !firedStagesRef.current.has(stage)) {
+            firedStagesRef.current.add(stage);
+            narrate(stagePhrase);
+          }
+        }
+      }
+
       if (ev.kind === "done" || ev.kind === "stream_end") {
         setPhase("ready");
+        // Speak a case-specific summary instead of a generic ready cue.
+        // Guard against double-fire if both "done" and "stream_end" arrive.
+        if (!firedMilestones.has("done")) {
+          setFiredMilestones((prev) => {
+            const next = new Set(prev);
+            next.add("done");
+            return next;
+          });
+          narrate(buildResultsNarration(caseData));
+        }
       }
     }
     lastProcessedRef.current = events.length;
-  }, [events, firedMilestones]);
+  }, [events, firedMilestones, caseData]);
+
+  // Filler loop - while the pipeline is chugging, the avatar explains what
+  // NeoVax is and what it's doing right now. Each explainer plays once per
+  // case, and only when the avatar has been silent for roughly 18 seconds, so
+  // real milestones still get priority.
+  useEffect(() => {
+    if (phase !== "processing") return;
+    // Seed lastSpokeAt to "now" so we don't fire a filler in the first 20s,
+    // letting UPLOAD_ACK + stage-1 narration land first.
+    if (lastSpokeAtRef.current === 0) {
+      lastSpokeAtRef.current = Date.now();
+    }
+    const interval = setInterval(() => {
+      if (fillerIdxRef.current >= PROJECT_EXPLAINERS.length) return;
+      if (Date.now() - lastSpokeAtRef.current < 18000) return;
+      const phrase = PROJECT_EXPLAINERS[fillerIdxRef.current];
+      fillerIdxRef.current += 1;
+      lastSpokeAtRef.current = Date.now();
+      stageRef.current?.speak(phrase).catch(() => {});
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [phase]);
 
   const handleBegin = useCallback(async () => {
     await stageRef.current?.start();
@@ -272,20 +362,23 @@ function ExperiencePage() {
   );
 
   const processingState: ProcessingState = useMemo(
-    () => ({ extractProgress, extractFeed, firedMilestones, currentStage }),
-    [extractProgress, extractFeed, firedMilestones, currentStage],
+    () => ({
+      extractProgress,
+      extractFeed,
+      firedMilestones,
+      currentStage,
+      stageLog,
+    }),
+    [extractProgress, extractFeed, firedMilestones, currentStage, stageLog],
   );
 
   const effectiveCase = caseData ?? (caseId ? emptyCase(caseId) : null);
 
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const showSidebar = phase === "ready" && !sidebarCollapsed;
+
   return (
-    <div
-      className={`h-screen w-screen overflow-hidden grid ${
-        phase === "ready"
-          ? "lg:grid-cols-[minmax(0,1.5fr)_minmax(380px,1fr)] grid-cols-1"
-          : "grid-cols-1"
-      }`}
-    >
+    <div className="relative h-screen w-screen overflow-hidden">
       <div className="relative h-full w-full">
         <AvatarStage
           ref={stageRef}
@@ -305,14 +398,41 @@ function ExperiencePage() {
         </AvatarStage>
       </div>
 
-      {phase === "ready" && effectiveCase && (
+      {effectiveCase && (
         <ResultsSidebar
+          open={showSidebar}
           caseData={effectiveCase}
           events={events}
           done={done}
           extractProgress={extractProgress}
           extractFeed={extractFeed}
         />
+      )}
+
+      {phase === "ready" && (
+        <button
+          type="button"
+          onClick={() => setSidebarCollapsed((c) => !c)}
+          aria-label={sidebarCollapsed ? "Show case panel" : "Hide case panel"}
+          title={sidebarCollapsed ? "Show case panel" : "Hide case panel"}
+          aria-pressed={!sidebarCollapsed}
+          className="fixed top-[14px] right-6 z-40 inline-flex h-9 w-9 items-center justify-center rounded-full border border-neutral-200 bg-white/90 backdrop-blur-xl text-neutral-700 shadow-sm transition hover:border-neutral-300 hover:bg-white hover:text-black"
+        >
+          <svg
+            aria-hidden
+            viewBox="0 0 20 20"
+            width="16"
+            height="16"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.75"
+            strokeLinecap="round"
+          >
+            <line x1="4" y1="6" x2="16" y2="6" />
+            <line x1="4" y1="10" x2="16" y2="10" />
+            <line x1="4" y1="14" x2="16" y2="14" />
+          </svg>
+        </button>
       )}
     </div>
   );

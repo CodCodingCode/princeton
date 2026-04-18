@@ -18,7 +18,7 @@ from __future__ import annotations
 from ..models import Mutation, PathologyFindings
 
 
-# Supported tokens — must match the cancer_type metadata used by the Chroma
+# Supported tokens - must match the cancer_type metadata used by the Chroma
 # corpus (see scripts/build_pubmed_rag.py CANCER_TOPICS keys).
 SUPPORTED: frozenset[str] = frozenset(
     {
@@ -47,7 +47,7 @@ SUPPORTED: frozenset[str] = frozenset(
 
 
 # (substring in histology/site, mapped cancer_type)
-# Order matters — more specific substrings first.
+# Order matters - more specific substrings first.
 _TEXT_HINTS: tuple[tuple[str, str], ...] = (
     ("melanoma", "cutaneous_melanoma"),
     ("lung adenocarcinoma", "lung_adenocarcinoma"),
@@ -99,10 +99,10 @@ def _infer_from_mutations(mutations: list[Mutation]) -> str | None:
     # won't capture as an AA change. If we ever see ALK here, assume lung.
     if "ALK" in genes or "ROS1" in genes or "MET" in genes:
         return "lung_adenocarcinoma"
-    # KRAS G12C — lung > CRC prevalence, but mixed. Don't assume.
-    # BRCA1/2 — breast/ovarian/pancreatic/prostate, don't assume.
-    # HER2 amp — breast/gastric, don't assume.
-    # BRAF V600E — melanoma > CRC > thyroid > NSCLC. Assume melanoma only if
+    # KRAS G12C - lung > CRC prevalence, but mixed. Don't assume.
+    # BRCA1/2 - breast/ovarian/pancreatic/prostate, don't assume.
+    # HER2 amp - breast/gastric, don't assume.
+    # BRAF V600E - melanoma > CRC > thyroid > NSCLC. Assume melanoma only if
     # melanoma_subtype already hinted.
     return None
 

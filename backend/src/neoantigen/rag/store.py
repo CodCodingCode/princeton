@@ -2,7 +2,7 @@
 
 The store is built ahead of time by ``backend/scripts/build_pubmed_rag.py``.
 At runtime we open it read-only, embed the query with the same
-sentence-transformers model, and return the top-K nearest abstracts —
+sentence-transformers model, and return the top-K nearest abstracts -
 optionally filtered by cancer type so a NSCLC case doesn't get melanoma
 trials retrieved.
 
@@ -19,7 +19,7 @@ from pathlib import Path
 DATA_DIR = Path(__file__).resolve().parents[3] / "data" / "rag"
 COLLECTION = "oncology_trials_phase2plus"
 
-# Legacy collections to try if the current one is missing — lets an existing
+# Legacy collections to try if the current one is missing - lets an existing
 # melanoma-only corpus keep working after the upgrade until it's rebuilt.
 _LEGACY_COLLECTIONS = ("melanoma_papers",)
 
@@ -100,7 +100,7 @@ def query_papers(
     if not citations and where:
         citations = _run_query(coll, query, top_k, None)
 
-    # Honour min_phase if set (again, corpus already pre-filtered — this is a
+    # Honour min_phase if set (again, corpus already pre-filtered - this is a
     # safety net).
     if min_phase and min_phase > 2:
         citations = [c for c in citations if _phase_geq(c.trial_phase, min_phase)]
@@ -128,7 +128,7 @@ def _run_query(coll, query: str, top_k: int, where: dict | None) -> list[Citatio
     dists = result.get("distances", [[]])[0]
     out: list[Citation] = []
     for doc, meta, dist in zip(docs, metas, dists):
-        snippet = (doc or "")[:280].rsplit(" ", 1)[0]
+        snippet = (doc or "")[:140].rsplit(" ", 1)[0]
         out.append(Citation(
             pmid=str(meta.get("pmid", "")),
             title=str(meta.get("title", "")),

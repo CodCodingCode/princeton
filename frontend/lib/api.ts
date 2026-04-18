@@ -51,26 +51,42 @@ export async function fetchCase(caseId: string): Promise<PatientCase> {
 /**
  * Open an EventSource against the case stream and invoke `onEvent` for every
  * typed event. Returns a cleanup function.
+ *
+ * Critically, we must close the EventSource on `done` / `stream_end`: when the
+ * backend closes the stream normally the browser will otherwise auto-reconnect,
+ * the backend replays the full event history on the new connection, and every
+ * replay appends to the caller's events array + extractFeed. That manifests as
+ * the sidebar flickering between states on a finished case.
  */
 export function subscribeCaseEvents(
   caseId: string,
   onEvent: (ev: AgentEvent) => void,
 ): () => void {
   const es = new EventSource(`/api/cases/${caseId}/stream`);
+  let closed = false;
+  const close = () => {
+    if (closed) return;
+    closed = true;
+    es.close();
+  };
   for (const kind of ALL_EVENT_KINDS) {
     es.addEventListener(kind, (e: MessageEvent) => {
       try {
         const data = JSON.parse(e.data) as AgentEvent;
         onEvent(data);
+        if (data.kind === "done" || data.kind === "stream_end") close();
       } catch (err) {
         console.error("SSE parse error", err, e.data);
       }
     });
   }
   es.onerror = () => {
-    // EventSource auto-reconnects; no-op.
+    // If the stream already delivered `done`, we'll have closed above. This
+    // branch handles transient network errors - let the browser attempt one
+    // reconnect (default SSE behavior). If the connection is already closed
+    // this is a no-op.
   };
-  return () => es.close();
+  return close;
 }
 
 /**

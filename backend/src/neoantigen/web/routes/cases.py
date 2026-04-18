@@ -1,4 +1,4 @@
-"""Case routes — upload, read, stream events, download report, list trial sites."""
+"""Case routes - upload, read, stream events, download report, list trial sites."""
 
 from __future__ import annotations
 
@@ -35,12 +35,20 @@ async def create_case(files: list[UploadFile] = File(...)) -> dict[str, Any]:
     if not files:
         raise HTTPException(status_code=400, detail="At least one PDF is required.")
 
+    # Accept the messy mix real clinicians send us - PDFs, text notes,
+    # spreadsheets, JSON exports, images. The extractor routes by extension.
+    # Only reject the OS junk (.DS_Store, AppleDouble shards).
+    supported_exts = {
+        ".pdf", ".txt", ".md", ".csv", ".json", ".html", ".htm", ".log", ".rtf",
+        ".png", ".jpg", ".jpeg", ".webp", ".tiff", ".tif", ".bmp", ".gif",
+    }
     inputs: list[InputPDF] = []
     for f in files:
-        name = f.filename or "unknown.pdf"
-        ctype = (f.content_type or "").lower()
-        if "pdf" not in ctype and not name.lower().endswith(".pdf"):
-            # Silently skip non-PDFs (e.g. a stray .DS_Store from a folder drop)
+        name = f.filename or "unknown"
+        lname = name.lower()
+        if lname == ".ds_store" or lname.startswith("._"):
+            continue
+        if not any(lname.endswith(ext) for ext in supported_exts):
             continue
         data = await f.read()
         if not data:
@@ -50,7 +58,7 @@ async def create_case(files: list[UploadFile] = File(...)) -> dict[str, Any]:
     if not inputs:
         raise HTTPException(
             status_code=400,
-            detail="No valid PDF files in upload (expected PDFs by extension or mime type).",
+            detail="No supported files in upload (expected PDFs, text, or images).",
         )
 
     s = store()
@@ -130,7 +138,13 @@ async def get_report_pdf(case_id: str):
     rec = store().get(case_id)
     if rec is None:
         raise HTTPException(status_code=404, detail="Case not found.")
-    pdf = build_report_pdf(rec.case)
+    chat_messages = list(rec.chat_agent.messages) if rec.chat_agent is not None else []
+    pdf = build_report_pdf(
+        rec.case,
+        chat_messages=chat_messages,
+        events=list(rec.replay),
+        narrative_cache=rec.narrative_cache,
+    )
     return StreamingResponse(
         io.BytesIO(pdf),
         media_type="application/pdf",

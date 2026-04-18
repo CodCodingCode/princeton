@@ -128,7 +128,7 @@ class RailwayAlternative(BaseModel):
 
 
 class RailwayStep(BaseModel):
-    """One node on the railway — the chosen path plus siblings."""
+    """One node on the railway - the chosen path plus siblings."""
 
     node_id: str
     title: str
@@ -222,7 +222,7 @@ class TrialSite(BaseModel):
 
 
 class PageFinding(BaseModel):
-    """Per-page VLM output — structured findings pulled from one PDF page image."""
+    """Per-page VLM output - structured findings pulled from one PDF page image."""
 
     page_number: int
     description: str = ""
@@ -248,7 +248,7 @@ class PageFinding(BaseModel):
 
 
 class DocumentExtraction(BaseModel):
-    """One PDF's worth of extracted content — text + per-page VLM findings."""
+    """One PDF's worth of extracted content - text + per-page VLM findings."""
 
     filename: str
     document_kind: str = "unknown"
@@ -279,7 +279,7 @@ class PatientCase(BaseModel):
     documents: list[DocumentExtraction] = Field(default_factory=list)
     provenance: list[ProvenanceEntry] = Field(default_factory=list)
     conflicts: list[str] = Field(default_factory=list)
-    pdf_text_excerpt: str = ""  # legacy — first doc's text, kept for report compatibility
+    pdf_text_excerpt: str = ""  # legacy - first doc's text, kept for report compatibility
     railway: RailwayMap | None = None
     trial_matches: list[TrialMatch] = Field(default_factory=list)
     trial_sites: list[TrialSite] = Field(default_factory=list)

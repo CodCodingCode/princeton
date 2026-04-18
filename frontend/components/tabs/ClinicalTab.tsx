@@ -20,9 +20,7 @@ export function ClinicalTab({
   return (
     <div className="space-y-5">
       <div>
-        <div className="text-[11px] uppercase tracking-widest text-neutral-500 font-semibold mb-2">
-          Clinical detail
-        </div>
+        <div className="eyebrow mb-2">Clinical detail</div>
         <p className="text-sm text-neutral-600 leading-relaxed">
           Raw extracted fields and pipeline events. Use this tab when sharing
           the case with an oncologist.

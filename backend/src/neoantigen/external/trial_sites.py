@@ -137,7 +137,7 @@ async def fetch_trial_sites(
 ) -> list[TrialSite]:
     """Fetch + geocode recruiting sites for every NCT in ``nct_ids``.
 
-    Returns a flat ``list[TrialSite]``. Safe to call offline — returns cached
+    Returns a flat ``list[TrialSite]``. Safe to call offline - returns cached
     data when available and an empty list when the network + cache both fail.
     """
     api_key = os.environ.get("GOOGLE_MAPS_API_KEY")

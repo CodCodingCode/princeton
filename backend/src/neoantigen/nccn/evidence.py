@@ -5,7 +5,7 @@ This module just surfaces the *schema* of that evidence map so the frontend can
 render "this extracted field blocks nodes X and Y" without duplicating the
 mapping manually.
 
-Everything derives from `melanoma_v2024.GRAPH` — adding a node there
+Everything derives from `melanoma_v2024.GRAPH` - adding a node there
 automatically flows through to the UI hints.
 """
 
@@ -16,7 +16,7 @@ from .melanoma_v2024 import GRAPH
 
 # Fields the walker asks about somewhere in the graph, minus the always-filled
 # pathology free-text bucket `notes` (which is rendered elsewhere and never
-# meaningfully "missing"). Derived fields (`t_stage`, `braf_status`) stay in —
+# meaningfully "missing"). Derived fields (`t_stage`, `braf_status`) stay in -
 # they can still be "unknown" if their source fields weren't extracted.
 _EXCLUDED = frozenset({"notes"})
 

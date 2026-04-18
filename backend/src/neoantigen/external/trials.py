@@ -1,8 +1,9 @@
-"""ClinicalTrials.gov v2 client — melanoma recruiting trials.
+"""ClinicalTrials.gov v2 client - cancer-type-agnostic trial search.
 
 One async call, disk-cached, returns lightly-normalised `CTGovStudy` rows.
-Structured eligibility evaluation lives in :mod:`regeneron_rules` — this file
-just fetches raw trial records.
+Structured eligibility evaluation lives in :mod:`regeneron_rules` (Regeneron
+tier) and :mod:`trials_global` (everyone else) - this file just fetches raw
+trial records.
 """
 
 from __future__ import annotations
@@ -88,20 +89,29 @@ def _normalise(raw: dict[str, Any]) -> CTGovStudy | None:
     )
 
 
-async def fetch_melanoma_trials(
+def _cache_slug(condition: str, status_key: str) -> str:
+    """Filesystem-safe cache key for a (condition, status) pair."""
+    safe = "".join(c.lower() if c.isalnum() else "_" for c in condition)
+    safe = safe.strip("_") or "any"
+    return f"{safe}_{status_key}"
+
+
+async def fetch_trials_by_condition(
+    condition: str,
     *,
-    condition: str = "Melanoma",
     recruiting_only: bool = True,
     page_size: int = 50,
     use_cache: bool = True,
 ) -> list[CTGovStudy]:
-    """Hit CT.gov v2 `/studies` and return normalised records.
+    """Hit CT.gov v2 ``/studies`` for a free-text condition query.
 
-    Cached whole-response under `~/.cache/neoantigen/trials/melanoma_<status>.json`.
-    Network failure returns `[]` — caller decides how to surface that.
+    ``condition`` is any string CT.gov accepts as ``query.cond`` -
+    "Melanoma", "Lung Adenocarcinoma", "Breast Cancer", etc. Whole-response
+    results are cached under ``~/.cache/neoantigen/trials/<slug>_<status>.json``
+    so repeated searches for the same cancer type are free.
     """
     status_key = "recruiting" if recruiting_only else "all"
-    cache = _cache_dir() / f"melanoma_{status_key}.json"
+    cache = _cache_dir() / f"{_cache_slug(condition, status_key)}.json"
     if use_cache and cache.exists():
         try:
             raw_studies = json.loads(cache.read_text())
@@ -134,3 +144,23 @@ async def fetch_melanoma_trials(
             pass
 
     return [s for s in (_normalise(r) for r in raw_studies) if s and s.nct_id]
+
+
+async def fetch_melanoma_trials(
+    *,
+    condition: str = "Melanoma",
+    recruiting_only: bool = True,
+    page_size: int = 50,
+    use_cache: bool = True,
+) -> list[CTGovStudy]:
+    """Back-compat wrapper around :func:`fetch_trials_by_condition`.
+
+    Kept so the scraper + older call sites keep working. New code should use
+    ``fetch_trials_by_condition`` directly.
+    """
+    return await fetch_trials_by_condition(
+        condition,
+        recruiting_only=recruiting_only,
+        page_size=page_size,
+        use_cache=use_cache,
+    )

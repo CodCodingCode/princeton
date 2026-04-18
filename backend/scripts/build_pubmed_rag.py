@@ -8,7 +8,7 @@ collection. The store is loaded at runtime by
 Quality filter: every search is ANDed with a PubMed publication-type filter
 that requires the paper to be a Phase 2, Phase 3, Phase 4, or Randomized
 Controlled Trial. This drops preclinical work, phase-1 dose-finding,
-case reports, and narrative reviews — which were the main source of noise
+case reports, and narrative reviews - which were the main source of noise
 in the prior melanoma-only corpus.
 
 Each stored document gets ``cancer_type`` and ``trial_phase`` metadata so
@@ -16,7 +16,7 @@ runtime retrieval can filter by cancer when we know the primary diagnosis.
 
 NCBI rate limits unauthenticated traffic to 3 requests/second; with an API
 key you get 10/s. Set ``NCBI_API_KEY`` if you have one (free at
-https://www.ncbi.nlm.nih.gov/account/) — the script falls back to anonymous
+https://www.ncbi.nlm.nih.gov/account/) - the script falls back to anonymous
 mode otherwise with a slower sleep between calls.
 
 Run from the repo root::
@@ -193,7 +193,7 @@ def _extract_phase(article: ET.Element) -> str:
             phases.add(_ROMAN_TO_INT[token])
     if phases:
         return str(max(phases))
-    # Randomized controlled trials that don't declare a phase — treat as "rct"
+    # Randomized controlled trials that don't declare a phase - treat as "rct"
     for pt in article.findall(".//PublicationTypeList/PublicationType"):
         if "Randomized Controlled Trial" in (pt.text or ""):
             return "rct"
@@ -244,7 +244,7 @@ def main() -> None:
         import chromadb
         from chromadb.utils import embedding_functions
     except ImportError:
-        raise SystemExit("chromadb missing — install with: pip install -e './backend[rag]'")
+        raise SystemExit("chromadb missing - install with: pip install -e './backend[rag]'")
 
     api_key = os.environ.get("NCBI_API_KEY")
     OUT_DIR.mkdir(parents=True, exist_ok=True)

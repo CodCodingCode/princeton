@@ -1,15 +1,15 @@
-"""Free enrichment layer — compute/fetch biomarkers before the clinician types.
+"""Free enrichment layer - compute/fetch biomarkers before the clinician types.
 
 Populates :class:`neoantigen.models.EnrichedBiomarkers` from three sources:
 
-1. :mod:`.tmb` — tumour mutational burden from the mutation list (always works).
-2. :mod:`.signatures` — UV mutational-signature fraction from the VCF
+1. :mod:`.tmb` - tumour mutational burden from the mutation list (always works).
+2. :mod:`.signatures` - UV mutational-signature fraction from the VCF
    (needs real genomic ref/alt bases; degrades to ``None`` on synthetic VCFs).
-3. :mod:`.cbioportal` — prior systemic therapies for known TCGA submitter ids
+3. :mod:`.cbioportal` - prior systemic therapies for known TCGA submitter ids
    (network call, silently skipped when offline or unknown id).
 
 The orchestrator calls :func:`enrich` once per case, in parallel with the VLM
-and molecular stages. Nothing here raises — every failure path returns a
+and molecular stages. Nothing here raises - every failure path returns a
 partial :class:`EnrichedBiomarkers` with the relevant fields left as ``None``.
 """
 

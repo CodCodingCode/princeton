@@ -48,7 +48,7 @@
       "status": "POSITIVE at progression",
       "detection_method": "Guardant360 ctDNA liquid biopsy",
       "detected_date": "2025-09-18",
-      "clinical_significance": "Known osimertinib resistance pathway; but patient was already on osimertinib — suggests acquired resistance requiring 3rd-line change"
+      "clinical_significance": "Known osimertinib resistance pathway; but patient was already on osimertinib - suggests acquired resistance requiring 3rd-line change"
     }
   },
   "tumor_characteristics_at_diagnosis": {
@@ -72,14 +72,14 @@
     {"date": "2023-06-25", "event": "Amended pathology: Stage corrected IIIA→IIIB"},
     {"date": "2023-07-02", "event": "PET-CT staging"},
     {"date": "2023-07-05", "event": "FoundationOne CDx results: EGFR exon 19 del"},
-    {"date": "2023-07-06", "event": "Brain MRI — no intracranial disease"},
+    {"date": "2023-07-06", "event": "Brain MRI - no intracranial disease"},
     {"date": "2023-07-12", "event": "Medical oncology initial consult"},
     {"date": "2023-07-24", "event": "Started osimertinib 80 mg PO daily (1st-line targeted therapy)"},
     {"date": "2024-01-18", "event": "First restaging CT: partial response"},
     {"date": "2024-07-22", "event": "Restaging CT: stable disease"},
-    {"date": "2025-03-10", "event": "Restaging CT: stable disease, small new adrenal lesion — equivocal"},
-    {"date": "2025-09-12", "event": "ED visit — new headache, CT head neg; MRI brain pending"},
-    {"date": "2025-09-15", "event": "Brain MRI: 2 new sub-cm parietal enhancing lesions — CNS progression"},
+    {"date": "2025-03-10", "event": "Restaging CT: stable disease, small new adrenal lesion - equivocal"},
+    {"date": "2025-09-12", "event": "ED visit - new headache, CT head neg; MRI brain pending"},
+    {"date": "2025-09-15", "event": "Brain MRI: 2 new sub-cm parietal enhancing lesions - CNS progression"},
     {"date": "2025-09-18", "event": "Guardant360 liquid biopsy: EGFR T790M detected (acquired resistance)"},
     {"date": "2025-09-25", "event": "Hospital admission for SRS planning + symptom management"},
     {"date": "2025-10-02", "event": "Stereotactic radiosurgery to 2 brain lesions"},
@@ -100,6 +100,6 @@
     "doc_08_pdl1_pending": "Consult documents PD-L1 as pending; actual result in doc 03 dated 4 days later",
     "doc_11_ocr_artifacts": "Character-level corruption; different MRN; patient name rendered as 0'Brien and 0'8rien",
     "doc_11_name_typo": "'Margret' instead of 'Margaret'",
-    "doc_13_acquired_resistance": "T790M emerging on osimertinib — indicates need for regimen change"
+    "doc_13_acquired_resistance": "T790M emerging on osimertinib - indicates need for regimen change"
   }
 }

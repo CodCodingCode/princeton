@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "neoantigen"
 version = "0.2.0"
-description = "NeoVax — pathology PDF → NCCN railway → Kimi chat → oncologist report + trial-site map"
+description = "NeoVax - pathology PDF → NCCN railway → Kimi chat → oncologist report + trial-site map"
 requires-python = ">=3.11"
 dependencies = [
     "typer>=0.12",

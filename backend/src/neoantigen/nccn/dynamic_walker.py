@@ -1,4 +1,4 @@
-"""Cancer-agnostic railway walker — grounded in the phase-2+ RAG corpus.
+"""Cancer-agnostic railway walker - grounded in the phase-2+ RAG corpus.
 
 Replaces the static melanoma graph ([melanoma_v2024.py]) with a dynamic,
 literature-driven walker that works for any oncology case.
@@ -22,13 +22,18 @@ placeholder step per phase so the UI never looks broken.
 from __future__ import annotations
 
 import json
-import re
 from dataclasses import dataclass, field
 from typing import Literal
 
 from pydantic import BaseModel, Field
 
-from ..agent._llm import has_api_key, split_thinking, stream_with_thinking
+from ..agent._llm import (
+    _extract_json,
+    has_api_key,
+    split_thinking,
+    stream_with_thinking,
+)
+from ..agent.audit import audit
 from ..agent.events import EventKind, emit
 from ..models import (
     CitationRef,
@@ -59,7 +64,7 @@ PHASES: tuple[Phase, ...] = (
         title="Staging & workup",
         focus=(
             "Imaging, biopsy adequacy, molecular testing, and pathology "
-            "re-review decisions — the work needed to lock in the diagnosis "
+            "re-review decisions - the work needed to lock in the diagnosis "
             "and stage before therapy is picked."
         ),
         query_suffix="staging workup diagnosis biomarker testing",
@@ -77,7 +82,7 @@ PHASES: tuple[Phase, ...] = (
         id="systemic",
         title="Systemic therapy",
         focus=(
-            "First-line and subsequent systemic regimens — targeted "
+            "First-line and subsequent systemic regimens - targeted "
             "therapy, immunotherapy, chemotherapy. Line of therapy matters."
         ),
         query_suffix="first-line second-line systemic targeted immunotherapy",
@@ -160,7 +165,7 @@ SYSTEM_PROMPT = (
     "grounded strictly in the phase-2+ clinical-trial literature you are "
     "given per phase. For each phase you will emit 2-4 decision steps. "
     "Every recommendation must cite at least one PMID from the retrieved "
-    "papers — unless the literature genuinely doesn't cover the decision, "
+    "papers - unless the literature genuinely doesn't cover the decision, "
     "in which case say so and mark citations as empty. Think step-by-step "
     "inside <think>...</think>, then output the JSON object."
 )
@@ -208,7 +213,7 @@ def _build_phase_prompt(
         cite_block = "Retrieved phase-2+ trial literature:\n" + "\n".join(cite_lines) + "\n\n"
     else:
         cite_block = (
-            "Retrieved literature: (none — RAG store is empty or filtered out "
+            "Retrieved literature: (none - RAG store is empty or filtered out "
             "everything for this cancer type). State that the literature is "
             "thin in your rationales and leave citation_pmids empty.\n\n"
         )
@@ -242,15 +247,44 @@ def _build_phase_prompt(
     )
 
 
-def _parse_phase_response(answer: str) -> _PhaseResponse:
-    m = re.search(r"\{[\s\S]*\}", answer)
-    if m:
-        try:
-            data = json.loads(m.group(0))
-            return _PhaseResponse.model_validate(data)
-        except Exception:
-            pass
-    return _PhaseResponse(decisions=[])
+def _parse_phase_response(answer: str) -> tuple[_PhaseResponse, str]:
+    """Parse the walker's post-``</think>`` JSON into ``_PhaseResponse``.
+
+    Returns ``(parsed, reason_if_empty)``. Reuses ``_llm._extract_json`` so
+    truncated JSON (the most common failure mode on K2-Think when ``<think>``
+    eats most of the token budget) gets repaired before validation. The
+    ``reason_if_empty`` string is surfaced in the placeholder RailwayStep so
+    the UI shows "Model returned JSON but missed the schema" or similar
+    instead of the generic "Could not parse..." message.
+    """
+    if not answer.strip():
+        return _PhaseResponse(decisions=[]), "Model returned no answer content."
+    try:
+        extracted = _extract_json(answer)
+    except Exception:
+        return (
+            _PhaseResponse(decisions=[]),
+            "Model output contained no parseable JSON.",
+        )
+    try:
+        data = json.loads(extracted)
+    except json.JSONDecodeError as e:
+        return _PhaseResponse(decisions=[]), f"JSON parse failed: {e.msg}."
+
+    # Unwrap common wrapper shapes: {"response": {"decisions": [...]}}, etc.
+    if isinstance(data, dict) and "decisions" not in data:
+        for v in data.values():
+            if isinstance(v, dict) and "decisions" in v:
+                data = v
+                break
+
+    try:
+        return _PhaseResponse.model_validate(data), ""
+    except Exception as e:
+        return (
+            _PhaseResponse(decisions=[]),
+            f"Model JSON did not match the decision schema ({type(e).__name__}).",
+        )
 
 
 # ─────────────────────────────────────────────────────────────
@@ -272,7 +306,7 @@ async def _fetch_phase_citations(
     try:
         return query_papers(
             _rag_query(phase, cancer_type, state),
-            top_k=5,
+            top_k=3,
             cancer_type=cancer_type if cancer_type not in {"", "unknown"} else None,
         )
     except Exception:
@@ -317,6 +351,14 @@ class DynamicRailwayWalker:
 
         for phase in PHASES:
             citations = await _fetch_phase_citations(phase, self.cancer_type, self.state)
+            rag_query = _rag_query(phase, self.cancer_type, self.state)
+            audit(
+                "walker", "phase_start",
+                phase_id=phase.id, cancer_type=self.cancer_type,
+                citation_count=len(citations),
+                citation_pmids=[c.pmid for c in citations],
+                rag_query=rag_query,
+            )
             if citations:
                 await emit(
                     EventKind.RAG_CITATIONS,
@@ -337,10 +379,18 @@ class DynamicRailwayWalker:
             answer_buf = ""
             think_buf = ""
             mode: Literal["api", "heuristic"] = "api" if has_api_key() else "heuristic"
+            call_error: str | None = None
             try:
                 if mode == "api":
+                    # K2-Think's <think> block routinely eats 500-1500 tokens
+                    # before emitting the post-think JSON. 900 was starving the
+                    # JSON section and producing truncated output that the old
+                    # regex parser couldn't salvage, surfacing in the UI as
+                    # "Needs clinician review" / "Could not parse model
+                    # response into a structured decision." 2500 gives the
+                    # model room to finish.
                     async for kind, chunk in stream_with_thinking(
-                        SYSTEM_PROMPT, user_prompt, max_tokens=1400,
+                        SYSTEM_PROMPT, user_prompt, max_tokens=2500,
                     ):
                         if kind == "thinking":
                             think_buf += chunk
@@ -355,11 +405,16 @@ class DynamicRailwayWalker:
                                 {"phase_id": phase.id, "delta": chunk},
                             )
             except Exception as e:
+                call_error = f"{type(e).__name__}: {e}"
                 await emit(
                     EventKind.LOG,
-                    f"Railway model call failed for {phase.id}: {e}",
+                    f"Railway model call failed for {phase.id}: {call_error}",
                 )
-                mode = "heuristic"
+                audit(
+                    "walker", "phase_error",
+                    phase_id=phase.id, error=call_error,
+                    think_so_far=think_buf[:2000],
+                )
 
             if not think_buf and answer_buf:
                 think_part, answer_part = split_thinking(answer_buf)
@@ -367,9 +422,23 @@ class DynamicRailwayWalker:
                 answer_buf = answer_part or answer_buf
 
             phase_steps: list[RailwayStep] = []
+            parse_error: str = ""
 
             if mode == "api" and answer_buf:
-                parsed = _parse_phase_response(answer_buf)
+                parsed, parse_error = _parse_phase_response(answer_buf)
+                # Crucial visibility: dump the full post-<think> answer so we
+                # can finally see what MediX-R1 actually returned when the
+                # parse fails or yields zero decisions.
+                audit(
+                    "walker", "phase_parse",
+                    phase_id=phase.id,
+                    decisions=len(parsed.decisions),
+                    parse_error=parse_error,
+                    answer_len=len(answer_buf),
+                    think_len=len(think_buf),
+                    answer_slice=answer_buf,
+                    think_slice=think_buf[:4000],
+                )
                 for d in parsed.decisions:
                     node_counter += 1
                     step = RailwayStep(
@@ -402,11 +471,14 @@ class DynamicRailwayWalker:
             # renders the four swim-lanes with an actionable message.
             if not phase_steps:
                 node_counter += 1
-                reason = (
-                    "Medical reasoning endpoint unavailable (K2_API_KEY unset)."
-                    if mode == "heuristic"
-                    else "No decision could be synthesised — literature may be thin for this profile."
-                )
+                if mode == "heuristic":
+                    reason = "Medical reasoning endpoint unavailable (KIMI_API_KEY unset)."
+                elif call_error:
+                    reason = f"Model call failed ({call_error}). Retry or reduce context."
+                elif parse_error:
+                    reason = parse_error
+                else:
+                    reason = "Model produced no decisions for this phase."
                 phase_steps.append(
                     RailwayStep(
                         node_id=f"{phase.id.upper()}_{node_counter}",

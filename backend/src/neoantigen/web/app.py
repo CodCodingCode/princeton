@@ -1,4 +1,4 @@
-"""NeoVax FastAPI app — patient flow + chat SSE."""
+"""NeoVax FastAPI app - patient flow + chat SSE."""
 
 from __future__ import annotations
 
@@ -25,7 +25,7 @@ def _allowed_origins() -> list[str]:
     raw = os.environ.get("NEOVAX_CORS_ORIGINS", "")
     if raw.strip():
         return [o.strip() for o in raw.split(",") if o.strip()]
-    # Dev defaults — Next.js on :3000 and Vite fallback on :5173.
+    # Dev defaults - Next.js on :3000 and Vite fallback on :5173.
     return [
         "http://localhost:3000",
         "http://127.0.0.1:3000",
@@ -50,19 +50,19 @@ async def _lifespan(app: FastAPI):
         from ..rag.store import _client_and_collection, has_store
 
         if not has_store():
-            print("[warmup] rag: no store on disk — skipping", flush=True, file=sys.stderr)
+            print("[warmup] rag: no store on disk - skipping", flush=True, file=sys.stderr)
             return
         t0 = asyncio.get_event_loop().time()
         try:
-            # sentence-transformers model load is blocking — run in a thread so
+            # sentence-transformers model load is blocking - run in a thread so
             # the event loop doesn't stall while chroma opens.
             await asyncio.to_thread(_client_and_collection)
             dt = asyncio.get_event_loop().time() - t0
             print(f"[warmup] rag: ready ({dt:.2f}s)", flush=True, file=sys.stderr)
         except Exception as e:
-            print(f"[warmup] rag: failed — {e!r}", flush=True, file=sys.stderr)
+            print(f"[warmup] rag: failed - {e!r}", flush=True, file=sys.stderr)
 
-    # Kick off all warmups in parallel — they return immediately on missing deps.
+    # Kick off all warmups in parallel - they return immediately on missing deps.
     await asyncio.gather(_warm_rag(), return_exceptions=True)
     yield
 

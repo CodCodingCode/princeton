@@ -1,4 +1,4 @@
-"""Patient-flow orchestrator — multi-PDF folder input.
+"""Patient-flow orchestrator - multi-PDF folder input.
 
 Flow (one call per case):
 
@@ -27,6 +27,7 @@ from ..enrichment import enrich
 from ..enrichment.cancer_type import detect_primary_cancer
 from ..external.regeneron_rules import evaluate_all
 from ..external.trial_sites import fetch_trial_sites
+from ..external.trials_global import search_global_trials
 from ..io.aggregator import aggregate_documents
 from ..io.pdf_extract import extract_document
 from ..models import (
@@ -284,7 +285,7 @@ class PatientOrchestrator:
             case.final_recommendation = rmap.final_recommendation
             await self.bus.emit(
                 EventKind.RAILWAY_READY,
-                f"Railway ready — {len(steps)} nodes",
+                f"Railway ready - {len(steps)} nodes",
                 {"railway": rmap.model_dump()},
             )
             await self.bus.emit(
@@ -297,25 +298,38 @@ class PatientOrchestrator:
             "6", "Dynamic NCCN railway", t0, f"{len(steps)} node(s)"
         )
 
-        # ── Stage 7: Regeneron trial matching ──────────────────────────────────
-        t0 = await self._stage_start("7", "Regeneron trial matching")
+        # ── Stage 7: Trial matching (Regeneron tier + global tier) ────────────
+        # Regeneron matches have hand-written predicates, so they keep their
+        # eligible / needs_more_data verdicts. The global tier pulls up to 20
+        # more recruiting trials from ClinicalTrials.gov for the case's
+        # cancer type (any sponsor), marked status="unscored" since we don't
+        # have per-trial predicates for the long tail. The frontend ranks
+        # them by distance from the patient.
+        t0 = await self._stage_start("7", "Clinical trial matching")
         try:
-            matches: list[TrialMatch] = evaluate_all(case)
+            regeneron_matches: list[TrialMatch] = evaluate_all(case)
+            exclude = {m.nct_id.upper() for m in regeneron_matches}
+            global_matches: list[TrialMatch] = await search_global_trials(
+                case, exclude_nct_ids=exclude, limit=20,
+            )
+            matches: list[TrialMatch] = regeneron_matches + global_matches
             case.trial_matches = matches
             eligible_n = sum(1 for m in matches if m.status == "eligible")
             await self.bus.emit(
                 EventKind.TRIAL_MATCHES_READY,
-                f"{eligible_n} eligible / {len(matches)} total",
+                f"{eligible_n} eligible · {len(regeneron_matches)} Regeneron · "
+                f"{len(global_matches)} other",
                 {"matches": [m.model_dump() for m in matches]},
             )
         except Exception as e:
-            await self._stage_fail("7", "Regeneron trial matching", e)
+            await self._stage_fail("7", "Clinical trial matching", e)
             raise
         await self._stage_done(
             "7",
-            "Regeneron trial matching",
+            "Clinical trial matching",
             t0,
-            f"{eligible_n}/{len(matches)} eligible",
+            f"{eligible_n}/{len(matches)} eligible across "
+            f"{len(regeneron_matches)}+{len(global_matches)} trials",
         )
 
         # ── Stage 8: Trial-site geocoding ──────────────────────────────────────

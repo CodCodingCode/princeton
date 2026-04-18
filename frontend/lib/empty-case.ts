@@ -1,7 +1,7 @@
 import type { PatientCase } from "./types";
 
 /**
- * Stub `PatientCase` so the UI can render without a backend — useful for
+ * Stub `PatientCase` so the UI can render without a backend - useful for
  * layout work and for `/?case=anything` previews.
  */
 export function emptyCase(caseId: string): PatientCase {

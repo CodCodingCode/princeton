@@ -7,9 +7,7 @@ export function DocumentsTab({ caseData }: { caseData: PatientCase }) {
   return (
     <div className="space-y-5">
       <div>
-        <div className="text-[11px] uppercase tracking-widest text-neutral-500 font-semibold mb-2">
-          Source documents
-        </div>
+        <div className="eyebrow mb-2">Source documents</div>
         <p className="text-sm text-neutral-600 leading-relaxed">
           Every extracted field traces back to a page. Expand a document to see
           what was pulled from it.

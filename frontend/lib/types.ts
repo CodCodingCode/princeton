@@ -1,4 +1,4 @@
-// Mirror of backend/src/neoantigen/models.py — kept manually in sync.
+// Mirror of backend/src/neoantigen/models.py - kept manually in sync.
 
 export interface Mutation {
   gene: string;

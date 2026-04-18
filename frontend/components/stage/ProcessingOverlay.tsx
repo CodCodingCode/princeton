@@ -4,11 +4,26 @@ import { useEffect, useMemo, useRef } from "react";
 import type { EventKind } from "@/lib/types";
 import type { ExtractFeedEntry } from "@/components/CaseTabs";
 
+export interface StageLogEntry {
+  stage: string;
+  phase: "start" | "done" | "fail";
+  message: string;
+  seconds?: number;
+  at: number;
+}
+
 export interface ProcessingState {
   extractProgress: { done: number; total: number; latest: string } | null;
   extractFeed?: ExtractFeedEntry[];
   firedMilestones: Set<EventKind>;
   currentStage: string | null;
+  stageLog?: StageLogEntry[];
+}
+
+function stageBody(message: string): string {
+  // Strip the "[stage N] ▶/✓/✗ PHASE · " prefix the backend tags on.
+  const m = message.match(/·\s+(.+)$/);
+  return m ? m[1] : message;
 }
 
 function fmtBytes(bytes?: number): string {
@@ -25,6 +40,7 @@ interface Row {
   label: string;
   status: RowStatus;
   detail?: string;
+  progress?: { done: number; total: number; pct: number };
 }
 
 function deriveRows(s: ProcessingState): Row[] {
@@ -44,12 +60,24 @@ function deriveRows(s: ProcessingState): Row[] {
     ? `${s.extractProgress.done}/${s.extractProgress.total}`
     : undefined;
 
+  const readProgress =
+    !hasPdf && s.extractProgress && s.extractProgress.total > 0
+      ? {
+          done: s.extractProgress.done,
+          total: s.extractProgress.total,
+          pct: Math.round(
+            (s.extractProgress.done / s.extractProgress.total) * 100,
+          ),
+        }
+      : undefined;
+
   return [
     {
       key: "read",
       label: "Reading records",
       status: hasPdf ? "done" : extracting ? "active" : "active",
       detail: hasPdf ? undefined : extractDetail,
+      progress: readProgress,
     },
     {
       key: "reconcile",
@@ -138,11 +166,9 @@ export function ProcessingOverlay({ state }: { state: ProcessingState }) {
   }, [fileRows.length, state.extractProgress?.done]);
 
   return (
-    <div className="absolute top-6 right-6 pointer-events-none">
-      <div className="pointer-events-auto w-[360px] rounded-2xl bg-white/95 backdrop-blur shadow-2xl p-5">
-        <div className="text-[10px] uppercase tracking-[0.25em] text-neutral-500 font-semibold mb-3">
-          Working on your case
-        </div>
+    <div className="absolute top-24 right-6 pointer-events-none">
+      <div className="pointer-events-auto w-[360px] rounded-2xl bg-white/70 backdrop-blur-xl ring-1 ring-white/40 shadow-2xl shadow-black/10 p-5">
+        <div className="eyebrow mb-3">Working on your case</div>
         <ul className="space-y-2.5">
           {rows.map((r) => (
             <li key={r.key} className="flex items-start gap-3">
@@ -159,23 +185,77 @@ export function ProcessingOverlay({ state }: { state: ProcessingState }) {
                 >
                   {r.label}
                 </div>
-                {r.detail && (
-                  <div className="text-[11px] text-neutral-500 mt-0.5 tabular-nums">
-                    {r.detail}
+                {r.progress ? (
+                  <div className="mt-1.5">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[10px] text-neutral-500 tabular-nums">
+                        {r.progress.done}/{r.progress.total}
+                      </span>
+                      <span className="text-[10px] text-neutral-500 tabular-nums">
+                        {r.progress.pct}%
+                      </span>
+                    </div>
+                    <div className="h-1.5 w-full bg-neutral-200 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-brand-700 transition-[width] duration-300"
+                        style={{ width: `${r.progress.pct}%` }}
+                      />
+                    </div>
                   </div>
+                ) : (
+                  r.detail && (
+                    <div className="text-[11px] text-neutral-500 mt-0.5 tabular-nums">
+                      {r.detail}
+                    </div>
+                  )
                 )}
               </div>
             </li>
           ))}
         </ul>
 
+        {state.stageLog && state.stageLog.length > 0 && (
+          <div className="mt-4 pt-4 divider">
+            <div className="eyebrow mb-2">Pipeline</div>
+            <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
+              {state.stageLog.slice(-8).map((e, i) => (
+                <div
+                  key={`${e.stage}-${e.phase}-${e.at}-${i}`}
+                  className="flex items-start gap-2 text-[11px] leading-snug"
+                >
+                  <span
+                    className={`shrink-0 w-4 text-center font-mono ${
+                      e.phase === "done"
+                        ? "text-emerald-600"
+                        : e.phase === "fail"
+                          ? "text-red-600"
+                          : "text-black"
+                    }`}
+                  >
+                    {e.phase === "done" ? "✓" : e.phase === "fail" ? "✗" : "▶"}
+                  </span>
+                  <span className="shrink-0 text-neutral-400 tabular-nums">
+                    {e.stage}
+                  </span>
+                  <span className="flex-1 min-w-0 text-neutral-700 truncate">
+                    {stageBody(e.message)}
+                  </span>
+                  {typeof e.seconds === "number" && (
+                    <span className="shrink-0 text-[10px] text-neutral-500 tabular-nums">
+                      {e.seconds.toFixed(1)}s
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {extracting && fileRows.length > 0 && (
-          <div className="mt-4 pt-4 border-t border-neutral-200">
+          <div className="mt-4 pt-4 divider">
             <div className="flex items-center justify-between mb-2">
-              <div className="text-[10px] uppercase tracking-[0.2em] text-neutral-500 font-semibold">
-                Reading files
-              </div>
-              <div className="text-[11px] tabular-nums text-neutral-500">
+              <div className="eyebrow">Reading files</div>
+              <div className="meta-mono">
                 {state.extractProgress!.done}/{state.extractProgress!.total} ·{" "}
                 {overallPct}%
               </div>

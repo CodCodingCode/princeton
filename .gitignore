@@ -14,7 +14,7 @@ node_modules/
 next-env.d.ts
 *.tsbuildinfo
 
-# Derived / downloaded data — rebuild with backend/scripts/build_pubmed_rag.py,
+# Derived / downloaded data - rebuild with backend/scripts/build_pubmed_rag.py,
 # don't commit.
 backend/data/rag/
 backend/out/

@@ -1,12 +1,12 @@
 """Regeneron melanoma trial registry + structured eligibility predicates.
 
 Four trials (checked April 2026):
-  NCT05352672 — Harmony Melanoma (Phase 3, 1L advanced, fianlimab + cemiplimab vs pembro)
-  NCT06246916 — Harmony Head-to-Head (Phase 3, 1L advanced, vs nivo + rela)
-  NCT06190951 — Neoadjuvant Phase 2 (fianlimab + cemiplimab, high-risk resectable)
-  NCT04526899 — BNT111 + Libtayo (BioNTech partnership, fixed-antigen vaccine + PD-1)
+  NCT05352672 - Harmony Melanoma (Phase 3, 1L advanced, fianlimab + cemiplimab vs pembro)
+  NCT06246916 - Harmony Head-to-Head (Phase 3, 1L advanced, vs nivo + rela)
+  NCT06190951 - Neoadjuvant Phase 2 (fianlimab + cemiplimab, high-risk resectable)
+  NCT04526899 - BNT111 + Libtayo (BioNTech partnership, fixed-antigen vaccine + PD-1)
 
-Predicates resolve from a :class:`PatientCase` — its `pathology`, `intake`,
+Predicates resolve from a :class:`PatientCase` - its `pathology`, `intake`,
 `enrichment`, and `mutations`. Unresolvable gates land in ``unknown_criteria``.
 """
 
@@ -79,7 +79,7 @@ def _has_braf_v600(case: PatientCase) -> bool:
 
 
 # ─────────────────────────────────────────────────────────────
-# Biomarker gate resolvers — one per supported key. Each returns
+# Biomarker gate resolvers - one per supported key. Each returns
 # (verdict, label) where verdict ∈ {"pass","fail","unknown"}.
 # Verdict is with respect to the `required` flag:
 #   required=True  → pass if biomarker present
@@ -131,7 +131,7 @@ def _gate_egfr_t790m(case: PatientCase, *, required: bool) -> tuple[str, str]:
 
 
 def _gate_alk_fusion(case: PatientCase, *, required: bool) -> tuple[str, str]:
-    # Fusions rarely appear as a clean AA change — rely on text and gene presence.
+    # Fusions rarely appear as a clean AA change - rely on text and gene presence.
     present = (
         _gene_present(case, "ALK")
         or _mutation_text_match(case, "alk fusion")
@@ -177,7 +177,7 @@ def _gate_her2_positive(case: PatientCase, *, required: bool) -> tuple[str, str]
         or _mutation_text_match(case, "erbb2 amplification")
     )
     label = "HER2 positive (amplified / 3+)"
-    # When absent we can't tell whether the test was simply not done — return unknown.
+    # When absent we can't tell whether the test was simply not done - return unknown.
     if not present:
         return ("unknown", f"{label} (status not extracted)")
     return ("pass" if required else "fail", label)
@@ -428,7 +428,7 @@ def evaluate(case: PatientCase, rule: TrialRule) -> TrialMatch:
     if rule.min_life_expectancy_months is not None:
         _record(_life_expectancy_verdict(intake, rule.min_life_expectancy_months))
 
-    # Biomarker gates — dispatch via the resolver table. "any" is a no-op;
+    # Biomarker gates - dispatch via the resolver table. "any" is a no-op;
     # "required" / "excluded" resolve through their gate function.
     for key, mode in rule.biomarker_gates.items():
         if mode == "any":
@@ -469,7 +469,7 @@ def evaluate(case: PatientCase, rule: TrialRule) -> TrialMatch:
 def evaluate_all(case: PatientCase) -> list[TrialMatch]:
     """Run every Regeneron rule against a case, returning ranked matches.
 
-    Pre-filters trials by ``case.primary_cancer_type`` — a lung case only
+    Pre-filters trials by ``case.primary_cancer_type`` - a lung case only
     evaluates lung-bucketed trials. ``cancer_types`` is treated as a wildcard
     when empty (basket trials, unscoped legacy rules) or when the case's
     primary cancer type is ``unknown`` (let the predicate verdicts decide).
