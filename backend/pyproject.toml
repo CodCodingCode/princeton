@@ -17,16 +17,12 @@ dependencies = [
 [project.optional-dependencies]
 ml = ["mhcflurry>=2.1"]
 agent = [
-    "pydantic-ai-slim[openai]>=0.0.14",
-    "pypdf>=4.0",
-    "googlemaps>=4.10",
-    "reportlab>=4.0",
-    "icalendar>=5.0",
+    "openai>=1.40",
     "python-dotenv>=1.0",
-    "jinja2>=3.1",
     "streamlit>=1.30",
     "plotly>=5.18",
     "py3Dmol>=2.0",
+    "networkx>=3.2",
 ]
 
 [project.scripts]

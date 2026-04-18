@@ -1,11 +1,10 @@
-"""Agent orchestration layer for the neoantigen pipeline.
+"""Agent layer for the melanoma copilot.
 
-Drives the existing pipeline + external integrations (Google, PANDORA, email)
-through a deterministic 8-step workflow. LLM reasoning uses PydanticAI agents
-backed by K2 Think V2. Progress events stream to the Streamlit UI via EventBus.
+Import the orchestrator directly from its module to avoid circular imports:
+
+    from neoantigen.agent.melanoma_orchestrator import MelanomaOrchestrator
 """
 
 from .events import AgentEvent, EventBus, EventKind
-from .orchestrator import CaseOrchestrator, build_case_file, run_case
 
-__all__ = ["AgentEvent", "EventBus", "EventKind", "CaseOrchestrator", "build_case_file", "run_case"]
+__all__ = ["AgentEvent", "EventBus", "EventKind"]

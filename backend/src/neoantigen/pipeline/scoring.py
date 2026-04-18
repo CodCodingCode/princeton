@@ -1,7 +1,7 @@
 """Peptide-MHC binding scorers.
 
-Default: heuristic based on length and anchor residues (HLA-A*02:01-ish).
-Opt-in: MHCflurry via `--mhcflurry` flag.
+Default: heuristic based on length and HLA-A*02:01 anchor residues.
+Opt-in: MHCflurry via the ``--mhcflurry`` flag.
 """
 
 from __future__ import annotations
@@ -12,16 +12,10 @@ from typing import Protocol
 from ..models import Peptide
 
 HYDROPHOBIC = set("AILMFWVC")
+
+# Anchor preferences for HLA-A*02:01 (the most common allele in melanoma demos).
 A0201_P2_ANCHORS = set("LMIV")
 A0201_PC_ANCHORS = set("VLIM")
-
-# DLA-88 anchor preferences from canine peptidome studies (Ross 2018, Barth 2016).
-# DLA-88*50101 favors hydrophobic P2 and aromatic/hydrophobic C-terminus.
-DLA_88_50101_P2_ANCHORS = set("AILMV")
-DLA_88_50101_PC_ANCHORS = set("FLWMIV")
-# DLA-88*00801 — different preferred anchors
-DLA_88_00801_P2_ANCHORS = set("EDQ")
-DLA_88_00801_PC_ANCHORS = set("LMFI")
 
 
 class Scorer(Protocol):
@@ -95,57 +89,7 @@ class MHCflurryScorer:
             peptide.score_nm = float(nm)
 
 
-class DLAHeuristicScorer:
-    """Canine DLA-I binding heuristic. Same shape as HeuristicScorer but with DLA anchors."""
-
-    name = "dla-heuristic"
-
-    def __init__(self, allele: str = "DLA-88*50101") -> None:
-        self.allele = allele
-        if "50101" in allele:
-            self._p2 = DLA_88_50101_P2_ANCHORS
-            self._pc = DLA_88_50101_PC_ANCHORS
-        elif "00801" in allele:
-            self._p2 = DLA_88_00801_P2_ANCHORS
-            self._pc = DLA_88_00801_PC_ANCHORS
-        else:
-            self._p2 = DLA_88_50101_P2_ANCHORS
-            self._pc = DLA_88_50101_PC_ANCHORS
-
-    def _score_one(self, seq: str) -> float:
-        length = len(seq)
-        score = 0.0
-        if length == 9:
-            score += 0.0
-        elif length == 10:
-            score += 0.4
-        elif length == 8:
-            score += 1.2
-        else:
-            score += 2.0
-
-        if length >= 2 and seq[1] in self._p2:
-            score -= 1.6
-        if seq[-1] in self._pc:
-            score -= 1.6
-
-        hydrophobic_fraction = sum(1 for aa in seq if aa in HYDROPHOBIC) / length
-        score -= hydrophobic_fraction * 0.6
-
-        if "P" in seq[1:-1]:
-            score += 0.5
-
-        pseudo_nm = 60.0 * math.exp(score)
-        return round(pseudo_nm, 2)
-
-    def score(self, peptides: list[Peptide]) -> None:
-        for p in peptides:
-            p.score_nm = self._score_one(p.sequence)
-
-
-def build_scorer(name: str, allele: str) -> Scorer:
+def build_scorer(name: str, allele: str = "HLA-A*02:01") -> Scorer:
     if name == "mhcflurry":
         return MHCflurryScorer(allele=allele)
-    if name == "dla-heuristic" or allele.startswith("DLA"):
-        return DLAHeuristicScorer(allele=allele)
     return HeuristicScorer(allele=allele)

@@ -128,10 +128,8 @@ async def dock_peptide(peptide: str, allele: str, mutation_label: str = "") -> S
     cache_file = _cache_dir() / f"{_cache_key(peptide, allele)}.pdb"
     method: str = "template"
 
-    # 1. Check cache
     if cache_file.exists():
         pdb_text = cache_file.read_text()
-        # Detect method from header
         head = pdb_text[:200].upper()
         if "PANDORA" in head:
             method = "pandora"
@@ -140,13 +138,12 @@ async def dock_peptide(peptide: str, allele: str, mutation_label: str = "") -> S
         return StructurePose(
             peptide_sequence=peptide,
             mutation_label=mutation_label,
-            dla_allele=allele,
+            hla_allele=allele,
             pdb_path=str(cache_file),
             pdb_text=pdb_text,
             method=method,  # type: ignore[arg-type]
         )
 
-    # 2. PANDORA
     pdb_text: Optional[str] = None
     if _pandora_available():
         work_dir = _cache_dir() / f"pandora_{_cache_key(peptide, allele)}"
@@ -155,14 +152,12 @@ async def dock_peptide(peptide: str, allele: str, mutation_label: str = "") -> S
         if pdb_text:
             method = "pandora"
 
-    # 3. ESMFold
     if pdb_text is None:
         pdb_text = await _fold_esmfold(peptide)
         if pdb_text:
             method = "esmfold"
             pdb_text = f"HEADER    ESMFOLD {peptide} (allele {allele})\n" + pdb_text
 
-    # 4. Template stub
     if pdb_text is None:
         pdb_text = _minimal_pdb(peptide)
         method = "template"
@@ -172,8 +167,20 @@ async def dock_peptide(peptide: str, allele: str, mutation_label: str = "") -> S
     return StructurePose(
         peptide_sequence=peptide,
         mutation_label=mutation_label,
-        dla_allele=allele,
+        hla_allele=allele,
         pdb_path=str(cache_file),
         pdb_text=pdb_text,
         method=method,  # type: ignore[arg-type]
     )
+
+
+async def fold_protein(sequence: str) -> tuple[str | None, str]:
+    """Fold an arbitrary protein sequence with ESMFold. Returns (pdb_text, method).
+
+    Used by the molecular landscape (Panel 2) to render WT vs mutant for driver
+    proteins. Falls back to a template stub if ESMFold is unreachable.
+    """
+    pdb = await _fold_esmfold(sequence, timeout=120.0)
+    if pdb is not None:
+        return f"HEADER    ESMFOLD ({len(sequence)} aa)\n" + pdb, "esmfold"
+    return _minimal_pdb(sequence[:50]), "template"

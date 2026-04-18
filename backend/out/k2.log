@@ -32,3 +32,18 @@
 2026-04-17 23:02:10,929 [WARNING] neoantigen.k2: draft_email fallback: recipient_type=synthesis_vendor, recipient_name=TriLink BioTechnologies, err=NotFoundError: Error code: 404 - {'detail': 'No LLM found for model_name: medix-r1-30b'}
 2026-04-17 23:02:11,120 [ERROR] neoantigen.k2: call_for_json HTTP error: schema=EmailContent, err=NotFoundError: Error code: 404 - {'detail': 'No LLM found for model_name: medix-r1-30b'}
 2026-04-17 23:02:11,120 [WARNING] neoantigen.k2: draft_email fallback: recipient_type=ethics_board, recipient_name=Ethics Committee, err=NotFoundError: Error code: 404 - {'detail': 'No LLM found for model_name: medix-r1-30b'}
+2026-04-18 01:20:54,127 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=https://api.k2think.ai/v1)
+2026-04-18 01:20:55,494 [INFO] neoantigen.llm: stream_with_thinking start user_len=557 images=0
+2026-04-18 01:20:56,772 [ERROR] neoantigen.llm: stream HTTP error: NotFoundError: Error code: 404 - {'detail': 'No LLM found for model_name: medix-r1-30b'}
+2026-04-18 01:20:56,772 [INFO] neoantigen.llm: stream_with_thinking start user_len=470 images=0
+2026-04-18 01:20:57,045 [ERROR] neoantigen.llm: stream HTTP error: NotFoundError: Error code: 404 - {'detail': 'No LLM found for model_name: medix-r1-30b'}
+2026-04-18 01:20:57,045 [INFO] neoantigen.llm: stream_with_thinking start user_len=742 images=0
+2026-04-18 01:20:57,307 [ERROR] neoantigen.llm: stream HTTP error: NotFoundError: Error code: 404 - {'detail': 'No LLM found for model_name: medix-r1-30b'}
+2026-04-18 01:20:57,308 [INFO] neoantigen.llm: stream_with_thinking start user_len=513 images=0
+2026-04-18 01:20:57,617 [ERROR] neoantigen.llm: stream HTTP error: NotFoundError: Error code: 404 - {'detail': 'No LLM found for model_name: medix-r1-30b'}
+2026-04-18 01:20:57,617 [INFO] neoantigen.llm: stream_with_thinking start user_len=457 images=0
+2026-04-18 01:20:57,894 [ERROR] neoantigen.llm: stream HTTP error: NotFoundError: Error code: 404 - {'detail': 'No LLM found for model_name: medix-r1-30b'}
+2026-04-18 01:20:57,895 [INFO] neoantigen.llm: stream_with_thinking start user_len=680 images=0
+2026-04-18 01:20:58,162 [ERROR] neoantigen.llm: stream HTTP error: NotFoundError: Error code: 404 - {'detail': 'No LLM found for model_name: medix-r1-30b'}
+2026-04-18 01:20:58,162 [INFO] neoantigen.llm: stream_with_thinking start user_len=620 images=0
+2026-04-18 01:20:58,428 [ERROR] neoantigen.llm: stream HTTP error: NotFoundError: Error code: 404 - {'detail': 'No LLM found for model_name: medix-r1-30b'}

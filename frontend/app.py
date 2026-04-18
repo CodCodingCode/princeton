@@ -1,365 +1,544 @@
+"""Melanoma Oncologist Copilot — three-panel live UI.
+
+Panel 1 — NCCN guideline walker (flowchart that lights up node by node).
+Panel 2 — Molecular landscape (WT vs mutant 3D, drug co-crystals).
+Panel 3 — Vaccine designer (top peptides, mRNA construct, HLA poses).
+
+Sidebar streams the model's <think> reasoning live and accepts chat interrupts.
+
+Run from /frontend with the GH200 vLLM tunnel up:
+    streamlit run app.py
+"""
+
+from __future__ import annotations
+
 import asyncio
-import io
+import queue
+import threading
+import time
 from pathlib import Path
 
-import httpx
-import plotly.express as px
+import networkx as nx
 import plotly.graph_objects as go
-import py3Dmol
 import streamlit as st
-import streamlit.components.v1 as components
+from dotenv import load_dotenv
 
-from neoantigen.external.clinicaltrials import search_trials
-from neoantigen.external.dgidb import search_drugs
-from neoantigen.models import PipelineResult
-from neoantigen.pipeline.construct import build_construct
-from neoantigen.pipeline.filters import filter_candidates
-from neoantigen.pipeline.parser import parse_tsv
-from neoantigen.pipeline.peptides import generate_peptides
-from neoantigen.pipeline.protein import apply_mutation, fetch_protein
-from neoantigen.pipeline.scoring import build_scorer
-
-st.set_page_config(page_title="NeoVax", page_icon="🧬", layout="wide")
+from neoantigen.agent import AgentEvent, EventBus, EventKind
+from neoantigen.agent.melanoma_orchestrator import MelanomaOrchestrator
+from neoantigen.nccn.melanoma_v2024 import GRAPH, graph_to_payload
 
 BACKEND_DIR = Path(__file__).resolve().parent.parent / "backend"
-SAMPLE = BACKEND_DIR / "sample_data" / "braf_v600e.tsv"
+SAMPLE_DIR = BACKEND_DIR / "sample_data"
+OUT_DIR = BACKEND_DIR / "out"
 
-# ── sidebar ──────────────────────────────────────────────────────────────────
+DEMO_VCF = SAMPLE_DIR / "tcga_skcm_demo.vcf"
+DEMO_SLIDE = SAMPLE_DIR / "tcga_skcm_demo_slide.jpg"
 
-st.sidebar.title("NeoVax")
-st.sidebar.caption("Personalized cancer vaccine pipeline")
+load_dotenv(dotenv_path=BACKEND_DIR / ".env")
 
-scorer_choice = st.sidebar.radio("Scorer", ["heuristic", "mhcflurry"], index=0)
-allele = st.sidebar.text_input("MHC allele", value="HLA-A*02:01")
-top_n = st.sidebar.slider("Top N candidates", 3, 30, 15)
-max_nm = st.sidebar.slider("Affinity cutoff (nM)", 100, 10000, 500, step=100)
-with_apis = st.sidebar.checkbox("Query ClinicalTrials.gov + DGIdb", value=False)
+st.set_page_config(
+    page_title="Melanoma Oncologist Copilot",
+    page_icon="🩺",
+    layout="wide",
+)
 
-st.sidebar.divider()
-input_mode = st.sidebar.radio("Input", ["Upload file", "Use demo data"])
+# ─────────────────────────────────────────────────────────────
+# Session state
+# ─────────────────────────────────────────────────────────────
+DEFAULTS = {
+    "events": [],
+    "event_queue": None,
+    "agent_thread": None,
+    "running": False,
+    "done": False,
+    "started_at": None,
+    "live_thinking": "",
+    "live_thinking_node": None,
+    "active_bus": None,
+    "chat_messages": [],
+    "nccn_steps": [],
+    "molecules": [],
+    "poses": [],
+    "pipeline": None,
+    "pathology": None,
+    "mutations": [],
+    "selected_node": None,
+}
+for key, default in DEFAULTS.items():
+    if key not in st.session_state:
+        st.session_state[key] = default
 
-# ── input ────────────────────────────────────────────────────────────────────
 
-mutations = None
-if input_mode == "Upload file":
-    uploaded = st.sidebar.file_uploader("Upload VCF or TSV", type=["vcf", "tsv", "txt", "csv"])
-    if uploaded is not None:
-        tmp = Path("/tmp/neoantigen_upload" + Path(uploaded.name).suffix)
-        tmp.write_bytes(uploaded.read())
-        from neoantigen.pipeline.parser import parse
-        mutations = parse(tmp)
-else:
-    if SAMPLE.exists():
-        mutations = parse_tsv(SAMPLE)
+# ─────────────────────────────────────────────────────────────
+# Background agent runner
+# ─────────────────────────────────────────────────────────────
+def run_agent_in_background(slide_path: Path, vcf_path: Path, event_q: queue.Queue, bus_holder: dict) -> None:
+    async def _bridge():
+        bus = EventBus()
+        bus_holder["bus"] = bus
+        orch = MelanomaOrchestrator(slide_path=slide_path, vcf_path=vcf_path, bus=bus)
+
+        async def _drain():
+            async for ev in bus.stream():
+                event_q.put(ev)
+            event_q.put(None)
+
+        drain_task = asyncio.create_task(_drain())
+        try:
+            await orch.run()
+        finally:
+            await drain_task
+
+    try:
+        asyncio.run(_bridge())
+    except Exception as e:
+        event_q.put(AgentEvent(kind=EventKind.TOOL_ERROR, label=f"Fatal: {e}", payload={"error": str(e)}))
+        event_q.put(None)
+
+
+def _drain_queue() -> bool:
+    q = st.session_state.event_queue
+    if q is None:
+        return False
+    done = False
+    while True:
+        try:
+            ev = q.get_nowait()
+        except queue.Empty:
+            break
+        if ev is None:
+            done = True
+            break
+        _ingest_event(ev)
+        st.session_state.events.append(ev)
+        if ev.kind == EventKind.DONE:
+            done = True
+    return done
+
+
+def _ingest_event(ev: AgentEvent) -> None:
+    """Route event into the right pieces of session state for live rendering."""
+    p = ev.payload
+    if ev.kind == EventKind.THINKING_DELTA:
+        node = p.get("node_id")
+        if node != st.session_state.live_thinking_node:
+            st.session_state.live_thinking = ""
+            st.session_state.live_thinking_node = node
+        st.session_state.live_thinking += p.get("delta", "")
+    elif ev.kind == EventKind.NCCN_NODE_VISITED:
+        st.session_state.nccn_steps.append(p.get("step", {}))
+        st.session_state.live_thinking = ""
+        st.session_state.live_thinking_node = None
+    elif ev.kind == EventKind.VLM_FINDING:
+        st.session_state.pathology = p.get("findings")
+    elif ev.kind == EventKind.MOLECULE_READY:
+        st.session_state.molecules.append(p.get("view"))
+    elif ev.kind == EventKind.PIPELINE_RESULT:
+        st.session_state.pipeline = p.get("pipeline")
+    elif ev.kind == EventKind.STRUCTURE_READY:
+        st.session_state.poses.append(p.get("pose"))
+    elif ev.kind == EventKind.CASE_UPDATE and "mutations" in p:
+        st.session_state.mutations = p.get("mutations", [])
+
+
+# ─────────────────────────────────────────────────────────────
+# NCCN flowchart rendering (Panel 1)
+# ─────────────────────────────────────────────────────────────
+@st.cache_data
+def _graph_layout() -> dict:
+    payload = graph_to_payload()
+    g = nx.DiGraph()
+    for n in payload["nodes"]:
+        g.add_node(n["id"])
+    for e in payload["edges"]:
+        if e["dst"] is not None:
+            g.add_edge(e["src"], e["dst"])
+    try:
+        from networkx.drawing.nx_agraph import graphviz_layout
+        return graphviz_layout(g, prog="dot")
+    except Exception:
+        return nx.spring_layout(g, seed=42, k=2.0)
+
+
+def _render_nccn_flowchart() -> None:
+    payload = graph_to_payload()
+    pos = _graph_layout()
+    visited = {s["node_id"] for s in st.session_state.nccn_steps}
+    last_id = st.session_state.nccn_steps[-1]["node_id"] if st.session_state.nccn_steps else None
+    chosen_edges: set[tuple[str, str]] = set()
+    for s in st.session_state.nccn_steps:
+        if s.get("next_node_id"):
+            chosen_edges.add((s["node_id"], s["next_node_id"]))
+
+    edge_x: list = []
+    edge_y: list = []
+    edge_chosen_x: list = []
+    edge_chosen_y: list = []
+    for e in payload["edges"]:
+        if e["dst"] is None or e["src"] not in pos or e["dst"] not in pos:
+            continue
+        x0, y0 = pos[e["src"]]
+        x1, y1 = pos[e["dst"]]
+        if (e["src"], e["dst"]) in chosen_edges:
+            edge_chosen_x.extend([x0, x1, None])
+            edge_chosen_y.extend([y0, y1, None])
+        else:
+            edge_x.extend([x0, x1, None])
+            edge_y.extend([y0, y1, None])
+
+    node_ids: list[str] = []
+    node_x: list[float] = []
+    node_y: list[float] = []
+    node_text: list[str] = []
+    node_color: list[str] = []
+    for n in payload["nodes"]:
+        if n["id"] not in pos:
+            continue
+        x, y = pos[n["id"]]
+        node_ids.append(n["id"])
+        node_x.append(x)
+        node_y.append(y)
+        node_text.append(n["title"])
+        if n["id"] == last_id:
+            node_color.append("#10b981")
+        elif n["id"] in visited:
+            node_color.append("#3b82f6")
+        elif n["is_terminal"]:
+            node_color.append("#f59e0b")
+        else:
+            node_color.append("#e5e7eb")
+
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(
+        x=edge_x, y=edge_y, mode="lines",
+        line=dict(width=1, color="#cbd5e1"), hoverinfo="none", showlegend=False,
+    ))
+    if edge_chosen_x:
+        fig.add_trace(go.Scatter(
+            x=edge_chosen_x, y=edge_chosen_y, mode="lines",
+            line=dict(width=3, color="#10b981"), hoverinfo="none", showlegend=False,
+        ))
+    fig.add_trace(go.Scatter(
+        x=node_x, y=node_y,
+        mode="markers+text",
+        marker=dict(size=42, color=node_color, line=dict(color="#0f172a", width=1.5)),
+        text=node_text,
+        textposition="middle center",
+        textfont=dict(size=10, color="#0f172a"),
+        customdata=node_ids,
+        hovertemplate="<b>%{text}</b><br>%{customdata}<extra></extra>",
+        showlegend=False,
+    ))
+    fig.update_layout(
+        margin=dict(l=10, r=10, t=10, b=10),
+        height=440,
+        xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+        yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+        plot_bgcolor="#ffffff",
+    )
+    selection = st.plotly_chart(fig, key="nccn_chart", use_container_width=True, on_select="rerun")
+    sel_points = []
+    try:
+        sel_points = selection.selection["points"] if selection else []
+    except Exception:
+        sel_points = []
+    if sel_points:
+        st.session_state.selected_node = sel_points[0].get("customdata")
+
+
+def _node_detail(node_id: str) -> None:
+    matching = [s for s in st.session_state.nccn_steps if s["node_id"] == node_id]
+    node = GRAPH.get(node_id)
+    if node is None:
+        return
+    with st.container(border=True):
+        st.markdown(f"#### 🩺 {node.title}")
+        st.caption(node.question)
+        if matching:
+            step = matching[-1]
+            st.markdown(f"**Decision:** {step.get('chosen_option', '—')}")
+            ev = step.get("evidence") or {}
+            if ev:
+                st.markdown("**Evidence consulted**")
+                for k, v in ev.items():
+                    st.markdown(f"- `{k}`: {v}")
+            reasoning = step.get("reasoning") or "(no reasoning recorded)"
+            st.markdown("**Model reasoning**")
+            st.code(reasoning, language="markdown")
+        else:
+            st.info("Node not yet visited by the agent.")
+
+
+# ─────────────────────────────────────────────────────────────
+# Panel 2 — molecular landscape
+# ─────────────────────────────────────────────────────────────
+def _render_molecule(mol: dict) -> None:
+    import py3Dmol
+
+    title = f"##### 🧬 {mol['gene']} {mol['mutation_label']}"
+    if mol.get("drug_complex_pdb_id"):
+        title += f" · drug co-crystal {mol['drug_complex_pdb_id']} ({mol['drug_name']})"
+    st.markdown(title)
+
+    cols = st.columns(3 if mol.get("drug_complex_pdb_text") else 2)
+
+    with cols[0]:
+        st.caption("Wild-type (ESMFold)")
+        if mol.get("wt_pdb_text"):
+            v = py3Dmol.view(width=320, height=240)
+            v.addModel(mol["wt_pdb_text"], "pdb")
+            v.setStyle({"cartoon": {"color": "spectrum"}})
+            v.addStyle({"resi": str(mol["mutation_position"])}, {"stick": {"colorscheme": "greenCarbon"}})
+            v.zoomTo()
+            st.components.v1.html(v._make_html(), height=250)
+
+    with cols[1]:
+        st.caption(f"Mutant — residue {mol['mutation_position']} highlighted")
+        if mol.get("mut_pdb_text"):
+            v = py3Dmol.view(width=320, height=240)
+            v.addModel(mol["mut_pdb_text"], "pdb")
+            v.setStyle({"cartoon": {"color": "spectrum"}})
+            v.addStyle({"resi": str(mol["mutation_position"])}, {"stick": {"colorscheme": "redCarbon"}})
+            v.zoomTo()
+            st.components.v1.html(v._make_html(), height=250)
+
+    if mol.get("drug_complex_pdb_text"):
+        with cols[2]:
+            st.caption(f"Drug bound — RCSB {mol['drug_complex_pdb_id']}")
+            v = py3Dmol.view(width=320, height=240)
+            v.addModel(mol["drug_complex_pdb_text"], "pdb")
+            v.setStyle({"cartoon": {"color": "lightgray"}})
+            v.addStyle({"hetflag": True}, {"stick": {"colorscheme": "magentaCarbon"}})
+            v.zoomTo()
+            st.components.v1.html(v._make_html(), height=250)
+
+
+# ─────────────────────────────────────────────────────────────
+# Panel 3 — vaccine designer
+# ─────────────────────────────────────────────────────────────
+def _render_vaccine_panel() -> None:
+    pipeline = st.session_state.pipeline
+    poses = st.session_state.poses
+
+    if not pipeline:
+        st.info("Vaccine pipeline runs once the NCCN walker reaches the personalized vaccine endpoint.")
+        return
+
+    candidates = pipeline.get("candidates", [])
+    if not candidates:
+        st.warning("No candidate peptides survived filtering.")
+        return
+
+    rows = []
+    for c in candidates[:10]:
+        p = c["peptide"]
+        m = p["mutation"]
+        rows.append({
+            "#": c["rank"],
+            "Peptide": p["sequence"],
+            "Len": p["length"],
+            "Gene/Mut": f"{m['gene']} {m['ref_aa']}{m['position']}{m['alt_aa']}",
+            "Score (nM)": round(p["score_nm"], 2) if p.get("score_nm") is not None else None,
+        })
+    st.dataframe(rows, hide_index=True, use_container_width=True)
+
+    if poses:
+        st.markdown("##### Top peptide-HLA poses")
+        cols = st.columns(min(3, len(poses)))
+        import py3Dmol
+        for i, pose in enumerate(poses[:3]):
+            with cols[i]:
+                st.caption(f"{pose['peptide_sequence']} · {pose['hla_allele']} ({pose['method']})")
+                if pose.get("pdb_text"):
+                    v = py3Dmol.view(width=300, height=240)
+                    v.addModel(pose["pdb_text"], "pdb")
+                    v.setStyle({"cartoon": {"color": "spectrum"}})
+                    v.addStyle({"hetflag": False}, {"stick": {"radius": 0.18}})
+                    v.zoomTo()
+                    st.components.v1.html(v._make_html(), height=250)
+
+    vaccine = pipeline.get("vaccine")
+    if vaccine:
+        st.markdown("##### mRNA construct")
+        _render_construct_bar(vaccine)
+        st.caption(
+            f"{len(vaccine['epitopes'])} epitopes · {len(vaccine['nucleotide_sequence'])} bp · "
+            f"~${round(len(vaccine['nucleotide_sequence']) * 0.07, 2)} synthesis"
+        )
+        with st.expander("Amino acid sequence"):
+            st.code(vaccine["amino_acid_sequence"], language="text")
+
+
+def _render_construct_bar(vaccine: dict) -> None:
+    epitopes = vaccine["epitopes"]
+    linker = vaccine["linker"]
+    palette = ["#0ea5e9", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899", "#14b8a6", "#84cc16", "#f97316", "#6366f1"]
+    segments = [("5' Kozak", "GCCGCCACC", "#94a3b8"), ("ATG", "M", "#475569")]
+    for i, ep in enumerate(epitopes):
+        if i > 0:
+            segments.append(("linker", linker, "#cbd5e1"))
+        segments.append((f"epitope {i + 1}", ep, palette[i % len(palette)]))
+    segments.append(("STOP", "TAA", "#0f172a"))
+
+    fig = go.Figure()
+    cursor = 0
+    for label, seq, color in segments:
+        width = max(1, len(seq))
+        fig.add_trace(go.Bar(
+            x=[width], y=["mRNA"], orientation="h",
+            marker=dict(color=color, line=dict(color="#0f172a", width=0.5)),
+            base=cursor, hovertemplate=f"<b>{label}</b><br>{seq}<extra></extra>",
+            showlegend=False,
+        ))
+        cursor += width
+    fig.update_layout(
+        barmode="stack",
+        height=110,
+        margin=dict(l=10, r=10, t=10, b=10),
+        xaxis=dict(showgrid=False, title="Residues"),
+        yaxis=dict(showgrid=False, showticklabels=False),
+        plot_bgcolor="#ffffff",
+    )
+    st.plotly_chart(fig, use_container_width=True, key="construct_bar")
+
+
+# ─────────────────────────────────────────────────────────────
+# Sidebar — inputs + thinking feed + chat
+# ─────────────────────────────────────────────────────────────
+def _start_run(slide_path: Path, vcf_path: Path) -> None:
+    event_q: queue.Queue = queue.Queue()
+    bus_holder: dict = {"bus": None}
+    st.session_state.event_queue = event_q
+    st.session_state.events = []
+    st.session_state.live_thinking = ""
+    st.session_state.live_thinking_node = None
+    st.session_state.nccn_steps = []
+    st.session_state.molecules = []
+    st.session_state.poses = []
+    st.session_state.pipeline = None
+    st.session_state.pathology = None
+    st.session_state.mutations = []
+    st.session_state.chat_messages = []
+    st.session_state.running = True
+    st.session_state.done = False
+    st.session_state.started_at = time.time()
+    thread = threading.Thread(
+        target=run_agent_in_background,
+        args=(slide_path, vcf_path, event_q, bus_holder),
+        daemon=True,
+    )
+    thread.start()
+    st.session_state.agent_thread = thread
+    st.session_state.active_bus = bus_holder
+    st.rerun()
+
+
+with st.sidebar:
+    st.markdown("## 🩺 Patient inputs")
+    slide_up = st.file_uploader("Pathology slide (image)", type=["jpg", "jpeg", "png", "tif", "tiff"])
+    vcf_up = st.file_uploader("Tumour VCF / TSV", type=["vcf", "tsv"])
+
+    col_a, col_b = st.columns(2)
+    with col_a:
+        if st.button(
+            "Run uploads",
+            disabled=(slide_up is None or vcf_up is None or st.session_state.running),
+            use_container_width=True,
+        ):
+            upload_dir = OUT_DIR / "uploads"
+            upload_dir.mkdir(parents=True, exist_ok=True)
+            slide_path = upload_dir / slide_up.name
+            vcf_path = upload_dir / vcf_up.name
+            slide_path.write_bytes(slide_up.read())
+            vcf_path.write_bytes(vcf_up.read())
+            _start_run(slide_path, vcf_path)
+    with col_b:
+        if st.button("Run TCGA demo", type="primary", disabled=st.session_state.running, use_container_width=True):
+            _start_run(DEMO_SLIDE, DEMO_VCF)
+
+    if st.session_state.done and st.button("↻ New case", use_container_width=True):
+        for k in list(DEFAULTS.keys()):
+            st.session_state[k] = DEFAULTS[k]
+        st.rerun()
+
+    st.divider()
+    st.markdown("### 💭 Live thinking")
+    if st.session_state.live_thinking:
+        st.caption(f"Node: {st.session_state.live_thinking_node or '—'}")
+        st.markdown(
+            "<div style='font-family: ui-monospace, SFMono-Regular, monospace; font-size:0.78em; "
+            "color:#475569; max-height:280px; overflow-y:auto; background:#f1f5f9; padding:8px; "
+            f"border-radius:6px; white-space:pre-wrap;'>{st.session_state.live_thinking}</div>",
+            unsafe_allow_html=True,
+        )
     else:
-        st.error("Demo sample not found")
+        st.caption("Reasoning will stream here while the agent walks the guideline.")
 
-if mutations is None:
-    st.info("Upload a mutation file or select demo data in the sidebar to begin.")
+    st.divider()
+    st.markdown("### 💬 Ask / interrupt")
+    for msg in st.session_state.chat_messages:
+        role_icon = "🧑‍⚕️" if msg["role"] == "user" else "🤖"
+        st.markdown(f"{role_icon} {msg['content']}")
+    user_msg = st.chat_input("Interject…", disabled=not st.session_state.running)
+    if user_msg:
+        st.session_state.chat_messages.append({"role": "user", "content": user_msg})
+        bus_holder = st.session_state.get("active_bus") or {}
+        bus = bus_holder.get("bus")
+        if bus is not None:
+            bus.push_interrupt(user_msg)
+            st.session_state.chat_messages.append(
+                {"role": "agent", "content": "Acknowledged — will reconsider at the next NCCN node."}
+            )
+
+
+# ─────────────────────────────────────────────────────────────
+# Main column
+# ─────────────────────────────────────────────────────────────
+st.markdown("# Melanoma Oncologist Copilot")
+st.caption("VLM pathology · NCCN guideline walker · 3D molecular landscape · personalized neoantigen vaccine")
+
+if not st.session_state.running and not st.session_state.done:
+    st.info("Choose inputs in the sidebar and start a run.")
     st.stop()
 
-# ── run pipeline ─────────────────────────────────────────────────────────────
+done_now = _drain_queue()
+if done_now:
+    st.session_state.running = False
+    st.session_state.done = True
 
-@st.cache_data(show_spinner="Running pipeline...")
-def run_pipeline(_mutation_tuples, scorer_name, _allele, _top_n, _max_nm, _with_apis):
-    from neoantigen.models import Mutation
-    _mutations = [Mutation(gene=g, ref_aa=r, position=p, alt_aa=a) for g, r, p, a in _mutation_tuples]
-    scorer = build_scorer(scorer_name, _allele)
-    all_peptides = []
-    reference_by_gene = {}
+header_cols = st.columns(5)
+path = st.session_state.pathology or {}
+header_cols[0].metric("T-stage", path.get("t_stage") if path else "—")
+header_cols[1].metric("Subtype", (path.get("melanoma_subtype") or "—").replace("_", " ") if path else "—")
+header_cols[2].metric("Breslow", f"{path.get('breslow_thickness_mm')} mm" if path.get("breslow_thickness_mm") else "—")
+header_cols[3].metric("Mutations", len(st.session_state.mutations))
+elapsed = int(time.time() - (st.session_state.started_at or time.time()))
+header_cols[4].metric("Elapsed", f"{elapsed}s")
 
-    for m in _mutations:
-        if m.gene not in reference_by_gene:
-            reference_by_gene[m.gene] = fetch_protein(m.gene)
-        ref = reference_by_gene[m.gene]
-        mutant = apply_mutation(ref, m)
-        peps = generate_peptides(mutant, m)
-        all_peptides.extend(peps)
-
-    scorer.score(all_peptides)
-
-    filtered = []
-    for m in _mutations:
-        mpeps = [p for p in all_peptides if p.mutation.full_label == m.full_label]
-        ref = reference_by_gene[m.gene]
-        filtered.extend(filter_candidates(mpeps, ref, max_nm=_max_nm))
-
-    filtered.sort(key=lambda p: p.score_nm or float("inf"))
-    from neoantigen.models import Candidate
-    candidates = [Candidate(peptide=p, rank=i + 1) for i, p in enumerate(filtered[:_top_n])]
-    construct = build_construct(candidates) if candidates else None
-
-    drugs, trials = [], []
-    if _with_apis:
-        async def _fetch():
-            genes = sorted({m.gene for m in _mutations})
-            async with httpx.AsyncClient() as client:
-                d = await asyncio.gather(*[search_drugs(client, g) for g in genes])
-                t = await asyncio.gather(*[search_trials(client, g) for g in genes])
-            return [x for sub in d for x in sub], [x for sub in t for x in sub]
-        drugs, trials = asyncio.run(_fetch())
-
-    return PipelineResult(
-        mutations=_mutations,
-        candidates=candidates,
-        drugs=drugs,
-        trials=trials,
-        vaccine=construct,
-    ), all_peptides, filtered
-
-
-mut_tuples = tuple((m.gene, m.ref_aa, m.position, m.alt_aa) for m in mutations)
-result, all_peptides, filtered = run_pipeline(
-    mut_tuples, scorer_choice, allele, top_n, max_nm, with_apis,
-)
-
-# reconstruct Mutation objects from tuples (st.cache_data serializes)
-from neoantigen.models import Mutation
-mutations = [Mutation(gene=g, ref_aa=r, position=p, alt_aa=a) for g, r, p, a in mut_tuples]
-
-# ── header ───────────────────────────────────────────────────────────────────
-
-col1, col2, col3, col4 = st.columns(4)
-col1.metric("Mutations", len(mutations))
-col2.metric("Peptides scored", len(all_peptides))
-col3.metric("Passed filter", len(filtered))
-col4.metric("In construct", len(result.candidates))
-
-# ── mutations table ──────────────────────────────────────────────────────────
-
-st.header("Input mutations")
-mut_data = [{"Gene": m.gene, "Mutation": f"{m.ref_aa}{m.position}{m.alt_aa}"} for m in mutations]
-st.dataframe(mut_data, use_container_width=True, hide_index=True)
-
-# ── candidate leaderboard ────────────────────────────────────────────────────
-
-st.header("Ranked vaccine candidates")
-
-if result.candidates:
-    cand_data = []
-    for c in result.candidates:
-        cand_data.append({
-            "Rank": c.rank,
-            "Peptide": c.peptide.sequence,
-            "Length": c.peptide.length,
-            "Gene": c.peptide.mutation.gene,
-            "Mutation": c.peptide.mutation.label,
-            "Score (nM)": round(c.peptide.score_nm, 2) if c.peptide.score_nm else None,
-        })
-    st.dataframe(cand_data, use_container_width=True, hide_index=True)
-
-    # bar chart
-    fig = px.bar(
-        cand_data,
-        x="Peptide",
-        y="Score (nM)",
-        color="Gene",
-        title="Binding affinity by candidate (lower = stronger)",
-        labels={"Score (nM)": "Predicted IC50 (nM)"},
-    )
-    fig.update_layout(xaxis_tickangle=-45, height=400)
-    st.plotly_chart(fig, use_container_width=True)
-
-    # scatter: length vs score
-    fig2 = px.scatter(
-        cand_data,
-        x="Length",
-        y="Score (nM)",
-        color="Gene",
-        size=[8] * len(cand_data),
-        hover_data=["Peptide", "Mutation"],
-        title="Peptide length vs binding affinity",
-    )
-    st.plotly_chart(fig2, use_container_width=True)
-else:
-    st.warning("No candidates survived filtering. Try raising the nM cutoff.")
-
-# ── 3D protein structures ────────────────────────────────────────────────────
-
-st.header("3D protein structures")
-st.caption("AlphaFold-predicted structures — mutation sites highlighted in red")
-
-ALPHAFOLD_API = "https://alphafold.ebi.ac.uk/api/prediction/{accession}"
-
-from neoantigen.genes import GENE_TO_UNIPROT
-
-gene_mutations: dict[str, list] = {}
-for m in mutations:
-    gene_mutations.setdefault(m.gene, []).append(m)
-
-structure_genes = [g for g in gene_mutations if g in GENE_TO_UNIPROT]
-
-if structure_genes:
-    tabs = st.tabs(structure_genes)
-    for tab, gene in zip(tabs, structure_genes):
-        with tab:
-            accession = GENE_TO_UNIPROT[gene]
-            cache_path = Path.home() / ".cache" / "neoantigen" / "structures" / f"{accession}.pdb"
-            cache_path.parent.mkdir(parents=True, exist_ok=True)
-
-            pdb_data = None
-            if cache_path.exists():
-                pdb_data = cache_path.read_text()
-            else:
-                try:
-                    api_resp = httpx.get(
-                        ALPHAFOLD_API.format(accession=accession),
-                        timeout=15.0,
-                        follow_redirects=True,
-                    )
-                    api_resp.raise_for_status()
-                    pdb_url = api_resp.json()[0]["pdbUrl"]
-                    pdb_resp = httpx.get(pdb_url, timeout=30.0, follow_redirects=True)
-                    pdb_resp.raise_for_status()
-                    pdb_data = pdb_resp.text
-                    cache_path.write_text(pdb_data)
-                except (httpx.HTTPError, KeyError, IndexError) as e:
-                    st.warning(f"Could not fetch AlphaFold structure for {gene} ({accession}): {e}")
-
-            if pdb_data:
-                mut_positions = [m.position for m in gene_mutations[gene]]
-                mut_labels = [m.label for m in gene_mutations[gene]]
-
-                viewer = py3Dmol.view(width=700, height=500)
-                viewer.addModel(pdb_data, "pdb")
-
-                viewer.setStyle({"cartoon": {"color": "spectrum"}})
-
-                for pos in mut_positions:
-                    viewer.addStyle(
-                        {"resi": pos},
-                        {"cartoon": {"color": "red"}, "stick": {"color": "red", "radius": 0.3}},
-                    )
-
-                viewer.addStyle(
-                    {"resi": mut_positions},
-                    {"stick": {"color": "red", "radius": 0.3}},
-                )
-
-                for pos, label in zip(mut_positions, mut_labels):
-                    viewer.addLabel(
-                        label,
-                        {
-                            "fontSize": 14,
-                            "fontColor": "white",
-                            "backgroundColor": "rgba(200,0,0,0.8)",
-                            "position": {"resi": pos},
-                        },
-                        {"resi": pos},
-                    )
-
-                viewer.zoomTo({"resi": mut_positions})
-                viewer.spin(True)
-                html = viewer._make_html()
-                components.html(html, height=520, width=720, scrolling=False)
-
-                st.caption(
-                    f"**{gene}** (UniProt {accession}) — "
-                    f"mutations: {', '.join(mut_labels)} — "
-                    f"colored by rainbow spectrum, mutation sites in red with sticks"
-                )
-else:
-    st.info("No AlphaFold structures available for the input genes.")
-
-# ── score distribution ───────────────────────────────────────────────────────
-
-st.header("Score distribution (all peptides)")
-scores = [p.score_nm for p in all_peptides if p.score_nm is not None]
-if scores:
-    fig3 = px.histogram(
-        x=scores,
-        nbins=50,
-        title="Binding affinity distribution",
-        labels={"x": "Predicted IC50 (nM)", "y": "Count"},
-    )
-    fig3.add_vline(x=max_nm, line_dash="dash", line_color="red", annotation_text=f"Cutoff: {max_nm} nM")
-    st.plotly_chart(fig3, use_container_width=True)
-
-# ── construct ────────────────────────────────────────────────────────────────
-
-st.header("mRNA vaccine construct")
-if result.vaccine:
-    v = result.vaccine
-    c1, c2, c3 = st.columns(3)
-    c1.metric("Nucleotide length", f"{v.length_bp} bp")
-    c2.metric("Epitopes", len(v.epitopes))
-    c3.metric("Est. synthesis cost", f"${v.estimated_cost_usd}")
-
-    with st.expander("Amino acid sequence"):
-        st.code(v.amino_acid_sequence, language=None)
-    with st.expander("Nucleotide sequence"):
-        st.code(v.nucleotide_sequence, language=None)
-
-    # FASTA download
-    genes_str = "_".join(sorted({m.gene for m in mutations}))
-    header = f">neoantigen_vaccine|{genes_str}|{len(v.epitopes)}epitopes"
-    nt = v.nucleotide_sequence
-    fasta_lines = [header] + [nt[i:i + 60] for i in range(0, len(nt), 60)]
-    fasta_content = "\n".join(fasta_lines) + "\n"
-
-    st.download_button(
-        "Download FASTA",
-        data=fasta_content,
-        file_name="vaccine.fasta",
-        mime="text/plain",
-    )
-
-    # cost breakdown
-    st.subheader("Synthesis cost estimate")
-    cost_data = [
-        {"Provider": "Twist Bioscience (fragments)", "Cost/bp": "$0.07", "Total": f"${round(v.length_bp * 0.07, 2)}"},
-        {"Provider": "Twist Bioscience (clonal)", "Cost/bp": "$0.09", "Total": f"${round(v.length_bp * 0.09, 2)}"},
-        {"Provider": "IDT gBlocks", "Cost/bp": "~$0.10", "Total": f"~${round(v.length_bp * 0.10, 2)}"},
-    ]
-    st.dataframe(cost_data, use_container_width=True, hide_index=True)
-else:
-    st.warning("No construct — no candidates passed filtering.")
-
-# ── drug interactions ────────────────────────────────────────────────────────
-
-if result.drugs:
-    st.header("Drug-gene interactions (DGIdb)")
-    seen = set()
-    drug_data = []
-    for d in result.drugs:
-        key = (d.gene, d.drug_name)
-        if key in seen:
-            continue
-        seen.add(key)
-        drug_data.append({
-            "Gene": d.gene,
-            "Drug": d.drug_name,
-            "Interaction": ", ".join(d.interaction_types) or "—",
-            "Sources": ", ".join(d.sources[:3]) or "—",
-        })
-    st.dataframe(drug_data, use_container_width=True, hide_index=True)
-
-# ── clinical trials ──────────────────────────────────────────────────────────
-
-if result.trials:
-    st.header("Clinical trials (ClinicalTrials.gov)")
-    trial_data = []
-    for t in result.trials[:15]:
-        trial_data.append({
-            "NCT ID": t.nct_id,
-            "Phase": t.phase or "—",
-            "Status": t.status,
-            "Title": t.title[:100],
-            "Link": t.url,
-        })
-    st.dataframe(
-        trial_data,
-        use_container_width=True,
-        hide_index=True,
-        column_config={"Link": st.column_config.LinkColumn("Link")},
-    )
-
-# ── JSON export ──────────────────────────────────────────────────────────────
-
+st.markdown("### Panel 1 · NCCN melanoma guideline walker")
+_render_nccn_flowchart()
+if st.session_state.selected_node:
+    _node_detail(st.session_state.selected_node)
+elif st.session_state.nccn_steps:
+    _node_detail(st.session_state.nccn_steps[-1]["node_id"])
 st.divider()
-st.download_button(
-    "Download full results (JSON)",
-    data=result.model_dump_json(indent=2),
-    file_name="vaccine_results.json",
-    mime="application/json",
-)
+
+st.markdown("### Panel 2 · Molecular landscape")
+if not st.session_state.molecules:
+    st.caption("Folding mutated driver proteins and pulling drug co-crystals…")
+else:
+    for mol in st.session_state.molecules:
+        with st.container(border=True):
+            _render_molecule(mol)
+st.divider()
+
+st.markdown("### Panel 3 · Vaccine designer")
+with st.container(border=True):
+    _render_vaccine_panel()
+
+status_label = "▶ Running" if st.session_state.running else "✅ Complete"
+st.caption(f"{status_label} · {len(st.session_state.events)} events · NCCN nodes walked: {len(st.session_state.nccn_steps)}")
+
+if st.session_state.running:
+    time.sleep(0.4)
+    st.rerun()

@@ -30,3 +30,13 @@ streamlit run app_agent.py   # agent-driven live dashboard (reads backend/.env)
 - Two entry points share the pipeline: the plain CLI/dashboard ([frontend/app.py](frontend/app.py), `neoantigen` CLI) and the agent-driven flow ([frontend/app_agent.py](frontend/app_agent.py), `neoantigen agent-demo`). When changing pipeline behavior, consider both.
 - No test suite exists — `backend/test.py` and `backend/main.py` are empty placeholders.
 - Uploads from `app_agent.py` are written to `backend/out/uploads/`, alongside the rest of the generated artifacts.
+
+## LLM layer
+
+Three agent call sites ([pathology.py](backend/src/neoantigen/agent/pathology.py), [emails.py](backend/src/neoantigen/agent/emails.py), [explain.py](backend/src/neoantigen/agent/explain.py)) all route through [backend/src/neoantigen/agent/\_llm.py](backend/src/neoantigen/agent/_llm.py). Current backend is **K2 Think V2** (OpenAI-compatible endpoint at `api.k2think.ai/v1`):
+
+- `K2_API_KEY` — required for LLM calls; missing key falls back to heuristics/templates.
+- `NEOVAX_MODEL` — overrides the default `MBZUAI-IFM/K2-Think-v2`.
+- Every K2 request is logged to `backend/out/k2.log` (override with `NEOVAX_LOG_PATH`). Check this first when agent output looks wrong.
+
+A migration to MBZUAI's MediX-R1-30B (medical-RL-trained) is planned — see [plan.md](plan.md) for the GH200 deployment details and which three files are affected.

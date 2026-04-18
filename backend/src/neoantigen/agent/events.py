@@ -1,8 +1,8 @@
-"""Live activity feed for the agent orchestrator.
+"""Live activity feed for the melanoma orchestrator.
 
-The EventBus is an asyncio.Queue wrapper with typed events. Tools emit events at
-start/end, and the Streamlit UI consumes them via an async generator for live
-activity feed rendering.
+The EventBus is an asyncio.Queue wrapper with typed events. The orchestrator and
+the NCCN walker emit events at every meaningful step; the Streamlit UI consumes
+them via an async generator and routes by EventKind.
 """
 
 from __future__ import annotations
@@ -18,12 +18,22 @@ class EventKind(str, Enum):
     TOOL_START = "tool_start"
     TOOL_RESULT = "tool_result"
     TOOL_ERROR = "tool_error"
-    STRUCTURE_READY = "structure_ready"
-    EMAIL_DRAFTED = "email_drafted"
-    EMAIL_SENT = "email_sent"
-    CASE_UPDATE = "case_update"
     LOG = "log"
     DONE = "done"
+
+    THINKING_DELTA = "thinking_delta"
+    ANSWER_DELTA = "answer_delta"
+
+    VLM_FINDING = "vlm_finding"
+    NCCN_NODE_VISITED = "nccn_node_visited"
+    NCCN_PATH_COMPLETE = "nccn_path_complete"
+
+    MOLECULE_READY = "molecule_ready"
+    DRUG_COMPLEX_READY = "drug_complex_ready"
+
+    PIPELINE_RESULT = "pipeline_result"
+    STRUCTURE_READY = "structure_ready"
+    CASE_UPDATE = "case_update"
 
 
 @dataclass
@@ -43,11 +53,12 @@ class AgentEvent:
 
 
 class EventBus:
-    """Single-producer async event queue. Call `emit` from tools, `stream` from UI."""
+    """Single-producer async event queue with an out-of-band interrupt slot."""
 
     def __init__(self) -> None:
         self._queue: asyncio.Queue[AgentEvent | None] = asyncio.Queue()
         self._closed = False
+        self._interrupt: str | None = None
 
     async def emit(self, kind: EventKind, label: str, payload: dict[str, Any] | None = None) -> None:
         if self._closed:
@@ -55,13 +66,20 @@ class EventBus:
         await self._queue.put(AgentEvent(kind=kind, label=label, payload=payload or {}))
 
     def emit_sync(self, kind: EventKind, label: str, payload: dict[str, Any] | None = None) -> None:
-        """Emit from a synchronous context — uses put_nowait."""
         if self._closed:
             return
         try:
             self._queue.put_nowait(AgentEvent(kind=kind, label=label, payload=payload or {}))
         except asyncio.QueueFull:
             pass
+
+    def push_interrupt(self, message: str) -> None:
+        """Record a user interjection that the walker should consult before its next step."""
+        self._interrupt = message
+
+    def consume_interrupt(self) -> str | None:
+        msg, self._interrupt = self._interrupt, None
+        return msg
 
     async def close(self) -> None:
         self._closed = True
@@ -88,7 +106,6 @@ def current_bus() -> EventBus | None:
 
 
 async def emit(kind: EventKind, label: str, payload: dict[str, Any] | None = None) -> None:
-    """Convenience: emit to the ambient current bus if set."""
     bus = current_bus()
     if bus is not None:
         await bus.emit(kind, label, payload)

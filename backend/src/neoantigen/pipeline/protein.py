@@ -25,10 +25,10 @@ def _parse_fasta(text: str) -> str:
     return "".join(lines)
 
 
-def fetch_protein(gene: str, *, species: str = "human", force: bool = False, timeout: float = 15.0) -> str:
-    accession = lookup_accession(gene, species=species)
+def fetch_protein(gene: str, *, force: bool = False, timeout: float = 15.0) -> str:
+    accession = lookup_accession(gene)
     if accession is None:
-        raise KeyError(f"Unknown gene symbol: {gene!r} (species={species}). Add it to src/neoantigen/genes.py.")
+        raise KeyError(f"Unknown gene symbol: {gene!r}. Add it to src/neoantigen/genes.py.")
 
     cache_path = cache_dir() / f"{accession}.fasta"
     if cache_path.exists() and not force:

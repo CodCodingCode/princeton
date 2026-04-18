@@ -1,9 +1,13 @@
 from __future__ import annotations
 
-from datetime import date
 from typing import Literal
 
 from pydantic import BaseModel, Field
+
+
+# ─────────────────────────────────────────────────────────────
+# Core mutation / peptide / vaccine types (pipeline reuses)
+# ─────────────────────────────────────────────────────────────
 
 
 class Mutation(BaseModel):
@@ -39,21 +43,6 @@ class Candidate(BaseModel):
     binding_rank_percentile: float | None = None
 
 
-class DrugInteraction(BaseModel):
-    gene: str
-    drug_name: str
-    interaction_types: list[str] = []
-    sources: list[str] = []
-
-
-class ClinicalTrial(BaseModel):
-    nct_id: str
-    title: str
-    status: str
-    phase: str | None = None
-    url: str
-
-
 class VaccineConstruct(BaseModel):
     epitopes: list[str]
     linker: str
@@ -72,82 +61,122 @@ class VaccineConstruct(BaseModel):
 class PipelineResult(BaseModel):
     mutations: list[Mutation]
     candidates: list[Candidate]
-    drugs: list[DrugInteraction] = []
-    trials: list[ClinicalTrial] = []
     vaccine: VaccineConstruct | None = None
 
 
-class PathologyReport(BaseModel):
-    patient_name: str
-    species: Literal["canine", "feline", "human"] = "canine"
-    breed: str | None = None
-    age_years: float | None = None
-    weight_kg: float | None = None
-    sex: Literal["M", "F", "MN", "FS"] | None = None
-    cancer_type: str
-    grade: str | None = None
-    stage: str | None = None
-    location: str = Field(description="Anatomical site of tumor")
-    owner_location: str | None = Field(default=None, description="City/region for lab search")
-    prior_treatments: list[str] = []
-    clinical_notes: str = ""
-    dla_alleles: list[str] = Field(default_factory=list, description="Known DLA alleles if HLA-typed")
+# ─────────────────────────────────────────────────────────────
+# VLM pathology output
+# ─────────────────────────────────────────────────────────────
 
 
-class LabMatch(BaseModel):
-    name: str
-    category: Literal["sequencing", "synthesis", "vet_oncology", "dla_typing"]
-    address: str = ""
-    distance_km: float | None = None
-    phone: str | None = None
-    email: str | None = None
-    website: str | None = None
+MelanomaSubtype = Literal[
+    "superficial_spreading",
+    "nodular",
+    "lentigo_maligna",
+    "acral_lentiginous",
+    "desmoplastic",
+    "other",
+    "unknown",
+]
+
+
+class PathologyFindings(BaseModel):
+    """Output from the VLM after looking at an H&E pathology slide image."""
+
+    melanoma_subtype: MelanomaSubtype = "unknown"
+    breslow_thickness_mm: float | None = Field(
+        default=None, description="Breslow depth in millimetres, if estimable from the slide"
+    )
+    ulceration: bool | None = None
+    mitotic_rate_per_mm2: float | None = None
+    tils_present: Literal["absent", "non_brisk", "brisk", "unknown"] = "unknown"
+    pdl1_estimate: Literal["negative", "low", "high", "unknown"] = "unknown"
+    confidence: float = Field(default=0.5, ge=0.0, le=1.0)
     notes: str = ""
-    estimated_cost_usd: float | None = None
-    turnaround_days: int | None = None
+
+    @property
+    def t_stage(self) -> str:
+        """AJCC 8th edition T category derived from Breslow + ulceration."""
+        b = self.breslow_thickness_mm
+        if b is None:
+            return "Tx"
+        u = bool(self.ulceration)
+        if b < 0.8 and not u:
+            return "T1a"
+        if b < 0.8 and u:
+            return "T1b"
+        if b < 1.0:
+            return "T1b"
+        if b < 2.0:
+            return "T2b" if u else "T2a"
+        if b < 4.0:
+            return "T3b" if u else "T3a"
+        return "T4b" if u else "T4a"
 
 
-class EmailDraft(BaseModel):
-    recipient_type: Literal["sequencing_lab", "synthesis_vendor", "vet_oncologist", "ethics_board", "owner"]
-    recipient_name: str
-    recipient_email: str | None = None
-    subject: str
-    body: str
-    attachments: list[str] = Field(default_factory=list, description="Paths to attachment files")
-    sent: bool = False
-    sent_message_id: str | None = None
+# ─────────────────────────────────────────────────────────────
+# NCCN walker output
+# ─────────────────────────────────────────────────────────────
 
 
-class TimelineEvent(BaseModel):
-    week: int
-    date_iso: str
-    title: str
-    description: str
-    location: str | None = None
+class NCCNStep(BaseModel):
+    """One step of the NCCN walker — node visited, decision made, reasoning shown."""
+
+    node_id: str
+    node_title: str
+    chosen_option: str
+    next_node_id: str | None
+    reasoning: str = ""
+    evidence: dict[str, str] = Field(default_factory=dict)
+
+
+# ─────────────────────────────────────────────────────────────
+# Panel 2 — molecular landscape
+# ─────────────────────────────────────────────────────────────
+
+
+class MoleculeView(BaseModel):
+    """A single mutated protein with optional drug co-crystal complex."""
+
+    gene: str
+    mutation_label: str
+    mutation_position: int
+    wt_pdb_text: str | None = None
+    mut_pdb_text: str | None = None
+    fold_method: Literal["esmfold", "alphafold", "template"] = "esmfold"
+    drug_complex_pdb_id: str | None = None
+    drug_name: str | None = None
+    drug_complex_pdb_text: str | None = None
+
+
+# ─────────────────────────────────────────────────────────────
+# Panel 3 — peptide-HLA pose (reused from pipeline)
+# ─────────────────────────────────────────────────────────────
 
 
 class StructurePose(BaseModel):
     peptide_sequence: str
     mutation_label: str
-    dla_allele: str
+    hla_allele: str
     pdb_path: str | None = None
     pdb_text: str | None = None
-    method: Literal["pandora", "esmfold", "alphafold"] = "pandora"
+    method: Literal["pandora", "esmfold", "alphafold", "template"] = "esmfold"
     binding_energy_kcal_mol: float | None = None
-    tcr_facing_residues: list[int] = Field(default_factory=list, description="1-based residue indices")
+    tcr_facing_residues: list[int] = Field(default_factory=list)
 
 
-class CaseFile(BaseModel):
-    """Complete treatment package — everything the agent produces."""
+# ─────────────────────────────────────────────────────────────
+# Aggregate case file
+# ─────────────────────────────────────────────────────────────
 
-    pathology: PathologyReport
-    pipeline: PipelineResult
-    structures: list[StructurePose] = []
-    sequencing_labs: list[LabMatch] = []
-    synthesis_vendors: list[LabMatch] = []
-    vet_oncologists: list[LabMatch] = []
-    dla_typing_labs: list[LabMatch] = []
-    emails: list[EmailDraft] = []
-    timeline: list[TimelineEvent] = []
-    plain_english: str = ""
-    drive_folder_url: str | None = None
+
+class MelanomaCase(BaseModel):
+    """Everything the agent produces for one patient."""
+
+    pathology: PathologyFindings
+    mutations: list[Mutation] = Field(default_factory=list)
+    nccn_path: list[NCCNStep] = Field(default_factory=list)
+    final_recommendation: str = ""
+    molecules: list[MoleculeView] = Field(default_factory=list)
+    pipeline: PipelineResult | None = None
+    poses: list[StructurePose] = Field(default_factory=list)

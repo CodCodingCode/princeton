@@ -1,26 +1,37 @@
-"""Shared K2 Think V2 client + model factory.
+"""Shared client for the medical reasoning model (MediX-R1-30B via vLLM).
 
-K2 Think V2 is a reasoning model — it emits `<think>...</think>` blocks in its
-response and does NOT reliably produce OpenAI-style tool calls (MBZUAI's own
-docs: "not yet tuned for agentic tasks"). We therefore use two client surfaces:
+The model is a Qwen3-VL-based VLM served by vLLM with an OpenAI-compatible
+endpoint. It supports:
 
-* `build_model()` returns a PydanticAI `OpenAIModel` for free-form `str` outputs
-  (used by `explain.py`). PydanticAI's tool-call path for structured outputs is
-  unreliable with K2-Think.
-* `call_for_json(prompt, schema)` calls K2 via the plain openai SDK, strips the
-  `<think>` block, extracts the first JSON object, and validates it against a
-  Pydantic model. Used by `pathology.py` + `emails.py`.
+* text + image multimodal inputs (image_url content blocks, base64 data URIs)
+* `<think>...</think>` reasoning blocks emitted before the final answer
+
+Three call surfaces:
+
+* `call_for_json(schema, system, user)` — single-shot JSON extraction.
+* `call_with_vision(images, system, user, schema)` — same, but with image inputs.
+* `stream_with_thinking(system, user)` — async iterator yielding
+  `("thinking", chunk)` and `("answer", chunk)` tuples for live UI rendering.
+
+Backend selection is env-driven so we can swap K2 → MediX without touching code:
+
+* `K2_BASE_URL` (default `https://api.k2think.ai/v1`) — point at the SSH-tunneled
+  vLLM endpoint, e.g. `http://localhost:8000/v1`.
+* `K2_API_KEY` — required by the OpenAI client (vLLM ignores its value).
+* `NEOVAX_MODEL` — served model name, e.g. `medix-r1-30b`.
 """
 
 from __future__ import annotations
 
+import base64
 import json
 import logging
+import mimetypes
 import os
 import re
 from functools import lru_cache
 from pathlib import Path
-from typing import TypeVar
+from typing import AsyncIterator, Literal, TypeVar
 
 from pydantic import BaseModel, ValidationError
 
@@ -32,17 +43,13 @@ T = TypeVar("T", bound=BaseModel)
 
 
 @lru_cache(maxsize=1)
-def get_k2_logger() -> logging.Logger:
-    """File-only logger that records every K2 call + outcome to out/k2.log.
-
-    Does NOT propagate to root, so terminal stays clean. Path is overridable
-    via `NEOVAX_LOG_PATH`; default is `out/k2.log` relative to the CWD.
-    """
-    logger = logging.getLogger("neoantigen.k2")
+def get_logger() -> logging.Logger:
+    """File-only logger for every model call. Path overridable via NEOVAX_LOG_PATH."""
+    logger = logging.getLogger("neoantigen.llm")
     logger.setLevel(logging.DEBUG)
     logger.propagate = False
     if logger.handlers:
-        return logger  # already configured
+        return logger
 
     default_log_path = Path(__file__).resolve().parents[3] / "out" / "k2.log"
     log_path = Path(os.environ.get("NEOVAX_LOG_PATH", default_log_path))
@@ -52,7 +59,7 @@ def get_k2_logger() -> logging.Logger:
         logging.Formatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s")
     )
     logger.addHandler(handler)
-    logger.info("K2 logger initialized (path=%s)", log_path)
+    logger.info("LLM logger initialized (path=%s, base_url=%s)", log_path, K2_BASE_URL)
     return logger
 
 
@@ -65,23 +72,7 @@ def _model_name() -> str:
 
 
 @lru_cache(maxsize=1)
-def build_model():
-    """Build a PydanticAI OpenAIModel pointing at K2 Think V2."""
-    from pydantic_ai.models.openai import OpenAIModel
-    from pydantic_ai.providers.openai import OpenAIProvider
-
-    api_key = os.environ.get("K2_API_KEY")
-    if not api_key:
-        raise RuntimeError("K2_API_KEY not set")
-    return OpenAIModel(
-        _model_name(),
-        provider=OpenAIProvider(base_url=K2_BASE_URL, api_key=api_key),
-    )
-
-
-@lru_cache(maxsize=1)
 def _openai_client():
-    """Lazy-built raw AsyncOpenAI client pointed at K2 Think V2."""
     from openai import AsyncOpenAI
 
     api_key = os.environ.get("K2_API_KEY")
@@ -90,26 +81,38 @@ def _openai_client():
     return AsyncOpenAI(base_url=K2_BASE_URL, api_key=api_key)
 
 
-def strip_think(text: str) -> str:
-    """Strip K2-Think reasoning.
+# ─────────────────────────────────────────────────────────────
+# Reasoning-block parsing
+# ─────────────────────────────────────────────────────────────
 
-    K2's output pattern: `...reasoning prose...</think>\\n{actual output}`. The
-    reasoning often echoes JSON-schema fragments, so a greedy `{...}` regex
-    over the full text matches the wrong block. Splitting on the LAST `</think>`
-    isolates the payload. If no think marker is present, returns the stripped
-    input unchanged.
-    """
-    if "</think>" in text:
-        text = text.rsplit("</think>", 1)[1]
+_THINK_OPEN = "<think>"
+_THINK_CLOSE = "</think>"
+
+
+def strip_think(text: str) -> str:
+    """Drop the model's reasoning prefix and return only the post-`</think>` text."""
+    if _THINK_CLOSE in text:
+        text = text.rsplit(_THINK_CLOSE, 1)[1]
     return text.strip()
 
 
-def _extract_json(text: str) -> str:
-    """Extract a single top-level JSON object from K2's response.
+def split_thinking(text: str) -> tuple[str, str]:
+    """Split a complete response into (thinking, answer).
 
-    Strategy: strip <think> reasoning, strip markdown fences, try direct parse;
-    fall back to balanced-brace scanning for the first valid top-level `{...}`.
+    If `<think>` is absent, returns ("", text). If `</think>` is missing, treats
+    the entire text as thinking with empty answer.
     """
+    if _THINK_OPEN not in text and _THINK_CLOSE not in text:
+        return "", text.strip()
+    after_open = text.split(_THINK_OPEN, 1)[-1]
+    if _THINK_CLOSE in after_open:
+        thinking, answer = after_open.split(_THINK_CLOSE, 1)
+        return thinking.strip(), answer.strip()
+    return after_open.strip(), ""
+
+
+def _extract_json(text: str) -> str:
+    """Pull the first valid top-level JSON object out of a model response."""
     cleaned = strip_think(text)
     if cleaned.startswith("```"):
         cleaned = re.sub(r"^```(?:json)?\n", "", cleaned)
@@ -139,7 +142,41 @@ def _extract_json(text: str) -> str:
                     return candidate
                 except json.JSONDecodeError:
                     start = -1
-    raise json.JSONDecodeError("no valid JSON object found in K2 response", cleaned, 0)
+    raise json.JSONDecodeError("no valid JSON object found in response", cleaned, 0)
+
+
+# ─────────────────────────────────────────────────────────────
+# Image encoding
+# ─────────────────────────────────────────────────────────────
+
+
+def _encode_image(image: Path | bytes, mime_hint: str | None = None) -> str:
+    """Return a `data:image/...;base64,...` URI suitable for OpenAI image_url."""
+    if isinstance(image, Path):
+        mime = mime_hint or mimetypes.guess_type(image.name)[0] or "image/jpeg"
+        data = image.read_bytes()
+    else:
+        mime = mime_hint or "image/jpeg"
+        data = image
+    b64 = base64.b64encode(data).decode("ascii")
+    return f"data:{mime};base64,{b64}"
+
+
+def _user_content_with_images(
+    text: str, images: list[Path | bytes] | None
+) -> list[dict] | str:
+    if not images:
+        return text
+    parts: list[dict] = []
+    for img in images:
+        parts.append({"type": "image_url", "image_url": {"url": _encode_image(img)}})
+    parts.append({"type": "text", "text": text})
+    return parts
+
+
+# ─────────────────────────────────────────────────────────────
+# Public call surfaces
+# ─────────────────────────────────────────────────────────────
 
 
 async def call_for_json(
@@ -149,12 +186,26 @@ async def call_for_json(
     *,
     max_tokens: int = 2000,
 ) -> T:
-    """Call K2 Think V2 asking for JSON matching `schema`, parse, and validate.
+    """Single-turn structured response. Returns a validated `schema` instance."""
+    return await call_with_vision(
+        schema=schema,
+        system_prompt=system_prompt,
+        user_prompt=user_prompt,
+        images=None,
+        max_tokens=max_tokens,
+    )
 
-    Works around K2's unreliable tool-calling by prompting for JSON in the text
-    response and post-processing out the <think>...</think> block.
-    """
-    log = get_k2_logger()
+
+async def call_with_vision(
+    schema: type[T],
+    system_prompt: str,
+    user_prompt: str,
+    *,
+    images: list[Path | bytes] | None = None,
+    max_tokens: int = 2000,
+) -> T:
+    """JSON-typed call that optionally includes images in the user message."""
+    log = get_logger()
     client = _openai_client()
     schema_json = json.dumps(schema.model_json_schema(), indent=2)
     augmented_system = (
@@ -163,40 +214,118 @@ async def call_for_json(
         + schema_json
         + "\n\nReturn ONLY the JSON object after your reasoning. No markdown, no prose."
     )
-    log.info("call_for_json start: schema=%s, user_prompt_len=%d", schema.__name__, len(user_prompt))
+    user_content = _user_content_with_images(user_prompt, images)
+    log.info(
+        "call schema=%s images=%d user_len=%d",
+        schema.__name__, len(images or []), len(user_prompt),
+    )
     try:
         resp = await client.chat.completions.create(
             model=_model_name(),
             max_tokens=max_tokens,
             messages=[
                 {"role": "system", "content": augmented_system},
-                {"role": "user", "content": user_prompt},
+                {"role": "user", "content": user_content},
             ],
         )
     except Exception as e:
-        log.error("call_for_json HTTP error: schema=%s, err=%s: %s", schema.__name__, type(e).__name__, e)
+        log.error("call HTTP error schema=%s err=%s: %s", schema.__name__, type(e).__name__, e)
         raise
+
     raw = resp.choices[0].message.content or ""
-    finish = resp.choices[0].finish_reason
-    log.info(
-        "call_for_json response: schema=%s, finish_reason=%s, content_len=%d",
-        schema.__name__, finish, len(raw),
-    )
+    log.info("call response schema=%s len=%d", schema.__name__, len(raw))
     try:
         data = json.loads(_extract_json(raw))
     except json.JSONDecodeError as e:
-        log.error(
-            "call_for_json JSON parse failed: schema=%s, err=%s, raw=%r",
-            schema.__name__, e, raw[:800],
-        )
-        raise ValueError(f"K2 did not return valid JSON: {raw[:300]!r}") from e
+        log.error("JSON parse failed schema=%s raw=%r", schema.__name__, raw[:600])
+        raise ValueError(f"model did not return valid JSON: {raw[:300]!r}") from e
     try:
-        validated = schema.model_validate(data)
+        return schema.model_validate(data)
     except ValidationError as e:
-        log.error(
-            "call_for_json validation failed: schema=%s, err=%s, data=%s",
-            schema.__name__, e, data,
+        log.error("validation failed schema=%s err=%s data=%s", schema.__name__, e, data)
+        raise ValueError(f"model JSON failed {schema.__name__} validation: {e}") from e
+
+
+async def stream_with_thinking(
+    system_prompt: str,
+    user_prompt: str,
+    *,
+    images: list[Path | bytes] | None = None,
+    max_tokens: int = 2000,
+) -> AsyncIterator[tuple[Literal["thinking", "answer"], str]]:
+    """Stream the model's response, tagging each chunk as 'thinking' or 'answer'.
+
+    The model emits `<think>...</think>` then the answer. We track which region
+    we're currently in across chunk boundaries and yield `(region, delta_text)`.
+    """
+    log = get_logger()
+    client = _openai_client()
+    user_content = _user_content_with_images(user_prompt, images)
+    log.info("stream_with_thinking start user_len=%d images=%d", len(user_prompt), len(images or []))
+
+    state: Literal["pre", "thinking", "answer"] = "pre"
+    buffer = ""
+
+    try:
+        stream = await client.chat.completions.create(
+            model=_model_name(),
+            max_tokens=max_tokens,
+            stream=True,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_content},
+            ],
         )
-        raise ValueError(f"K2 JSON failed {schema.__name__} validation: {e}") from e
-    log.info("call_for_json OK: schema=%s", schema.__name__)
-    return validated
+    except Exception as e:
+        log.error("stream HTTP error: %s: %s", type(e).__name__, e)
+        raise
+
+    async for chunk in stream:
+        if not chunk.choices:
+            continue
+        delta = chunk.choices[0].delta.content or ""
+        if not delta:
+            continue
+        buffer += delta
+
+        while True:
+            if state == "pre":
+                idx = buffer.find(_THINK_OPEN)
+                if idx == -1:
+                    if buffer:
+                        state = "answer"
+                        emit_text, buffer = buffer, ""
+                        if emit_text:
+                            yield ("answer", emit_text)
+                    break
+                pre_text = buffer[:idx]
+                buffer = buffer[idx + len(_THINK_OPEN):]
+                state = "thinking"
+                if pre_text:
+                    yield ("answer", pre_text)
+                continue
+
+            if state == "thinking":
+                idx = buffer.find(_THINK_CLOSE)
+                if idx == -1:
+                    safe_len = max(0, len(buffer) - (len(_THINK_CLOSE) - 1))
+                    if safe_len > 0:
+                        emit_text, buffer = buffer[:safe_len], buffer[safe_len:]
+                        yield ("thinking", emit_text)
+                    break
+                think_text = buffer[:idx]
+                buffer = buffer[idx + len(_THINK_CLOSE):]
+                state = "answer"
+                if think_text:
+                    yield ("thinking", think_text)
+                continue
+
+            if state == "answer":
+                if buffer:
+                    emit_text, buffer = buffer, ""
+                    yield ("answer", emit_text)
+                break
+
+    if buffer:
+        yield (state if state != "pre" else "answer", buffer)
+    log.info("stream_with_thinking done")
