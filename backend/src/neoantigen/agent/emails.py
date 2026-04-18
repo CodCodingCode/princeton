@@ -18,7 +18,7 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 from ..models import EmailDraft
-from ._llm import call_for_json, has_api_key
+from ._llm import call_for_json, get_k2_logger, has_api_key
 
 
 class EmailContent(BaseModel):
@@ -90,7 +90,11 @@ async def draft_email(
             user_prompt=prompt,
             max_tokens=4000,
         )
-    except Exception:
+    except Exception as e:
+        get_k2_logger().warning(
+            "draft_email fallback: recipient_type=%s, recipient_name=%s, err=%s: %s",
+            recipient_type, recipient_name, type(e).__name__, e,
+        )
         return _fallback_draft(recipient_type, recipient_name, recipient_email, context, attachments)
 
     return EmailDraft(

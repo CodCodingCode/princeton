@@ -5,20 +5,17 @@
     "breed": "Golden Retriever",
     "age_years": 8.0,
     "weight_kg": 32.4,
-    "sex": null,
-    "cancer_type": "Cutaneous mast cell tumor, Patnaik Grade III (Kiupel high-grade), left hind leg, local recurrence. Deep",
+    "sex": "F",
+    "cancer_type": "Cutaneous mast cell tumor",
     "grade": "III",
     "stage": null,
-    "location": "Toronto, ON, Canada",
+    "location": "left hind leg",
     "owner_location": "Toronto, ON, Canada",
     "prior_treatments": [
-      "Wide local excision (Nov 2025",
-      "narrow margins)",
-      "Vinblastine/Prednisone chemotherapy",
-      "8 cycles (Dec 2025 -",
-      "Feb 2026)."
+      "Wide local excision (Nov 2025, narrow margins)",
+      "Vinblastine/Prednisone chemotherapy, 8 cycles (Dec 2025 - Feb 2026)"
     ],
-    "clinical_notes": "ONTARIO VETERINARY DIAGNOSTIC LABORATORY\nSurgical Pathology Report \u2014 Confidential\n50 Stone Road East, Guelph ON N1G 2W1   |   Tel: (519) 824-4120   |   Fax: (519) 824-5930\nPatient Name:\nLuna\nAccession #:\nOVDL-2026-04710\nSpecies:\nCanine (Canis familiaris)\nDate of Biopsy:\nApril 10, 2026\nBreed:\nGolden Retriever\nDate of Report:\nApril 14, 2026\nAge:\n8 years\nReferring Vet:\nDr. Sarah Chen, DVM\nWeight:\n32.4 kg\nClinic:\nBloor West Animal Hospital\nSex:\nFS (spayed female)\nOwner Location:\nToronto, ON, Canada\nCLINICAL HISTORY\nLuna presented 6 months ago with a firm, ulcerated mass on the left hind leg, proximal to the tarsal joint.\nFine-needle aspiration suggested mast cell neoplasia. The mass was surgically excised on November 12, 2025,\nwith histopathology confirming Patnaik Grade II (Kiupel high-grade)",
+    "clinical_notes": "Luna presented 6 months ago with a firm, ulcerated mass on the left hind leg, proximal to the tarsal joint. Fine-needle aspiration suggested mast cell neoplasia. The mass was surgically excised on November 12, 2025, with histopathology confirming Patnaik Grade II (Kiupel high-grade) cutaneous mast cell tumor. Surgical margins were narrow (1 mm on deep margin). Adjuvant vinblastine/prednisone chemotherapy (8 cycles) was completed in February 2026. Patient was tumor-free for approximately 8 weeks following chemotherapy completion. On March 28, 2026, a new 2.4 cm firm nodule was palpated at the surgical site. Ultrasound showed no regional lymphadenopathy, and thoracic radiographs were clear. Excisional biopsy was performed on April 10, 2026.",
     "dla_alleles": [
       "DLA-88*50101",
       "DLA-88*00801"
@@ -591,31 +588,11 @@
   "dla_typing_labs": [],
   "emails": [
     {
-      "recipient_type": "synthesis_vendor",
-      "recipient_name": "TriLink BioTechnologies",
-      "recipient_email": null,
-      "subject": "mRNA synthesis request \u2014 canine personalized vaccine",
-      "body": "Dear TriLink BioTechnologies team,\n\nWe would like to place a custom mRNA synthesis order for a veterinary compassionate-use\ncancer vaccine application. Details:\n\nPatient: Luna (canine, Cutaneous mast cell tumor, Patnaik Grade III (Kiupel high-grade), left hind leg, local recurrence. Deep). Mutations found: 10. Neoantigen candidates: 15. Top candidate: ALMSELEVL from mutation KIT K642E (predicted affinity 1.64 nM).\n\nConstruct specifications (FASTA attached):\n- Research-grade IVT mRNA\n- Modified bases: N1-methylpseudouridine (N1Me-\u03a8)\n- 5' cap: Cap-1 (ideally co-transcriptional / CleanCap)\n- Poly-A tail: 120 nt\n- Quantity: 500 \u00b5g (sufficient for prime + boost dosing in a 30 kg patient)\n\nCould you please share:\n1. Total pricing including QC (RIN, endotoxin, sterility, particle size)\n2. Lead time from order confirmation to delivery\n3. Any recommendations on buffer/lyophilization for shipment\n\nThank you,\nNeoVax Treatment Coordinator\n",
-      "attachments": [],
-      "sent": false,
-      "sent_message_id": null
-    },
-    {
       "recipient_type": "sequencing_lab",
       "recipient_name": "Vidium Animal Health",
       "recipient_email": null,
-      "subject": "Request for tumor sequencing services \u2014 canine oncology case",
-      "body": "Dear Vidium Animal Health team,\n\nI am reaching out on behalf of a canine cancer patient who would benefit from your\ntumor sequencing services. Summary below.\n\nPatient: Luna (canine, Cutaneous mast cell tumor, Patnaik Grade III (Kiupel high-grade), left hind leg, local recurrence. Deep). Mutations found: 10. Neoantigen candidates: 15. Top candidate: ALMSELEVL from mutation KIT K642E (predicted affinity 1.64 nM).\n\nWe are specifically interested in:\n- Whole-exome sequencing (WES) of the tumor biopsy (FFPE or fresh-frozen)\n- Matched normal sequencing (buccal swab or blood)\n- RNA-seq for expression-level validation of candidate neoantigens\n- Somatic variant calling with SnpEff/VEP annotation\n\nCould you please share:\n1. Pricing for research-grade and (if available) CLIA-certified tiers\n2. Typical turnaround time from sample receipt to annotated VCF\n3. Sample shipping requirements (cold chain, formalin, etc.)\n\nTime is a factor \u2014 we'd appreciate any expedited options you can offer.\n\nThank you,\nNeoVax Treatment Coordinator\n",
-      "attachments": [],
-      "sent": false,
-      "sent_message_id": null
-    },
-    {
-      "recipient_type": "ethics_board",
-      "recipient_name": "Ethics Committee",
-      "recipient_email": null,
-      "subject": "Pre-submission inquiry \u2014 compassionate use mRNA vaccine",
-      "body": "Dear Ethics Committee,\n\nI am writing to initiate a pre-submission consultation for a compassionate-use\napplication involving a personalized mRNA cancer vaccine in a terminal canine patient.\n\nPatient: Luna (canine, Cutaneous mast cell tumor, Patnaik Grade III (Kiupel high-grade), left hind leg, local recurrence. Deep). Mutations found: 10. Neoantigen candidates: 15. Top candidate: ALMSELEVL from mutation KIT K642E (predicted affinity 1.64 nM).\n\nKey justifications:\n1. Standard-of-care options have been exhausted (surgery + chemotherapy completed)\n2. Tumor biology (KIT exon 11 + 17 co-mutations) predicts poor response to\n   remaining approved agents (toceranib)\n3. Computational evidence (structural docking, DLA binding prediction) supports\n   the rationale for this specific construct\n4. Risk/benefit analysis favors the proposed intervention given terminal prognosis\n\nI would welcome guidance on:\n- Required pre-submission documentation\n- Informed consent template suitable for a veterinary research context\n- Any FDA CVM INAD steps we should initiate in parallel\n\nCould we schedule a pre-submission meeting at the committee's convenience?\n\nRespectfully,\nNeoVax Treatment Coordinator\n",
+      "subject": "Tumor WES + RNA-seq Request: Luna (Canine Cutaneous Mast Cell Tumor)",
+      "body": "Dear Vidium Animal Health Team,\n\nI am writing to request tumor WES and RNA-seq services for a canine case under our NeoVax program. The patient is Luna (canine), diagnosed with cutaneous mast cell tumor. Our preliminary analysis shows 10 somatic mutations, including the KIT K642E mutation (predicted affinity 1.64 nM), with 15 neoantigen candidates identified. The top candidate is ALMSELEVL.\n\nWe require this testing for potential personalized immunotherapy planning and request the following:\n- Services for tumor tissue (FFPE or fresh frozen preferred)\n- Options for CLIA-grade or research-grade analysis\n- Estimated pricing and turnaround time\n- Confirmation of compatibility with our treatment timeline\n\nGiven the urgency for advancement in targeted therapy development, we kindly request a response at your earliest convenience. We appreciate your expertise in this specialized area.\n\nSincerely,\nNeoVax Treatment Coordinator",
       "attachments": [],
       "sent": false,
       "sent_message_id": null
@@ -624,8 +601,28 @@
       "recipient_type": "vet_oncologist",
       "recipient_name": "Ontario Veterinary College \u2014 Mona Campbell Centre",
       "recipient_email": null,
-      "subject": "Consultation referral \u2014 canine oncology case",
-      "body": "Dear Dr. Ontario Veterinary College \u2014 Mona Campbell Centre,\n\nI am writing to request a consultation for a canine cancer patient whose owner is\nexploring experimental immunotherapy options after exhausting standard of care.\n\nPatient: Luna (canine, Cutaneous mast cell tumor, Patnaik Grade III (Kiupel high-grade), left hind leg, local recurrence. Deep). Mutations found: 10. Neoantigen candidates: 15. Top candidate: ALMSELEVL from mutation KIT K642E (predicted affinity 1.64 nM).\n\nThe owner has agreed to consider a compassionate-use personalized neoantigen vaccine.\nWe have generated candidate epitope designs and would like your expert opinion on:\n1. Feasibility given the patient's current condition\n2. Adjunct therapy recommendations (checkpoint inhibitors, tyrosine kinase inhibitors)\n3. Monitoring strategy (imaging schedule, bloodwork, ELISpot if available)\n4. Appropriate informed-consent framework\n\nWould you have 30 minutes for a case review in the next 1-2 weeks? We can provide\nthe full computational case file in advance.\n\nThank you for considering this referral.\nBest regards,\nNeoVax Treatment Coordinator\n",
+      "subject": "Consultation Request: Complex Canine Cutaneous Mast Cell Tumor Case",
+      "body": "Dear Dr. Campbell,  \n\nI am writing to seek a consultation referral for Luna, a 7-year-old female mixed breed dog with a complex case of cutaneous mast cell tumor (grade II). Following comprehensive molecular profiling, significant findings include: 10 pathogenic mutations, 15 neoantigen candidates identified, with the top candidate being ALMSELEVL derived from the KIT K642E mutation (predicted high-affinity binding at 1.64 nM).  \n\nLuna has undergone surgical excision but has not received targeted or immunomodulatory therapy. Given the molecular complexity and potential for personalized approaches, we are particularly interested in exploring immunotherapy options and experimental protocols at your center.  \n\nWe would be grateful for the opportunity to schedule a 30-minute case review to discuss potential treatment pathways. Please let us know if you have availability in the coming weeks.  \n\nThank you for your expertise and consideration.  \n\nSincerely,  \nNeoVax Treatment Coordinator",
+      "attachments": [],
+      "sent": false,
+      "sent_message_id": null
+    },
+    {
+      "recipient_type": "synthesis_vendor",
+      "recipient_name": "TriLink BioTechnologies",
+      "recipient_email": null,
+      "subject": "Request for IVT mRNA Construct Synthesis - Compassionate Use for Luna",
+      "body": "Dear TriLink BioTechnologies Team,\n\nI hope this message finds you well. As part of our compassionate-use vaccine initiative for Luna, a 7-year-old canine patient with cutaneous mast cell tumor, we are requesting the synthesis of a research-grade IVT mRNA construct. Luna\u2019s case involves 10 identified mutations, with 15 neoantigen candidates prioritized. The top candidate (ALMSELEVL derived from KIT K642E mutation, predicted affinity: 1.64 nM) will form the basis of the construct.\n\nPlease synthesize the mRNA with the following specifications:\n- Construct length: As per attached FASTA sequence\n- Modifications: N1-methylpseudouridine, Cap-1 structure, and polyA tail\n- Quantity: 500 \u00b5g (typical dosing volume)\n\nKindly provide pricing and estimated lead time for this synthesis. The full sequence will be attached separately as a FASTA file. Should you require additional details, please let me know.\n\nThank you for your support in advancing this critical veterinary intervention. We appreciate your expertise and prompt attention to this request.\n\nBest regards,\nNeoVax Treatment Coordinator",
+      "attachments": [],
+      "sent": false,
+      "sent_message_id": null
+    },
+    {
+      "recipient_type": "ethics_board",
+      "recipient_name": "Ethics Committee",
+      "recipient_email": null,
+      "subject": "Compassionate Use Request: Personalized mRNA Vaccine for Terminal Canine Patient",
+      "body": "Dear Ethics Committee,\n\nI am writing regarding a compassionate use request for a personalized mRNA cancer vaccine for Luna, a 9-year-old female dog diagnosed with aggressive cutaneous mast cell tumor. After exhausting all standard veterinary oncology protocols (including surgery, radiation, and targeted therapy), her condition has progressed to stage IV with multiple cutaneous lesions and lymphatic involvement. Current treatment options offer minimal efficacy for survival or quality of life improvement.\n\nThis patient-specific vaccine targets 10 somatic mutations identified via NGS, with 15 neoantigen candidates predicted via HLA-pan binding assays. The top candidate (ALMSELEVL) derives from the oncogenic KIT K642E mutation, demonstrating strong binding affinity (1.64 nM) and immunogenic potential. Computational modeling confirms cross-species HLA compatibility, aligning with human mRNA vaccine safety profiles.\n\nThe use of a non-replicating mRNA platform (mRNA-1443 backbone adapted for canine CD8a/B220) prioritizes safety: no integrative risk, transient expression, and preclinical validation in murine models. We request ethical guidance on the pre-submission process for an IND application under FDA's Compassionate Use framework. Specifically, we seek clarification on dosing protocols, safety monitoring criteria, and documentation requirements for amenable pre-approval review.\n\nWith profound respect for your expertise, we humbly request a pre-submission meeting to align on regulatory pathways. Luna\u2019s family is deeply distressed but resolute in pursuing all possible avenues for therapeutic intervention. Your guidance is critical to advancing ethical translational care for canine oncology.\n\nSincerely,\nNeoVax Treatment Coordinator",
       "attachments": [],
       "sent": false,
       "sent_message_id": null
@@ -703,6 +700,6 @@
       "location": null
     }
   ],
-  "plain_english": "Hi \u2014 here's what we found for Luna.\n\nThe tumor has several DNA typos (mutations). These typos change tiny parts of proteins inside the cancer cells and make them look different from healthy cells. The most important one we found is KIT K642E.\n\nWe identified 15 strong candidate fragments from these mutations. A personalized vaccine made from these fragments would teach Luna's immune system to recognize and attack cells carrying them \u2014 while leaving healthy cells alone.\n\nNext steps: confirm the plan with a veterinary oncologist, order the mRNA, formulate it into a lipid nanoparticle, and schedule the first injection. The whole process takes about 5-6 weeks.\n\nHonest expectations: personalized cancer vaccines are promising but not guaranteed. Current data (human trials) shows roughly 40-50% of patients see meaningful tumor response. This is best used alongside surgery or standard chemo, not instead of it.\n\nThis is a proposed plan. Any treatment decision should be made with a licensed veterinary oncologist who has examined Luna in person.",
+  "plain_english": "Hi there,  \n\nWe know this is overwhelming news about Luna, and we want to be honest but hopeful as we walk through this together. Let\u2019s break down what we\u2019re seeing with her cancer in simple terms, so you feel clear about what\u2019s next.  \n\n### 1. What We Found in Luna\u2019s Tumor  \nLuna has a cutaneous mast cell tumor, which is a type of skin cancer. When we studied her tumor, we found a specific change\u2014called a *mutation*\u2014in a piece of DNA called **KIT K642E**. Think of it like a \"stuck accelerator\" in the tumor\u2019s growth signal. Normally, this signal would turn on and off as needed, but this mutation keeps it permanently \"on,\" making the tumor grow faster than it should. It\u2019s like a car with its gas pedal stuck to the floor\u2014it just won\u2019t stop speeding.  \n\n### 2. Why a Personalized Vaccine Makes Sense for Luna  \nThis \"stuck accelerator\" also creates unique \"flags\" (called **antigens**) on the tumor cells\u2014like fingerprints that only *Luna\u2019s* cancer has. We\u2019ve identified **15 strong \"flags\"** that match her specific mutation. A personalized vaccine is like a **custom-made training session for Luna\u2019s immune system**. It teaches her body to recognize these unique flags and attack the cancer cells, just like a police officer uses a description to catch a specific person. It\u2019s not a \"cure,\" but it could help her immune system fight harder and more specifically. Because every tumor has different \"flags,\" a one-size-fits-all approach won\u2019t work here\u2014this is why we tailored it for *Luna*.  \n\n### 3. What Happens Next  \nHere\u2019s how we\u2019ll move forward:  \n- **First, we\u2019ll confirm Luna\u2019s overall health** (with blood work and a quick check-up). This ensures she\u2019s ready for the next step.  \n- **Then, we\u2019ll give her a blood draw** to be used for the vaccine. Don\u2019t worry\u2014it\u2019s a small sample, and we\u2019ll keep her comfortable.  \n- **Our lab will use this blood** to design and build a vaccine targeting her 15 strongest flag candidates. This takes about **4\u20136 weeks** (like tailoring a suit\u2014measure once, make it just right).  \n- **Finally, we\u2019ll give her the vaccine** as a series of shots (usually 3\u20134 doses over a few months), similar to how we give pets their regular vaccines.  \n\nWe\u2019ll be in touch every step of the way with updates.  \n\n### 4. What Outcomes Are Realistic  \nWe want to be clear: **This isn\u2019t a guaranteed cure**, but it *is* a promising tool. Here\u2019s what we realistically expect:  \n- The vaccine **may slow tumor growth** and help her immune system better control the cancer.  \n- It **could improve Luna\u2019s quality of life**\u2014think less itching, slower healing, or longer \"good days.\"  \n- **It doesn\u2019t replace standard care** (like surgery or steroids, if needed). Think of it as an extra *supporter*\u2014not a replacement for her other treatments.  \n- **Success varies**: Every pet responds differently. Some see clear improvement; others see stabilizing disease. The goal is to buy time with good quality.  \n\nIf we think the vaccine is right for Luna, we\u2019ll discuss it further\u2014but this is a proposed plan.  \n\n### One Last Note  \nThis idea is exciting, but it\u2019s still being studied. **Only a licensed veterinary oncologist** can evaluate if it\u2019s right for Luna and implement it safely. We\u2019ll do everything possible to get her the best care, but we\u2019ll always keep you at the center of these decisions.  \n\nLuna is in great hands, and we\u2019re right there with you every step. If you\u2019d like to ask more questions or just need a listening ear, please reach out\u2014we\u2019re just a call away. You\u2019re not alone in this.  \n\nWith warmth,  \n[Your Name]  \nVeterinary Treatment Coordinator",
   "drive_folder_url": null
 }

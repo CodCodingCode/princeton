@@ -153,6 +153,7 @@ async def call_for_json(
     Works around K2's unreliable tool-calling by prompting for JSON in the text
     response and post-processing out the <think>...</think> block.
     """
+    log = get_k2_logger()
     client = _openai_client()
     schema_json = json.dumps(schema.model_json_schema(), indent=2)
     augmented_system = (
@@ -161,20 +162,40 @@ async def call_for_json(
         + schema_json
         + "\n\nReturn ONLY the JSON object after your reasoning. No markdown, no prose."
     )
-    resp = await client.chat.completions.create(
-        model=_model_name(),
-        max_tokens=max_tokens,
-        messages=[
-            {"role": "system", "content": augmented_system},
-            {"role": "user", "content": user_prompt},
-        ],
-    )
+    log.info("call_for_json start: schema=%s, user_prompt_len=%d", schema.__name__, len(user_prompt))
+    try:
+        resp = await client.chat.completions.create(
+            model=_model_name(),
+            max_tokens=max_tokens,
+            messages=[
+                {"role": "system", "content": augmented_system},
+                {"role": "user", "content": user_prompt},
+            ],
+        )
+    except Exception as e:
+        log.error("call_for_json HTTP error: schema=%s, err=%s: %s", schema.__name__, type(e).__name__, e)
+        raise
     raw = resp.choices[0].message.content or ""
+    finish = resp.choices[0].finish_reason
+    log.info(
+        "call_for_json response: schema=%s, finish_reason=%s, content_len=%d",
+        schema.__name__, finish, len(raw),
+    )
     try:
         data = json.loads(_extract_json(raw))
     except json.JSONDecodeError as e:
+        log.error(
+            "call_for_json JSON parse failed: schema=%s, err=%s, raw=%r",
+            schema.__name__, e, raw[:800],
+        )
         raise ValueError(f"K2 did not return valid JSON: {raw[:300]!r}") from e
     try:
-        return schema.model_validate(data)
+        validated = schema.model_validate(data)
     except ValidationError as e:
+        log.error(
+            "call_for_json validation failed: schema=%s, err=%s, data=%s",
+            schema.__name__, e, data,
+        )
         raise ValueError(f"K2 JSON failed {schema.__name__} validation: {e}") from e
+    log.info("call_for_json OK: schema=%s", schema.__name__)
+    return validated

@@ -1,0 +1,16 @@
+2026-04-17 22:57:41,541 [INFO] neoantigen.k2: K2 logger initialized (path=out/k2.log)
+2026-04-17 22:57:41,733 [INFO] neoantigen.k2: call_for_json start: schema=PathologyReport, user_prompt_len=3720
+2026-04-17 22:57:50,047 [INFO] neoantigen.k2: call_for_json response: schema=PathologyReport, finish_reason=stop, content_len=5392
+2026-04-17 22:57:50,048 [INFO] neoantigen.k2: call_for_json OK: schema=PathologyReport
+2026-04-17 22:57:50,845 [INFO] neoantigen.k2: call_for_json start: schema=EmailContent, user_prompt_len=581
+2026-04-17 22:57:50,846 [INFO] neoantigen.k2: call_for_json start: schema=EmailContent, user_prompt_len=660
+2026-04-17 22:57:50,847 [INFO] neoantigen.k2: call_for_json start: schema=EmailContent, user_prompt_len=605
+2026-04-17 22:57:50,848 [INFO] neoantigen.k2: call_for_json start: schema=EmailContent, user_prompt_len=596
+2026-04-17 22:57:56,170 [INFO] neoantigen.k2: call_for_json response: schema=EmailContent, finish_reason=stop, content_len=3121
+2026-04-17 22:57:56,170 [INFO] neoantigen.k2: call_for_json OK: schema=EmailContent
+2026-04-17 22:57:56,199 [INFO] neoantigen.k2: call_for_json response: schema=EmailContent, finish_reason=stop, content_len=3164
+2026-04-17 22:57:56,199 [INFO] neoantigen.k2: call_for_json OK: schema=EmailContent
+2026-04-17 22:57:57,051 [INFO] neoantigen.k2: call_for_json response: schema=EmailContent, finish_reason=stop, content_len=3893
+2026-04-17 22:57:57,052 [INFO] neoantigen.k2: call_for_json OK: schema=EmailContent
+2026-04-17 22:57:57,758 [INFO] neoantigen.k2: call_for_json response: schema=EmailContent, finish_reason=stop, content_len=4713
+2026-04-17 22:57:57,759 [INFO] neoantigen.k2: call_for_json OK: schema=EmailContent

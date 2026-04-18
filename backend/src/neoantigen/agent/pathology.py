@@ -14,7 +14,7 @@ from pathlib import Path
 from pypdf import PdfReader
 
 from ..models import PathologyReport
-from ._llm import call_for_json, has_api_key
+from ._llm import call_for_json, get_k2_logger, has_api_key
 
 
 SYSTEM_PROMPT = """You are a veterinary pathology report parser. Extract structured fields from the report text.
@@ -122,7 +122,10 @@ async def extract_pathology(pdf_path: Path) -> PathologyReport:
     if has_api_key():
         try:
             return await _llm_parse(text)
-        except Exception:
-            pass  # fall through to heuristic
+        except Exception as e:
+            get_k2_logger().warning(
+                "extract_pathology fallback to heuristic: err=%s: %s",
+                type(e).__name__, e,
+            )
 
     return PathologyReport(**_heuristic_parse(text))
