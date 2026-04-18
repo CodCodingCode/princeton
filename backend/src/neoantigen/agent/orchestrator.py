@@ -1,73 +1,39 @@
-"""Main agent orchestrator.
+"""Main case orchestrator — deterministic 8-step workflow.
 
-Uses Claude Agent SDK to run an agent with an in-process MCP server of our custom
-tools. Tools emit events to an EventBus; the external consumer (Streamlit UI or
-CLI) is responsible for consuming the stream and reconstructing the CaseFile.
+Drives the end-to-end case generation with a plain async Python workflow (no
+multi-turn tool-calling loop). LLM reasoning is performed inside three PydanticAI
+agents (pathology, emails, explain) backed by K2 Think V2; every other step is
+a pure compute or IO call. Tools emit events to an EventBus; the external
+consumer (Streamlit UI or CLI) consumes the stream and reconstructs the CaseFile.
 """
 
 from __future__ import annotations
 
 import asyncio
-import os
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from claude_agent_sdk import (
-    AssistantMessage,
-    ClaudeAgentOptions,
-    ResultMessage,
-    TextBlock,
-    create_sdk_mcp_server,
-    query,
+from ..models import (
+    CaseFile,
+    EmailDraft,
+    LabMatch,
+    PathologyReport,
+    PipelineResult,
+    StructurePose,
+    TimelineEvent,
 )
-
-from ..models import CaseFile, EmailDraft, LabMatch, PathologyReport, PipelineResult, StructurePose, TimelineEvent
 from .events import AgentEvent, EventBus, EventKind, set_current_bus
-from .tools import ALL_TOOLS
+from . import tools
 
 
-SYSTEM_PROMPT = """You are NeoVax — an autonomous veterinary cancer-treatment coordinator.
-
-Your job: given a tumor VCF and pathology PDF, produce a complete treatment package end-to-end.
-
-**Required workflow** (call tools in this order, using parallel calls where noted):
-
-1. Call `read_pathology` with the PDF path. Extract patient details + location.
-
-2. Call `run_neoantigen_pipeline` with the VCF. Use species="canine" and allele="DLA-88*50101"
-   unless the pathology specifies otherwise. Top 15 candidates, max_nm=500.
-
-3. In PARALLEL (call in a single response), run:
-   - `find_sequencing_labs` with the owner's location
-   - `find_vet_oncologists` with the owner's location
-   - `find_synthesis_vendors` with the mRNA length from step 2
-   - `find_drug_interactions` with the genes from step 2
-   - `find_clinical_trials` with the genes + cancer type
-
-4. Call `validate_structure_3d` on the TOP candidate peptide with the DLA allele. Also do this
-   for the #2 candidate if time permits.
-
-5. Call `draft_email` four times (can be parallel):
-   - recipient_type="sequencing_lab" to the top sequencing lab found
-   - recipient_type="synthesis_vendor" to TriLink BioTechnologies
-   - recipient_type="vet_oncologist" to the top vet oncologist found
-   - recipient_type="ethics_board" for the compassionate use application
-
-6. Call `generate_timeline`.
-
-7. Call `explain_case_to_owner` with the patient details and top mutation.
-
-8. Respond with a final summary: number of candidates, top candidate, estimated cost + timeline,
-   and emphasize this is a proposed plan requiring veterinary sign-off.
-
-Be efficient. Prefer parallel tool calls. Each tool emits progress events — the UI is watching
-live. Do NOT re-call tools with the same arguments."""
+DEFAULT_LOCATION = "New York, NY"
+DEFAULT_ALLELE = "DLA-88*50101"
 
 
 @dataclass
 class CaseOrchestrator:
-    """One-shot orchestrator: runs the agent end-to-end for a single case."""
+    """One-shot orchestrator: runs the 8-step workflow end-to-end for a single case."""
 
     vcf_path: Path
     pdf_path: Path
@@ -75,45 +41,122 @@ class CaseOrchestrator:
     case: CaseFile | None = None
 
     async def run(self) -> None:
-        """Run the agent loop. Emits events to self.bus; external consumer assembles CaseFile."""
+        """Run the deterministic workflow. Emits events to self.bus;
+        external consumer assembles CaseFile from CASE_UPDATE events."""
         set_current_bus(self.bus)
-
-        mcp_server = create_sdk_mcp_server(name="neovax-tools", version="0.1.0", tools=ALL_TOOLS)
-
-        tool_names = [f"mcp__neovax-tools__{t.name}" for t in ALL_TOOLS]
-
-        model = os.environ.get("NEOVAX_MODEL", "claude-sonnet-4-5")
-
-        options = ClaudeAgentOptions(
-            system_prompt=SYSTEM_PROMPT,
-            model=model,
-            mcp_servers={"neovax-tools": mcp_server},
-            allowed_tools=tool_names,
-            permission_mode="bypassPermissions",
-            max_turns=30,
-        )
-
-        user_prompt = (
-            f"New case to process.\n\n"
-            f"Pathology PDF: {self.pdf_path.resolve()}\n"
-            f"Tumor VCF: {self.vcf_path.resolve()}\n\n"
-            f"Execute the full workflow. The UI is streaming events live — keep moving."
-        )
-
         try:
-            async for message in query(prompt=user_prompt, options=options):
-                if isinstance(message, AssistantMessage):
-                    for block in message.content:
-                        if isinstance(block, TextBlock) and block.text.strip():
-                            await self.bus.emit(EventKind.LOG, block.text[:500])
-                elif isinstance(message, ResultMessage):
-                    await self.bus.emit(EventKind.DONE, "✅ Case complete")
-                    break
+            # Step 1: Pathology extraction
+            pathology = await tools.read_pathology(self.pdf_path)
+            if "error" in pathology:
+                raise RuntimeError(f"Pathology extraction failed: {pathology['error']}")
+
+            species = pathology.get("species") or "canine"
+            allele = _first_allele(pathology) or DEFAULT_ALLELE
+
+            # Step 2: Neoantigen pipeline
+            pipeline = await tools.run_neoantigen_pipeline(
+                vcf_path=self.vcf_path,
+                species=species,
+                allele=allele,
+            )
+            if "error" in pipeline:
+                raise RuntimeError(f"Pipeline failed: {pipeline['error']}")
+
+            # Step 3: Parallel discovery (labs, vets, vendors, drugs, trials)
+            location = pathology.get("owner_location") or DEFAULT_LOCATION
+            genes: list[str] = pipeline.get("genes") or []
+            cancer_type = pathology.get("cancer_type") or ""
+            mrna_length = int(pipeline.get("construct_length_bp") or 600)
+
+            labs, vets, vendors, _drugs, _trials = await asyncio.gather(
+                tools.find_sequencing_labs(location),
+                tools.find_vet_oncologists(location),
+                tools.find_synthesis_vendors(mrna_length),
+                tools.find_drug_interactions(genes),
+                tools.find_clinical_trials(genes, cancer_type),
+                return_exceptions=True,
+            )
+
+            # Step 4: Structure docking for the top candidate
+            top = pipeline.get("top_candidate")
+            if top:
+                await tools.validate_structure_3d(
+                    peptide=top["sequence"],
+                    dla_allele=allele,
+                    mutation_label=top["mutation"],
+                )
+
+            # Step 5: Parallel email drafts (4 recipient types)
+            top_lab = _first_name(labs, default="Sequencing Lab Partner")
+            top_vet = _first_name(vets, default="Veterinary Oncology Team")
+            context_summary = _build_context_summary(pathology, pipeline, top)
+
+            await asyncio.gather(
+                tools.draft_email("sequencing_lab", top_lab, context=context_summary),
+                tools.draft_email(
+                    "synthesis_vendor", "TriLink BioTechnologies", context=context_summary
+                ),
+                tools.draft_email("vet_oncologist", top_vet, context=context_summary),
+                tools.draft_email("ethics_board", "Ethics Committee", context=context_summary),
+                return_exceptions=True,
+            )
+
+            # Step 6: Treatment timeline
+            await tools.generate_timeline(start_week=1, species=species)
+
+            # Step 7: Plain-English owner explanation
+            await tools.explain_case_to_owner(
+                patient_name=pathology.get("patient_name") or "the patient",
+                cancer_type=cancer_type or "cancer",
+                candidate_count=int(pipeline.get("candidates") or 0),
+                top_mutation=(top["mutation"] if top else "unknown"),
+            )
+
+            # Step 8: Done
+            await self.bus.emit(EventKind.DONE, "✅ Case complete")
         except Exception as e:
-            await self.bus.emit(EventKind.TOOL_ERROR, f"Agent error: {e}")
+            await self.bus.emit(EventKind.TOOL_ERROR, f"Workflow error: {e}")
         finally:
             await self.bus.close()
             set_current_bus(None)
+
+
+def _first_allele(pathology: dict[str, Any]) -> str | None:
+    alleles = pathology.get("dla_alleles") or []
+    return alleles[0] if alleles else None
+
+
+def _first_name(result: Any, default: str) -> str:
+    """Extract the first entry's `name` from a discovery result list.
+
+    Handles the case where the result is an Exception (from asyncio.gather with
+    return_exceptions=True), an empty list, or a list of dicts.
+    """
+    if isinstance(result, BaseException) or not result:
+        return default
+    first = result[0]
+    if isinstance(first, dict):
+        return first.get("name") or default
+    return default
+
+
+def _build_context_summary(
+    pathology: dict[str, Any],
+    pipeline: dict[str, Any],
+    top: dict[str, Any] | None,
+) -> str:
+    parts = [
+        f"Patient: {pathology.get('patient_name', 'unknown')} "
+        f"({pathology.get('species', 'canine')}, {pathology.get('cancer_type', 'cancer')}).",
+        f"Mutations found: {pipeline.get('mutations_found', 0)}.",
+        f"Neoantigen candidates: {pipeline.get('candidates', 0)}.",
+    ]
+    if top:
+        parts.append(
+            f"Top candidate: {top['sequence']} from mutation {top['mutation']} "
+            f"(predicted affinity {top.get('score_nm', '?')} nM)."
+        )
+    return " ".join(parts)
 
 
 def build_case_file(events: list[AgentEvent]) -> CaseFile | None:
@@ -154,7 +197,11 @@ def build_case_file(events: list[AgentEvent]) -> CaseFile | None:
     if pathology_data is None:
         return None
 
-    pipeline = PipelineResult(**pipeline_data) if pipeline_data else PipelineResult(mutations=[], candidates=[])
+    pipeline = (
+        PipelineResult(**pipeline_data)
+        if pipeline_data
+        else PipelineResult(mutations=[], candidates=[])
+    )
     return CaseFile(
         pathology=PathologyReport(**pathology_data),
         pipeline=pipeline,
@@ -169,7 +216,6 @@ def build_case_file(events: list[AgentEvent]) -> CaseFile | None:
 
 
 async def run_case(vcf_path: Path, pdf_path: Path, bus: EventBus | None = None) -> CaseOrchestrator:
-    """Create and start a case orchestration. Caller consumes bus.stream() for live events."""
+    """Create a case orchestration. Caller consumes bus.stream() for live events."""
     bus = bus or EventBus()
-    orchestrator = CaseOrchestrator(vcf_path=vcf_path, pdf_path=pdf_path, bus=bus)
-    return orchestrator
+    return CaseOrchestrator(vcf_path=vcf_path, pdf_path=pdf_path, bus=bus)

@@ -1,8 +1,26 @@
-"""Plain-English case narrative for the pet owner."""
+"""Plain-English case narrative for the pet owner.
+
+Uses K2 Think V2 via PydanticAI to produce a warm, jargon-free explanation.
+Falls back to a static template when K2_API_KEY is not set.
+"""
 
 from __future__ import annotations
 
-import os
+import re
+
+from ._llm import build_model, has_api_key
+
+
+_THINK_RE = re.compile(r"<think>.*?</think>\s*|</think>\s*", re.DOTALL)
+
+
+def _strip_think_block(text: str) -> str:
+    """Remove K2-Think's <think>...</think> reasoning block from free-form output.
+
+    Handles both the full `<think>...</think>` form and the truncated trailing
+    `</think>` that K2 sometimes emits when the open tag is consumed by the server.
+    """
+    return _THINK_RE.sub("", text, count=1)
 
 
 SYSTEM_PROMPT = """You are a compassionate veterinary treatment coordinator.
@@ -25,13 +43,17 @@ async def explain_case(
     top_mutation: str,
     **extra,
 ) -> str:
-    if not os.environ.get("ANTHROPIC_API_KEY"):
+    if not has_api_key():
         return _fallback(patient_name, cancer_type, candidate_count, top_mutation)
 
     try:
-        from anthropic import AsyncAnthropic
+        from pydantic_ai import Agent
 
-        client = AsyncAnthropic()
+        agent = Agent(
+            build_model(),
+            output_type=str,
+            system_prompt=SYSTEM_PROMPT,
+        )
         prompt = (
             f"Patient: {patient_name}\n"
             f"Cancer type: {cancer_type}\n"
@@ -39,13 +61,8 @@ async def explain_case(
             f"Strong vaccine candidates found: {candidate_count}\n\n"
             "Write the owner-facing explanation."
         )
-        resp = await client.messages.create(
-            model="claude-opus-4-5",
-            max_tokens=1200,
-            system=SYSTEM_PROMPT,
-            messages=[{"role": "user", "content": prompt}],
-        )
-        return resp.content[0].text.strip()
+        result = await agent.run(prompt)
+        return _strip_think_block(result.output).strip()
     except Exception:
         return _fallback(patient_name, cancer_type, candidate_count, top_mutation)
 

@@ -1,7 +1,8 @@
 """Agent orchestration layer for the neoantigen pipeline.
 
-Wraps the existing pipeline + external integrations (Google, PANDORA, email) as
-Claude Agent SDK tools, and streams progress events to a Streamlit UI.
+Drives the existing pipeline + external integrations (Google, PANDORA, email)
+through a deterministic 8-step workflow. LLM reasoning uses PydanticAI agents
+backed by K2 Think V2. Progress events stream to the Streamlit UI via EventBus.
 """
 
 from .events import AgentEvent, EventBus, EventKind

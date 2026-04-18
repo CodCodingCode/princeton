@@ -1,7 +1,8 @@
 """Email draft generation and sending.
 
-Uses Claude to generate a professional draft per recipient type. Sending goes
-through Gmail MCP if configured; otherwise the draft is returned for manual send.
+Uses a PydanticAI agent (backed by K2 Think V2) to generate a professional draft
+per recipient type with a typed `EmailContent` output. Sending goes through the
+Gmail API if configured; otherwise the draft is returned for manual send.
 """
 
 from __future__ import annotations
@@ -14,7 +15,17 @@ from email.mime.text import MIMEText
 from pathlib import Path
 from typing import Literal
 
+from pydantic import BaseModel, Field
+
 from ..models import EmailDraft
+from ._llm import build_model, has_api_key
+
+
+class EmailContent(BaseModel):
+    """Structured email output from the drafting agent."""
+
+    subject: str = Field(description="Concise subject line, under 80 characters.")
+    body: str = Field(description="Full email body. Plain text, no markdown.")
 
 
 RECIPIENT_INSTRUCTIONS = {
@@ -48,12 +59,8 @@ RECIPIENT_INSTRUCTIONS = {
 
 
 SYSTEM_PROMPT = """You are an experienced veterinary oncology coordinator drafting professional correspondence.
-Produce outputs as JSON only, with shape:
-{
-  "subject": "...",
-  "body": "..."
-}
-No markdown. No commentary. Just JSON."""
+Produce a complete email with a concise subject line and a well-structured body.
+Keep the tone professional, warm where appropriate, and specific to the case context provided."""
 
 
 async def draft_email(
@@ -66,37 +73,26 @@ async def draft_email(
     instruction = RECIPIENT_INSTRUCTIONS.get(recipient_type, "Write a professional email.")
     attachments = attachments or []
 
-    if not os.environ.get("ANTHROPIC_API_KEY"):
+    if not has_api_key():
         return _fallback_draft(recipient_type, recipient_name, recipient_email, context, attachments)
 
     try:
-        from anthropic import AsyncAnthropic
+        from pydantic_ai import Agent
 
-        client = AsyncAnthropic()
-        response = await client.messages.create(
-            model="claude-opus-4-5",
-            max_tokens=1500,
-            system=SYSTEM_PROMPT,
-            messages=[
-                {
-                    "role": "user",
-                    "content": (
-                        f"Draft an email to {recipient_name}.\n\n"
-                        f"Recipient type: {recipient_type}\n"
-                        f"Instruction: {instruction}\n\n"
-                        f"Case context:\n{context}\n\n"
-                        f"Sign the email from 'NeoVax Treatment Coordinator'. Return JSON only."
-                    ),
-                }
-            ],
+        agent = Agent(
+            build_model(),
+            output_type=EmailContent,
+            system_prompt=SYSTEM_PROMPT,
         )
-        raw = response.content[0].text.strip()
-        if raw.startswith("```"):
-            raw = raw.split("```", 2)[1]
-            if raw.startswith("json"):
-                raw = raw[4:]
-            raw = raw.rsplit("```", 1)[0]
-        data = json.loads(raw)
+        prompt = (
+            f"Draft an email to {recipient_name}.\n\n"
+            f"Recipient type: {recipient_type}\n"
+            f"Instruction: {instruction}\n\n"
+            f"Case context:\n{context}\n\n"
+            f"Sign the email from 'NeoVax Treatment Coordinator'."
+        )
+        result = await agent.run(prompt)
+        content = result.output
     except Exception:
         return _fallback_draft(recipient_type, recipient_name, recipient_email, context, attachments)
 
@@ -104,8 +100,8 @@ async def draft_email(
         recipient_type=recipient_type,  # type: ignore[arg-type]
         recipient_name=recipient_name,
         recipient_email=recipient_email or None,
-        subject=data.get("subject", "Inquiry"),
-        body=data.get("body", ""),
+        subject=content.subject,
+        body=content.body,
         attachments=attachments,
     )
 

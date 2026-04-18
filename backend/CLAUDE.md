@@ -62,7 +62,7 @@ runner.py   → Orchestrator (RunConfig dataclass, async execution)
 
 ## Agent layer (`src/neoantigen/agent/`)
 
-Wraps the pipeline + external discovery as Claude Agent SDK tools. One entry point (`CaseOrchestrator`) drives the whole flow from `(pathology_pdf, tumor_vcf)` to a complete `CaseFile`.
+Wraps the pipeline + external discovery behind a deterministic 8-step workflow. One entry point (`CaseOrchestrator`) drives the whole flow from `(pathology_pdf, tumor_vcf)` to a complete `CaseFile`. LLM reasoning runs inside three **PydanticAI** agents (pathology, emails, explain) backed by **MBZUAI's K2 Think V2** via an OpenAI-compatible endpoint.
 
 **Architecture**:
 
@@ -70,28 +70,33 @@ Wraps the pipeline + external discovery as Claude Agent SDK tools. One entry poi
 app_agent.py / CLI (agent-demo)
     │
     ▼
-CaseOrchestrator ── claude_agent_sdk.query() with an in-process MCP server
-    │                                            │
-    │                                            ▼
-    │                           ALL_TOOLS from agent/tools.py
-    │                           (read_pathology, run_neoantigen_pipeline,
-    │                            find_sequencing_labs, find_vet_oncologists,
-    │                            find_synthesis_vendors, validate_structure_3d,
-    │                            find_drug_interactions, find_clinical_trials,
-    │                            draft_email, generate_timeline,
-    │                            explain_case_to_owner)
+CaseOrchestrator.run()  — deterministic Python workflow, 8 steps
+    │
+    ├─ Step 1: read_pathology           → PydanticAI agent (K2 reasoning) → PathologyReport
+    ├─ Step 2: run_neoantigen_pipeline  → pure compute
+    ├─ Step 3: asyncio.gather(            ← parallel IO
+    │           find_sequencing_labs, find_vet_oncologists, find_synthesis_vendors,
+    │           find_drug_interactions, find_clinical_trials)
+    ├─ Step 4: validate_structure_3d    → pure compute (PANDORA / ESMFold)
+    ├─ Step 5: asyncio.gather(            ← parallel K2 reasoning
+    │           draft_email x 4)
+    ├─ Step 6: generate_timeline        → pure compute
+    ├─ Step 7: explain_case_to_owner    → PydanticAI agent (K2 reasoning) → str
+    └─ Step 8: emit DONE
     │
     └─► EventBus (asyncio.Queue) ──► UI consumer
          tools emit progress events     (Streamlit live feed or CLI printer)
 ```
 
-**Event flow**: Each tool emits `TOOL_START` + `TOOL_RESULT` (+ occasionally `CASE_UPDATE` payloads with structured data). `build_case_file(events)` reconstructs the final `CaseFile` by replaying CASE_UPDATE payloads. The Streamlit UI consumes events live via a thread + `queue.Queue` bridge (`app_agent.py:run_agent_in_background`).
+**Why deterministic rather than multi-turn tool-calling**: MBZUAI's docs state K2 Think V2 is not yet tuned for agentic tool-use loops. We get the benefit of K2's single-turn reasoning where it shines (parsing, drafting, narrating) and keep the workflow reliable by scripting the step order in Python. The existing SYSTEM_PROMPT was already a fully deterministic 8-step recipe — there was no real planning to lose.
 
-**Model selection**: `NEOVAX_MODEL` env var overrides the default (`claude-sonnet-4-5`). Set to `claude-opus-4-6` for highest-quality orchestration at higher cost.
+**Event flow**: Each step emits `TOOL_START` + `TOOL_RESULT` (+ `CASE_UPDATE` payloads with structured data). `build_case_file(events)` reconstructs the final `CaseFile` by replaying CASE_UPDATE payloads. The Streamlit UI consumes events live via a thread + `queue.Queue` bridge (`app_agent.py:run_agent_in_background`).
+
+**Model selection**: `NEOVAX_MODEL` env var overrides the default (`MBZUAI-IFM/K2-Think-v2`). All three PydanticAI agents share one model instance built by `agent/_llm.py:build_model()`.
 
 **Credentials**: `.env` is loaded by `app_agent.py` via `python-dotenv`. Keys:
 
-- `ANTHROPIC_API_KEY` — for direct LLM calls in `pathology.py`, `emails.py`, `explain.py` (fall back to heuristics if missing). The agent SDK itself uses the `claude` CLI subprocess transport by default, which can reuse Claude Code's auth.
+- `K2_API_KEY` — for K2 Think V2 calls in `pathology.py`, `emails.py`, `explain.py` (fall back to heuristics/templates if missing). Obtained from MBZUAI IFM (HackPrinceton "Best Use of K2 Think V2" track).
 - `GOOGLE_PLACES_API_KEY` — for real lab/vet geo lookups (`labs.py` merges real + curated static results).
 
 ## Gmail sign-in (for email sending)

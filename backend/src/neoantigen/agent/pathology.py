@@ -1,42 +1,27 @@
 """PDF → PathologyReport extraction.
 
-Uses pypdf for text extraction, then Claude for structured field extraction via
-tool-use. Falls back to heuristic regex parsing if no ANTHROPIC_API_KEY is set.
+Uses pypdf for text extraction, then a PydanticAI agent (backed by K2 Think V2)
+for structured field extraction. The agent returns a PathologyReport directly —
+PydanticAI handles JSON parsing, validation, and retries on validation failure.
+Falls back to heuristic regex parsing if K2_API_KEY is not set.
 """
 
 from __future__ import annotations
 
-import json
-import os
 import re
 from pathlib import Path
 
 from pypdf import PdfReader
 
 from ..models import PathologyReport
+from ._llm import build_model, has_api_key
 
 
 SYSTEM_PROMPT = """You are a veterinary pathology report parser. Extract structured fields from the report text.
 
-Return ONLY valid JSON matching this schema (no markdown, no commentary):
-{
-  "patient_name": str,
-  "species": "canine" | "feline" | "human",
-  "breed": str | null,
-  "age_years": float | null,
-  "weight_kg": float | null,
-  "sex": "M" | "F" | "MN" | "FS" | null,
-  "cancer_type": str,
-  "grade": str | null,
-  "stage": str | null,
-  "location": str,
-  "owner_location": str | null,
-  "prior_treatments": [str],
-  "clinical_notes": str,
-  "dla_alleles": [str]
-}
+Reason step-by-step about what each field should be, then produce the final structured output.
 
-If a field is not stated, use null (or empty list for arrays). Be concise.
+If a field is not stated in the report, use null (or an empty list for array fields). Be precise and concise.
 """
 
 
@@ -119,37 +104,29 @@ def _heuristic_parse(text: str) -> dict:
     }
 
 
-async def _llm_parse(text: str) -> dict:
-    """Call Claude to extract structured fields."""
-    from anthropic import AsyncAnthropic
+async def _llm_parse(text: str) -> PathologyReport:
+    """Call K2 Think V2 via PydanticAI to extract a typed PathologyReport."""
+    from pydantic_ai import Agent
 
-    client = AsyncAnthropic()
-    response = await client.messages.create(
-        model="claude-opus-4-5",
-        max_tokens=2000,
-        system=SYSTEM_PROMPT,
-        messages=[{"role": "user", "content": f"Parse this pathology report:\n\n{text}"}],
+    agent = Agent(
+        build_model(),
+        output_type=PathologyReport,
+        system_prompt=SYSTEM_PROMPT,
     )
-    raw = response.content[0].text.strip()
-    # Strip markdown fences if present
-    if raw.startswith("```"):
-        raw = re.sub(r"^```(?:json)?\n", "", raw)
-        raw = re.sub(r"\n```$", "", raw)
-    return json.loads(raw)
+    result = await agent.run(f"Parse this pathology report:\n\n{text}")
+    return result.output
 
 
 async def extract_pathology(pdf_path: Path) -> PathologyReport:
-    """Extract a PathologyReport from a PDF. Uses Claude if available, falls back to regex."""
+    """Extract a PathologyReport from a PDF. Uses K2 Think V2 if available, falls back to regex."""
     text = _extract_text_from_pdf(pdf_path)
     if not text.strip():
         raise ValueError(f"No extractable text in {pdf_path}")
 
-    if os.environ.get("ANTHROPIC_API_KEY"):
+    if has_api_key():
         try:
-            fields = await _llm_parse(text)
+            return await _llm_parse(text)
         except Exception:
-            fields = _heuristic_parse(text)
-    else:
-        fields = _heuristic_parse(text)
+            pass  # fall through to heuristic
 
-    return PathologyReport(**fields)
+    return PathologyReport(**_heuristic_parse(text))
