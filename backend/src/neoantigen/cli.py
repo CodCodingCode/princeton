@@ -297,7 +297,11 @@ def melanoma_batch_command(
         slide = case_dir / "slide.jpg"
         vcf = case_dir / "tumor.vcf"
         bus = EventBus()
-        orch = MelanomaOrchestrator(slide_path=slide, vcf_path=vcf, bus=bus)
+        # case_dir name is the TCGA submitter_id — passing it unlocks the
+        # cohort twin-matching + Kaplan-Meier block in the orchestrator.
+        orch = MelanomaOrchestrator(
+            slide_path=slide, vcf_path=vcf, bus=bus, tcga_patient_id=case_dir.name,
+        )
 
         async def drain():
             async for _ in bus.stream():

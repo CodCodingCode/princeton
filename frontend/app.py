@@ -380,6 +380,15 @@ def _render_vaccine_panel() -> None:
         st.warning("No candidate peptides survived filtering.")
         return
 
+    if pipeline.get("scorer_is_heuristic"):
+        st.warning(
+            "⚠ **Heuristic-only scoring** — NOT a real MHC predictor. "
+            "Reported nM values are hand-rolled anchor-residue math, not ML predictions. "
+            "Run `mhcflurry-downloads fetch` to enable the default real scorer."
+        )
+    elif pipeline.get("scorer_name"):
+        st.caption(f"Scorer: `{pipeline['scorer_name']}`")
+
     rows = []
     for c in candidates[:10]:
         p = c["peptide"]

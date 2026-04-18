@@ -11,17 +11,15 @@ The Streamlit UI (`app.py`) lives in [../frontend/](../frontend/). This director
 ## Commands
 
 ```bash
-# Install (editable)
+# Install (editable). MHCflurry ships as a base dep; fetch its models once.
 pip install -e .
-
-# Install with ML scoring (MHCflurry)
-pip install -e '.[ml]'
-mhcflurry-downloads fetch   # one-time model download
+mhcflurry-downloads fetch
 
 # Pure-pipeline CLI (no LLM, no UI)
 neoantigen demo                           # bundled BRAF V600E sample
 neoantigen run sample_data/braf_v600e.tsv
-neoantigen run input.vcf --mhcflurry --top 20 --max-nm 500
+neoantigen run input.vcf --top 20 --max-nm 500
+neoantigen run input.vcf --scorer heuristic   # test fixture only; prints ⚠ banner
 
 # Full melanoma agent (VLM pathology → NCCN walk → molecular → vaccine → twins)
 neoantigen melanoma-demo                                   # auto-picks TCGA demo patient if cohort built, else sample VCF + slide
@@ -52,7 +50,7 @@ Each step is a separate module:
 parser.py    → Parse mutations from VCF (SnpEff ANN) or TSV
 protein.py   → Fetch wild-type sequence from UniProt, apply mutation
 peptides.py  → Sliding-window peptide generation (8–11 aa)
-scoring.py   → MHC binding prediction (HeuristicScorer or MHCflurryScorer via Protocol)
+scoring.py   → MHC binding prediction (MHCflurryScorer default; HeuristicScorer is a ⚠ test fixture)
 filters.py   → Filter by mutation presence, self-reactivity, affinity threshold
 construct.py → Assemble mRNA: Kozak + ATG + epitopes + linkers + stop codon
 codon.py     → Codon-optimized reverse translation
@@ -120,8 +118,7 @@ Hardcoded dict mapping ~20 common cancer driver genes to UniProt accessions. Unk
 
 ## Key design decisions
 
-- Scorer uses a Python `Protocol` (duck typing) so `HeuristicScorer`, `DLAHeuristicScorer`, `MHCflurryScorer` are interchangeable without inheritance.
-- MHCflurry is an optional `[ml]` extra — the heuristic scorer works without it.
+- Scorer uses a Python `Protocol` (duck typing). `MHCflurryScorer` is the production default; `HeuristicScorer` is a test fixture (made-up anchor-residue math) that emits a `RuntimeWarning` and surfaces a ⚠ banner in CLI + Streamlit whenever it runs — including the orchestrator's fallback path if MHCflurry isn't installed.
 - The pipeline is sync at the module level but the orchestrator uses `asyncio.gather` for concurrent molecular + pipeline steps and `asyncio.to_thread` to offload the sync pipeline runner.
 - The orchestrator is **deterministic Python**, not LLM-driven tool calling. The medical model is only invoked for per-node NCCN decisions (via `stream_with_thinking`) and for vision-based pathology extraction. Rationale: MediX-R1-30B is tuned for medical reasoning, not multi-turn tool-use loops — scripting the flow in Python keeps it reliable while preserving the streaming `<think>` UX the UI depends on.
 

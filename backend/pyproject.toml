@@ -23,6 +23,8 @@ agent = [
     "plotly>=5.18",
     "py3Dmol>=2.0",
     "networkx>=3.2",
+    "langgraph>=0.2",
+    "langchain-core>=0.3",
 ]
 rag = [
     "chromadb>=0.5",

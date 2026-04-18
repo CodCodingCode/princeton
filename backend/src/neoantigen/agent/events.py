@@ -41,6 +41,14 @@ class EventKind(str, Enum):
 
     TRIAL_MATCHES_READY = "trial_matches_ready"
 
+    CHAT_THINKING_DELTA = "chat_thinking_delta"
+    CHAT_ANSWER_DELTA = "chat_answer_delta"
+    CHAT_TOOL_CALL = "chat_tool_call"
+    CHAT_TOOL_RESULT = "chat_tool_result"
+    CHAT_UI_FOCUS = "chat_ui_focus"
+    CHAT_RERANK = "chat_rerank"
+    CHAT_DONE = "chat_done"
+
 
 @dataclass
 class AgentEvent:

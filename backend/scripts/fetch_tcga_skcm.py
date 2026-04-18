@@ -106,8 +106,13 @@ def write_clinical_csv(cases: list[dict], path: Path) -> None:
     print(f"→ wrote {path}")
 
 
-def fetch_maf_file_id() -> str:
-    """Find the open-access MuTect2 masked-MAF file for TCGA-SKCM."""
+def fetch_maf_file_ids() -> list[tuple[str, str, int]]:
+    """Find all open-access masked-somatic MAF files for TCGA-SKCM.
+
+    GDC now emits one MAF per aliquot (workflow
+    ``Aliquot Ensemble Somatic Variant Merging and Masking``) rather than one
+    cohort-wide MAF, so we need to pull them all and concat.
+    """
     body = {
         "filters": {
             "op": "and",
@@ -115,62 +120,81 @@ def fetch_maf_file_id() -> str:
                 {"op": "in", "content": {"field": "cases.project.project_id", "value": [PROJECT]}},
                 {"op": "in", "content": {"field": "data_format", "value": ["MAF"]}},
                 {"op": "in", "content": {"field": "data_type", "value": ["Masked Somatic Mutation"]}},
-                {"op": "in", "content": {"field": "analysis.workflow_type", "value": ["MuTect2 Annotation"]}},
+                {"op": "in", "content": {"field": "analysis.workflow_type",
+                                        "value": ["Aliquot Ensemble Somatic Variant Merging and Masking"]}},
                 {"op": "in", "content": {"field": "access", "value": ["open"]}},
             ],
         },
         "fields": "file_id,file_name,file_size",
-        "size": 5,
+        "size": 1000,
         "format": "JSON",
     }
     data = _post("files", body)
     hits = data["data"]["hits"]
     if not hits:
         raise SystemExit(
-            "No open-access MAF found for TCGA-SKCM. The GDC may have re-keyed "
-            "workflow names; check https://portal.gdc.cancer.gov manually."
+            "No open-access MAFs found for TCGA-SKCM. The GDC may have re-keyed "
+            "workflow names again; check https://portal.gdc.cancer.gov manually."
         )
-    chosen = hits[0]
-    print(f"→ MAF file: {chosen['file_name']} ({chosen['file_size'] // (1024 * 1024)} MB)")
-    return chosen["file_id"]
+    total_mb = sum(h["file_size"] for h in hits) / (1024 * 1024)
+    print(f"→ MAF files: {len(hits)} aliquots, total {total_mb:.1f} MB")
+    return [(h["file_id"], h["file_name"], h["file_size"]) for h in hits]
 
 
-def download_maf(file_id: str, dest: Path) -> Path:
-    url = f"{GDC}/data/{file_id}"
-    print(f"→ downloading MAF…")
-    with httpx.stream("GET", url, timeout=600.0) as r:
-        r.raise_for_status()
-        dest.write_bytes(r.read())
-    print(f"  saved {dest} ({dest.stat().st_size // (1024 * 1024)} MB)")
-    return dest
+def download_mafs(file_infos: list[tuple[str, str, int]], chunk_dir: Path) -> list[Path]:
+    """Download each per-aliquot MAF into ``chunk_dir``. Skip existing complete files."""
+    chunk_dir.mkdir(parents=True, exist_ok=True)
+    paths: list[Path] = []
+    for i, (fid, fname, fsize) in enumerate(file_infos, 1):
+        p = chunk_dir / fname
+        if p.exists() and p.stat().st_size == fsize:
+            paths.append(p)
+            continue
+        url = f"{GDC}/data/{fid}"
+        print(f"  [{i}/{len(file_infos)}] {fname} ({fsize // 1024} KB)", end="\r")
+        with httpx.stream("GET", url, timeout=120.0) as r:
+            r.raise_for_status()
+            p.write_bytes(r.read())
+        paths.append(p)
+    print(f"\n  downloaded {len(paths)} MAFs to {chunk_dir}")
+    return paths
 
 
-def parse_maf_to_parquet(maf_gz: Path, out_path: Path) -> None:
-    """Read the gzipped MAF and stash a slim version as parquet."""
+def parse_mafs_to_parquet(maf_paths: list[Path], out_path: Path) -> None:
+    """Read every MAF, concatenate, and stash a slim missense-only parquet."""
     try:
         import pandas as pd
     except ImportError:
         raise SystemExit("pandas missing — install with: pip install -e './backend[prep]'")
 
-    print(f"→ parsing MAF → parquet…")
-    with gzip.open(maf_gz, "rt") as f:
-        # MAF preamble lines start with '#'; the real header starts with Hugo_Symbol
-        df = pd.read_csv(
-            f,
-            sep="\t",
-            comment="#",
-            low_memory=False,
-            usecols=[
-                "Hugo_Symbol",
-                "Variant_Classification",
-                "Variant_Type",
-                "HGVSp_Short",
-                "Tumor_Sample_Barcode",
-                "case_id",
-                "t_alt_count",
-                "t_ref_count",
-            ],
-        )
+    print(f"→ parsing {len(maf_paths)} MAFs → parquet…")
+    frames: list = []
+    for p in maf_paths:
+        try:
+            with gzip.open(p, "rt") as f:
+                df = pd.read_csv(
+                    f,
+                    sep="\t",
+                    comment="#",
+                    low_memory=False,
+                    usecols=[
+                        "Hugo_Symbol",
+                        "Variant_Classification",
+                        "Variant_Type",
+                        "HGVSp_Short",
+                        "Tumor_Sample_Barcode",
+                        "case_id",
+                        "t_alt_count",
+                        "t_ref_count",
+                    ],
+                )
+        except Exception as e:
+            print(f"  ⚠ skipped {p.name}: {type(e).__name__}: {e}")
+            continue
+        frames.append(df)
+    if not frames:
+        raise SystemExit("No MAFs parsed — aborting.")
+    df = pd.concat(frames, ignore_index=True)
     df = df[df["Variant_Classification"] == "Missense_Mutation"].copy()
     df["vaf"] = df["t_alt_count"] / (df["t_alt_count"] + df["t_ref_count"]).replace(0, 1)
     df["submitter_id"] = df["Tumor_Sample_Barcode"].str.slice(0, 12)
@@ -178,7 +202,8 @@ def parse_maf_to_parquet(maf_gz: Path, out_path: Path) -> None:
         columns={"Hugo_Symbol": "gene", "HGVSp_Short": "hgvs_p"}
     )
     out.to_parquet(out_path, index=False)
-    print(f"  wrote {out_path} ({len(out)} missense mutations across {out['submitter_id'].nunique()} patients)")
+    print(f"  wrote {out_path} ({len(out)} missense mutations across "
+          f"{out['submitter_id'].nunique()} patients)")
 
 
 def pick_braf_v600e_demo_patient(parquet_path: Path) -> str:
@@ -244,10 +269,9 @@ def main() -> None:
     case_map = [{"case_id": c["case_id"], "submitter_id": c["submitter_id"]} for c in cases]
     (OUT_DIR / "cases.json").write_text(json.dumps(case_map, indent=2))
 
-    maf_file_id = fetch_maf_file_id()
-    maf_local = OUT_DIR / "skcm.maf.gz"
-    download_maf(maf_file_id, maf_local)
-    parse_maf_to_parquet(maf_local, OUT_DIR / "mutations.parquet")
+    file_infos = fetch_maf_file_ids()
+    maf_paths = download_mafs(file_infos, OUT_DIR / "maf_chunks")
+    parse_mafs_to_parquet(maf_paths, OUT_DIR / "mutations.parquet")
 
     chosen = pick_braf_v600e_demo_patient(OUT_DIR / "mutations.parquet")
     (OUT_DIR / "demo_patient.txt").write_text(chosen)

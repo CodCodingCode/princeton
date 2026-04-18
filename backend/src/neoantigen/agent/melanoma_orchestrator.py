@@ -174,11 +174,16 @@ class MelanomaOrchestrator:
     async def _run_pipeline(self, mutations: list[Mutation]) -> PipelineResult | None:
         await self.bus.emit(EventKind.TOOL_START, "💉 Running vaccine pipeline")
         try:
-            config = RunConfig(
-                scorer=build_scorer("heuristic", self.hla_allele),
-                top_n=10,
-                max_nm=500.0,
-            )
+            try:
+                scorer = build_scorer("mhcflurry", self.hla_allele)
+            except Exception as e:
+                await self.bus.emit(
+                    EventKind.TOOL_ERROR,
+                    f"⚠ MHCflurry unavailable ({e}). Falling back to heuristic scorer — "
+                    "reported nM values are NOT real predictions.",
+                )
+                scorer = build_scorer("heuristic", self.hla_allele)
+            config = RunConfig(scorer=scorer, top_n=10, max_nm=500.0)
             return await asyncio.to_thread(run_pipeline_sync, mutations, config, console=Console(quiet=True))
         except Exception as e:
             await self.bus.emit(EventKind.TOOL_ERROR, f"Pipeline failed: {e}")
@@ -190,8 +195,23 @@ class MelanomaOrchestrator:
         Non-Regeneron trials are returned with status='unscored' (surfaced in UI
         but not structurally matched). Sort order: Regeneron-eligible first,
         then Regeneron needs_more_data, then other trials, then ineligible.
+
+        When running on a TCGA patient, the matching clinical record (age,
+        AJCC stage) is passed to the evaluator to resolve age / stage gates.
         """
         await self.bus.emit(EventKind.TOOL_START, "🧪 Matching clinical trials")
+
+        tcga_record: TCGAPatient | None = None
+        if self.tcga_patient_id and has_cohort():
+            try:
+                cohort = load_cohort()
+                tcga_record = next(
+                    (p for p in cohort if p.submitter_id == self.tcga_patient_id),
+                    None,
+                )
+            except Exception as e:
+                await self.bus.emit(EventKind.LOG, f"TCGA clinical lookup failed: {e}")
+
         try:
             studies: list[CTGovStudy] = await fetch_melanoma_trials()
         except Exception as e:
@@ -203,7 +223,7 @@ class MelanomaOrchestrator:
         for study in studies:
             seen_ids.add(study.nct_id)
             if study.nct_id in REGENERON_TRIALS:
-                m = evaluate_regeneron(case, REGENERON_TRIALS[study.nct_id])
+                m = evaluate_regeneron(case, REGENERON_TRIALS[study.nct_id], tcga=tcga_record)
                 m.title = study.brief_title or m.title
                 m.sponsor = study.sponsor or m.sponsor
                 m.phase = study.phase or m.phase
@@ -230,7 +250,7 @@ class MelanomaOrchestrator:
         for nct_id, rule in REGENERON_TRIALS.items():
             if nct_id in seen_ids:
                 continue
-            m = evaluate_regeneron(case, rule)
+            m = evaluate_regeneron(case, rule, tcga=tcga_record)
             m.overall_status = "NOT_RECRUITING"
             matches.append(m)
 

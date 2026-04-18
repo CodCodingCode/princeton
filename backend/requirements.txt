@@ -23,5 +23,5 @@ streamlit>=1.30
 plotly>=5.18
 py3Dmol>=2.0
 
-# Optional: ML scoring (uncomment to enable MHCflurry)
-# mhcflurry>=2.1
+# MHC binding scorer (default, required). Run `mhcflurry-downloads fetch` once.
+mhcflurry>=2.1
