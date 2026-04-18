@@ -18,6 +18,12 @@ import threading
 import time
 from pathlib import Path
 
+# Eagerly import pandas BEFORE any background thread can touch it. plotly's
+# array validators do isinstance(v, pd.Series) checks; if a worker thread
+# triggers a lazy `import pandas` at the same moment plotly does, Python's
+# import lock races and one side sees a half-initialised module.
+import pandas as _pd  # noqa: F401
+
 import networkx as nx
 import plotly.graph_objects as go
 import streamlit as st

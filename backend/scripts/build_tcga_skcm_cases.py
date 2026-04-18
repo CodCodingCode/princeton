@@ -28,10 +28,10 @@ from pathlib import Path
 import httpx
 
 GDC = "https://api.gdc.cancer.gov"
-PORTAL = "https://portal.gdc.cancer.gov"
 PROJECT = "TCGA-SKCM"
 DATA_DIR = Path(__file__).resolve().parent.parent / "data" / "tcga_skcm"
 CASES_DIR = DATA_DIR / "cases"
+THUMB_MAX_SIZE = (1024, 1024)  # fed to VLM as base64; larger = slower, zero VLM benefit
 
 AA_ONE_TO_THREE = {
     "A": "Ala", "R": "Arg", "N": "Asn", "D": "Asp", "C": "Cys",
@@ -105,19 +105,27 @@ async def _fetch_slide_file_id(client: httpx.AsyncClient, submitter_id: str) -> 
     return hits[0]["file_id"] if hits else None
 
 
-async def _download_slide_thumbnail(
-    client: httpx.AsyncClient, file_id: str, dest: Path
-) -> bool:
-    """Mirrors fetch_tcga_skcm.py:fetch_demo_slide_thumbnail, async version."""
-    url = f"{PORTAL}/auth/api/data/{file_id}/slide-image"
+def _extract_thumbnail_sync(file_id: str, dest: Path) -> bool:
+    """Pull an H&E thumbnail out of the full SVS via ranged HTTP reads.
+
+    Uses tiffslide + fsspec to lazy-read only the header + thumbnail page
+    from the remote SVS file (~2-5 MB of network traffic instead of 100-500 MB).
+    The ``/auth/.../slide-image`` rendering endpoint is token-gated as of 2026,
+    but ``/data/{file_id}`` is open-access and accepts range requests.
+    """
+    import fsspec
+    import tiffslide
+
+    url = f"{GDC}/data/{file_id}"
     try:
-        r = await client.get(url, follow_redirects=True, timeout=120.0)
-    except httpx.HTTPError:
+        with fsspec.open(url, "rb") as f:
+            slide = tiffslide.TiffSlide(f)
+            thumb = slide.get_thumbnail(THUMB_MAX_SIZE)
+    except Exception:
         return False
-    if r.status_code != 200 or not r.headers.get("content-type", "").startswith("image"):
-        return False
-    dest.write_bytes(r.content)
-    return True
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    thumb.convert("RGB").save(dest, "JPEG", quality=85)
+    return dest.exists() and dest.stat().st_size > 0
 
 
 async def _build_case(
@@ -145,7 +153,7 @@ async def _build_case(
         if not file_id:
             return (submitter_id, "no_slide_file")
 
-        ok = await _download_slide_thumbnail(client, file_id, slide_path)
+        ok = await asyncio.to_thread(_extract_thumbnail_sync, file_id, slide_path)
         if not ok:
             return (submitter_id, "thumbnail_failed")
 

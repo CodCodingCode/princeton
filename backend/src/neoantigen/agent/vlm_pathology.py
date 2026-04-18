@@ -12,7 +12,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from ..models import PathologyFindings
-from ._llm import call_with_vision, has_api_key
+from ._llm import call_with_vision, has_medix_key
 from .events import EventKind, emit
 
 
@@ -41,11 +41,11 @@ async def analyze_slide(image_path: Path) -> PathologyFindings:
         {"path": str(image_path)},
     )
 
-    if not has_api_key() or not image_path.exists():
+    if not has_medix_key() or not image_path.exists():
         findings = _placeholder()
         await emit(
             EventKind.VLM_FINDING,
-            "🔬 VLM unavailable — using placeholder findings",
+            "🔬 VLM unavailable (MEDIX_API_KEY unset or slide missing) — placeholder findings",
             {"findings": findings.model_dump()},
         )
         return findings

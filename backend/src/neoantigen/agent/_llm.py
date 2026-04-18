@@ -39,6 +39,12 @@ from pydantic import BaseModel, ValidationError
 K2_BASE_URL = os.environ.get("K2_BASE_URL", "https://api.k2think.ai/v1")
 DEFAULT_MODEL = os.environ.get("NEOVAX_MODEL_DEFAULT", "MBZUAI-IFM/K2-Think-v2")
 
+# MediX-R1-30B (Qwen3-VL-based) on the GH200 SSH tunnel — used for any call that
+# needs vision (pathology slide reading). Defaults assume the tunnel is up at
+# localhost:8000 (set up via `ssh -L 8000:localhost:8000 gh200-vm`).
+MEDIX_BASE_URL = os.environ.get("MEDIX_BASE_URL", "http://localhost:8000/v1")
+MEDIX_DEFAULT_MODEL = "medix-r1-30b"
+
 T = TypeVar("T", bound=BaseModel)
 
 
@@ -67,18 +73,43 @@ def has_api_key() -> bool:
     return bool(os.environ.get("K2_API_KEY"))
 
 
+def has_medix_key() -> bool:
+    """MediX (vLLM on GH200) accepts any non-empty key string.
+
+    We treat ``MEDIX_API_KEY`` being set (even to ``"dummy"``) as the operator's
+    intent to route vision calls to the GH200 tunnel.
+    """
+    return bool(os.environ.get("MEDIX_API_KEY"))
+
+
 def _model_name() -> str:
     return os.environ.get("NEOVAX_MODEL", DEFAULT_MODEL)
 
 
+def _medix_model_name() -> str:
+    return os.environ.get("MEDIX_MODEL", MEDIX_DEFAULT_MODEL)
+
+
 @lru_cache(maxsize=1)
 def _openai_client():
+    """K2 cloud client — used for text reasoning (NCCN walker, JSON tasks)."""
     from openai import AsyncOpenAI
 
     api_key = os.environ.get("K2_API_KEY")
     if not api_key:
         raise RuntimeError("K2_API_KEY not set")
     return AsyncOpenAI(base_url=K2_BASE_URL, api_key=api_key)
+
+
+@lru_cache(maxsize=1)
+def _medix_client():
+    """MediX-R1-30B on the GH200 vLLM tunnel — used for vision (pathology slides)."""
+    from openai import AsyncOpenAI
+
+    api_key = os.environ.get("MEDIX_API_KEY")
+    if not api_key:
+        raise RuntimeError("MEDIX_API_KEY not set — bring up the GH200 tunnel first")
+    return AsyncOpenAI(base_url=MEDIX_BASE_URL, api_key=api_key)
 
 
 # ─────────────────────────────────────────────────────────────
@@ -186,13 +217,15 @@ async def call_for_json(
     *,
     max_tokens: int = 2000,
 ) -> T:
-    """Single-turn structured response. Returns a validated `schema` instance."""
-    return await call_with_vision(
+    """Single-turn structured response on K2 (text only)."""
+    return await _call_json_impl(
         schema=schema,
         system_prompt=system_prompt,
         user_prompt=user_prompt,
         images=None,
         max_tokens=max_tokens,
+        client=_openai_client(),
+        model=_model_name(),
     )
 
 
@@ -204,9 +237,35 @@ async def call_with_vision(
     images: list[Path | bytes] | None = None,
     max_tokens: int = 2000,
 ) -> T:
-    """JSON-typed call that optionally includes images in the user message."""
+    """Vision-capable JSON call routed to MediX-R1-30B on the GH200 tunnel.
+
+    K2 has no vision; this is the only call surface that handles ``image_url``
+    content blocks. Requires ``MEDIX_API_KEY`` and an open SSH tunnel
+    (default ``MEDIX_BASE_URL=http://localhost:8000/v1``).
+    """
+    return await _call_json_impl(
+        schema=schema,
+        system_prompt=system_prompt,
+        user_prompt=user_prompt,
+        images=images,
+        max_tokens=max_tokens,
+        client=_medix_client(),
+        model=_medix_model_name(),
+    )
+
+
+async def _call_json_impl(
+    schema: type[T],
+    system_prompt: str,
+    user_prompt: str,
+    *,
+    images: list[Path | bytes] | None,
+    max_tokens: int,
+    client,
+    model: str,
+) -> T:
+    """Shared JSON-extracting call. Routed by caller to K2 or MediX."""
     log = get_logger()
-    client = _openai_client()
     schema_json = json.dumps(schema.model_json_schema(), indent=2)
     augmented_system = (
         system_prompt.rstrip()
@@ -221,7 +280,7 @@ async def call_with_vision(
     )
     try:
         resp = await client.chat.completions.create(
-            model=_model_name(),
+            model=model,
             max_tokens=max_tokens,
             messages=[
                 {"role": "system", "content": augmented_system},
@@ -229,7 +288,8 @@ async def call_with_vision(
             ],
         )
     except Exception as e:
-        log.error("call HTTP error schema=%s err=%s: %s", schema.__name__, type(e).__name__, e)
+        log.error("call HTTP error schema=%s model=%s err=%s: %s",
+                  schema.__name__, model, type(e).__name__, e)
         raise
 
     raw = resp.choices[0].message.content or ""
