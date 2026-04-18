@@ -18,6 +18,16 @@ import threading
 import time
 from pathlib import Path
 
+# CRITICAL: load .env BEFORE importing from `neoantigen`. Several of the
+# neoantigen modules (notably agent/_llm.py) read env vars at module-import
+# time and cache them in module-level constants — if .env is loaded after
+# the import, K2_BASE_URL locks in the default remote endpoint and the
+# local vLLM tunnel is never used.
+from dotenv import load_dotenv
+
+BACKEND_DIR = Path(__file__).resolve().parent.parent / "backend"
+load_dotenv(dotenv_path=BACKEND_DIR / ".env")
+
 # Eagerly import pandas BEFORE any background thread can touch it. plotly's
 # array validators do isinstance(v, pd.Series) checks; if a worker thread
 # triggers a lazy `import pandas` at the same moment plotly does, Python's
@@ -27,21 +37,17 @@ import pandas as _pd  # noqa: F401
 import networkx as nx
 import plotly.graph_objects as go
 import streamlit as st
-from dotenv import load_dotenv
 
 from neoantigen.agent import AgentEvent, EventBus, EventKind
 from neoantigen.agent.melanoma_orchestrator import MelanomaOrchestrator
 from neoantigen.nccn.melanoma_v2024 import GRAPH, graph_to_payload
 
-BACKEND_DIR = Path(__file__).resolve().parent.parent / "backend"
 SAMPLE_DIR = BACKEND_DIR / "sample_data"
 OUT_DIR = BACKEND_DIR / "out"
 
 DEMO_VCF = SAMPLE_DIR / "tcga_skcm_demo.vcf"
 DEMO_SLIDE = SAMPLE_DIR / "tcga_skcm_demo_slide.jpg"
 CASES_ROOT = BACKEND_DIR / "data" / "tcga_skcm" / "cases"
-
-load_dotenv(dotenv_path=BACKEND_DIR / ".env")
 
 st.set_page_config(
     page_title="Melanoma Oncologist Copilot",
