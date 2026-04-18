@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import asyncio
 import os
+import sys
 
 try:
     from dotenv import load_dotenv
@@ -10,6 +12,8 @@ try:
     load_dotenv()
 except ImportError:
     pass
+
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -30,10 +34,44 @@ def _allowed_origins() -> list[str]:
     ]
 
 
+@asynccontextmanager
+async def _lifespan(app: FastAPI):
+    """Warm the slow-to-cold-start pieces in parallel at server boot so the
+    first case doesn't pay ~5–15s of model-load + Chroma-open latency.
+
+    We preload:
+      - the RAG store + sentence-transformers MiniLM embedder
+      - the Chroma collection handle
+
+    Each warm-up is best-effort and logged; failure never blocks startup.
+    """
+
+    async def _warm_rag() -> None:
+        from ..rag.store import _client_and_collection, has_store
+
+        if not has_store():
+            print("[warmup] rag: no store on disk — skipping", flush=True, file=sys.stderr)
+            return
+        t0 = asyncio.get_event_loop().time()
+        try:
+            # sentence-transformers model load is blocking — run in a thread so
+            # the event loop doesn't stall while chroma opens.
+            await asyncio.to_thread(_client_and_collection)
+            dt = asyncio.get_event_loop().time() - t0
+            print(f"[warmup] rag: ready ({dt:.2f}s)", flush=True, file=sys.stderr)
+        except Exception as e:
+            print(f"[warmup] rag: failed — {e!r}", flush=True, file=sys.stderr)
+
+    # Kick off all warmups in parallel — they return immediately on missing deps.
+    await asyncio.gather(_warm_rag(), return_exceptions=True)
+    yield
+
+
 app = FastAPI(
     title="NeoVax",
     description="Pathology PDF → NCCN railway → Kimi chat → oncologist report + trial sites",
     version="0.2.0",
+    lifespan=_lifespan,
 )
 
 app.add_middleware(
@@ -55,7 +93,7 @@ async def health() -> dict:
     from ..chat.k2_client import has_kimi_key
     from ..agent._llm import has_api_key
     from ..rag import has_store as rag_available
-    from .routes.heygen import has_heygen_key
+    from .routes.heygen import has_liveavatar_key
 
     return {
         "ok": True,
@@ -63,5 +101,5 @@ async def health() -> dict:
         "kimi_api_key": has_kimi_key(),
         "rag_store": rag_available(),
         "google_maps_api_key": bool(os.environ.get("GOOGLE_MAPS_API_KEY")),
-        "heygen_api_key": has_heygen_key(),
+        "liveavatar_api_key": has_liveavatar_key(),
     }

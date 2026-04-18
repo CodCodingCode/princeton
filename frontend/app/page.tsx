@@ -272,8 +272,8 @@ function ExperiencePage() {
   );
 
   const processingState: ProcessingState = useMemo(
-    () => ({ extractProgress, firedMilestones, currentStage }),
-    [extractProgress, firedMilestones, currentStage],
+    () => ({ extractProgress, extractFeed, firedMilestones, currentStage }),
+    [extractProgress, extractFeed, firedMilestones, currentStage],
   );
 
   const effectiveCase = caseData ?? (caseId ? emptyCase(caseId) : null);

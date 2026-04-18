@@ -11,11 +11,11 @@
 // short-lived session token; the SDK does the rest.
 
 import { useEffect, useRef, useState } from "react";
-import StreamingAvatar, {
-  AvatarQuality,
-  StreamingEvents,
-  TaskType,
-} from "@heygen/streaming-avatar";
+import {
+  LiveAvatarSession,
+  SessionEvent,
+  AgentEventsEnum,
+} from "@heygen/liveavatar-web-sdk";
 
 interface Turn {
   role: "user" | "avatar";
@@ -23,14 +23,11 @@ interface Turn {
   at: number;
 }
 
-const AVATAR_ID =
-  process.env.NEXT_PUBLIC_HEYGEN_AVATAR_ID || "Anna_public_3_20240108";
-
 type Status = "idle" | "connecting" | "live" | "error";
 
 export function AvatarPanel() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const avatarRef = useRef<StreamingAvatar | null>(null);
+  const avatarRef = useRef<LiveAvatarSession | null>(null);
 
   const [status, setStatus] = useState<Status>("idle");
   const [speaking, setSpeaking] = useState(false);
@@ -40,9 +37,8 @@ export function AvatarPanel() {
   const [input, setInput] = useState("");
 
   useEffect(() => {
-    // Teardown when the panel unmounts — don't leave a session burning.
     return () => {
-      avatarRef.current?.stopAvatar().catch(() => {});
+      avatarRef.current?.stop().catch(() => {});
       avatarRef.current = null;
     };
   }, []);
@@ -61,35 +57,25 @@ export function AvatarPanel() {
       }
       const { token } = (await r.json()) as { token: string };
 
-      const avatar = new StreamingAvatar({ token });
-      avatarRef.current = avatar;
+      const session = new LiveAvatarSession(token, { voiceChat: false });
+      avatarRef.current = session;
 
-      avatar.on(
-        StreamingEvents.STREAM_READY,
-        (event: { detail?: MediaStream }) => {
-          const stream = event?.detail;
-          if (stream && videoRef.current) {
-            videoRef.current.srcObject = stream;
-            videoRef.current.play().catch(() => {});
-          }
-          setStatus("live");
-        },
-      );
+      session.on(SessionEvent.SESSION_STREAM_READY, () => {
+        if (videoRef.current) session.attach(videoRef.current);
+        setStatus("live");
+      });
 
-      avatar.on(StreamingEvents.STREAM_DISCONNECTED, () => {
+      session.on(SessionEvent.SESSION_DISCONNECTED, () => {
         setStatus("idle");
         setSpeaking(false);
         setCaption("");
         if (videoRef.current) videoRef.current.srcObject = null;
       });
 
-      avatar.on(StreamingEvents.AVATAR_START_TALKING, () => setSpeaking(true));
-      avatar.on(StreamingEvents.AVATAR_STOP_TALKING, () => setSpeaking(false));
+      session.on(AgentEventsEnum.AVATAR_SPEAK_STARTED, () => setSpeaking(true));
+      session.on(AgentEventsEnum.AVATAR_SPEAK_ENDED, () => setSpeaking(false));
 
-      await avatar.createStartAvatar({
-        quality: AvatarQuality.Low,
-        avatarName: AVATAR_ID,
-      });
+      await session.start();
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
       setStatus("error");
@@ -99,7 +85,7 @@ export function AvatarPanel() {
 
   async function endSession() {
     try {
-      await avatarRef.current?.stopAvatar();
+      await avatarRef.current?.stop();
     } catch {
       /* ignore */
     }
@@ -112,8 +98,8 @@ export function AvatarPanel() {
   async function say(text: string) {
     const t = text.trim();
     if (!t) return;
-    const avatar = avatarRef.current;
-    if (!avatar || status !== "live") {
+    const session = avatarRef.current;
+    if (!session || status !== "live") {
       setError("Start a session first.");
       return;
     }
@@ -123,7 +109,7 @@ export function AvatarPanel() {
     ]);
     setCaption(t);
     try {
-      await avatar.speak({ text: t, task_type: TaskType.REPEAT });
+      session.repeat(t);
       setTranscript((prev) => [
         ...prev,
         { role: "avatar", text: t, at: Date.now() },

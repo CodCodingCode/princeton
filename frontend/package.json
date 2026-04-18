@@ -9,12 +9,16 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@heygen/streaming-avatar": "^2.1.0",
+    "@heygen/liveavatar-web-sdk": "^0.0.13",
     "@react-google-maps/api": "^2.20.3",
+    "events": "3.3.0",
+    "livekit-client": "2.15.7",
     "mermaid": "^11.4.1",
     "next": "^15.0.3",
     "react": "^19.0.0-rc-1631855f-20241023",
-    "react-dom": "^19.0.0-rc-1631855f-20241023"
+    "react-dom": "^19.0.0-rc-1631855f-20241023",
+    "typed-emitter": "2.1.0",
+    "webrtc-issue-detector": "1.16.3"
   },
   "devDependencies": {
     "@types/node": "^22.8.6",

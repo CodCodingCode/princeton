@@ -1,6 +1,6 @@
 "use client";
 
-// Full-viewport HeyGen avatar base layer. The avatar is the canvas; overlays
+// Full-viewport LiveAvatar base layer. The avatar is the canvas; overlays
 // render as `children` on top. Parent drives the session + speech via the
 // imperative ref:
 //
@@ -19,11 +19,11 @@ import {
   useRef,
   useState,
 } from "react";
-import StreamingAvatar, {
-  AvatarQuality,
-  StreamingEvents,
-  TaskType,
-} from "@heygen/streaming-avatar";
+import {
+  LiveAvatarSession,
+  SessionEvent,
+  AgentEventsEnum,
+} from "@heygen/liveavatar-web-sdk";
 
 export type AvatarStatus = "idle" | "connecting" | "live" | "error";
 
@@ -36,12 +36,9 @@ export interface AvatarStageHandle {
 interface Props {
   onStatusChange?: (s: AvatarStatus) => void;
   onSpeakingChange?: (speaking: boolean) => void;
-  compact?: boolean; // Ready phase shrinks the status chip / caption sizing
+  compact?: boolean;
   children?: React.ReactNode;
 }
-
-const AVATAR_ID =
-  process.env.NEXT_PUBLIC_HEYGEN_AVATAR_ID || "Anna_public_3_20240108";
 
 export const AvatarStage = forwardRef<AvatarStageHandle, Props>(
   function AvatarStage(
@@ -49,14 +46,13 @@ export const AvatarStage = forwardRef<AvatarStageHandle, Props>(
     ref,
   ) {
     const videoRef = useRef<HTMLVideoElement | null>(null);
-    const avatarRef = useRef<StreamingAvatar | null>(null);
+    const sessionRef = useRef<LiveAvatarSession | null>(null);
 
     const [status, setStatus] = useState<AvatarStatus>("idle");
     const [speaking, setSpeaking] = useState(false);
     const [caption, setCaption] = useState<string>("");
     const [error, setError] = useState<string | null>(null);
 
-    // Mirror local state out to the parent.
     useEffect(() => {
       onStatusChange?.(status);
     }, [status, onStatusChange]);
@@ -64,11 +60,10 @@ export const AvatarStage = forwardRef<AvatarStageHandle, Props>(
       onSpeakingChange?.(speaking);
     }, [speaking, onSpeakingChange]);
 
-    // Tear down on unmount — don't leave a session burning HeyGen minutes.
     useEffect(() => {
       return () => {
-        avatarRef.current?.stopAvatar().catch(() => {});
-        avatarRef.current = null;
+        sessionRef.current?.stop().catch(() => {});
+        sessionRef.current = null;
       };
     }, []);
 
@@ -86,51 +81,41 @@ export const AvatarStage = forwardRef<AvatarStageHandle, Props>(
         }
         const { token } = (await r.json()) as { token: string };
 
-        const avatar = new StreamingAvatar({ token });
-        avatarRef.current = avatar;
+        const session = new LiveAvatarSession(token, { voiceChat: false });
+        sessionRef.current = session;
 
-        avatar.on(
-          StreamingEvents.STREAM_READY,
-          (event: { detail?: MediaStream }) => {
-            const stream = event?.detail;
-            if (stream && videoRef.current) {
-              videoRef.current.srcObject = stream;
-              videoRef.current.play().catch(() => {});
-            }
-            setStatus("live");
-          },
-        );
-        avatar.on(StreamingEvents.STREAM_DISCONNECTED, () => {
+        session.on(SessionEvent.SESSION_STREAM_READY, () => {
+          if (videoRef.current) session.attach(videoRef.current);
+          setStatus("live");
+        });
+        session.on(SessionEvent.SESSION_DISCONNECTED, () => {
           setStatus("idle");
           setSpeaking(false);
           setCaption("");
           if (videoRef.current) videoRef.current.srcObject = null;
         });
-        avatar.on(StreamingEvents.AVATAR_START_TALKING, () =>
+        session.on(AgentEventsEnum.AVATAR_SPEAK_STARTED, () =>
           setSpeaking(true),
         );
-        avatar.on(StreamingEvents.AVATAR_STOP_TALKING, () =>
+        session.on(AgentEventsEnum.AVATAR_SPEAK_ENDED, () =>
           setSpeaking(false),
         );
 
-        await avatar.createStartAvatar({
-          quality: AvatarQuality.Low,
-          avatarName: AVATAR_ID,
-        });
+        await session.start();
       } catch (e) {
         setError(e instanceof Error ? e.message : String(e));
         setStatus("error");
-        avatarRef.current = null;
+        sessionRef.current = null;
       }
     };
 
     const stop = async () => {
       try {
-        await avatarRef.current?.stopAvatar();
+        await sessionRef.current?.stop();
       } catch {
         /* ignore */
       }
-      avatarRef.current = null;
+      sessionRef.current = null;
       setStatus("idle");
       setSpeaking(false);
       setCaption("");
@@ -138,13 +123,13 @@ export const AvatarStage = forwardRef<AvatarStageHandle, Props>(
 
     const speak = async (text: string) => {
       const t = text.trim();
-      const avatar = avatarRef.current;
-      if (!avatar || !t) return;
+      const session = sessionRef.current;
+      if (!session || !t) return;
       setCaption(t);
       try {
-        await avatar.speak({ text: t, task_type: TaskType.REPEAT });
+        session.repeat(t);
       } catch (e) {
-        console.warn("avatar.speak failed", e);
+        console.warn("avatar.repeat failed", e);
       }
     };
 
@@ -168,7 +153,6 @@ export const AvatarStage = forwardRef<AvatarStageHandle, Props>(
           }`}
         />
 
-        {/* Idle / connecting placeholder */}
         {status !== "live" && (
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="text-center text-neutral-400">
@@ -193,7 +177,6 @@ export const AvatarStage = forwardRef<AvatarStageHandle, Props>(
           </div>
         )}
 
-        {/* Status chip, top-left */}
         <div
           className={`absolute top-4 left-4 flex items-center gap-2 bg-black/55 backdrop-blur text-white rounded-full px-2.5 py-1 ${
             compact ? "text-[10px]" : "text-[11px]"
@@ -215,7 +198,6 @@ export const AvatarStage = forwardRef<AvatarStageHandle, Props>(
           {statusLabel}
         </div>
 
-        {/* End-session chip, top-right (only when live) */}
         {status === "live" && (
           <button
             onClick={stop}
@@ -225,14 +207,12 @@ export const AvatarStage = forwardRef<AvatarStageHandle, Props>(
           </button>
         )}
 
-        {/* Caption strip, bottom-center */}
         {status === "live" && caption && (
           <div className="pointer-events-none absolute bottom-6 left-1/2 -translate-x-1/2 max-w-[min(80vw,720px)] bg-black/60 backdrop-blur text-white rounded-lg px-4 py-2 text-sm leading-snug text-center">
             {caption}
           </div>
         )}
 
-        {/* Slot for phase overlays */}
         {children}
       </div>
     );
