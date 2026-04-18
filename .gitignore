@@ -15,3 +15,7 @@ backend/credentials.json
 gmail_token.json
 gmail_token.json.sender
 .config/
+
+# TCGA-SKCM dataset (per-case slides + vcfs) — built by build_tcga_skcm_cases.py
+backend/data/tcga_skcm/cases/
+out/cases/

@@ -237,5 +237,92 @@ def melanoma_demo_command(
     console.print(f"[bold green]→ Wrote case package:[/bold green] {output}")
 
 
+@app.command("melanoma-batch")
+def melanoma_batch_command(
+    dataset: Annotated[Path, typer.Option("--dataset", help="Directory containing per-case subdirs")] = Path("backend/data/tcga_skcm/cases"),
+    output_dir: Annotated[Path, typer.Option("--output-dir", help="Where to write per-case JSON")] = Path("out/cases"),
+    limit: Annotated[int | None, typer.Option("--limit", help="Cap the number of cases to run")] = None,
+) -> None:
+    """Run the melanoma agent over every ``<submitter_id>/`` under ``--dataset``.
+
+    Expects each case dir to contain ``slide.jpg`` and ``tumor.vcf`` (as produced
+    by ``build_tcga_skcm_cases.py``). Writes ``out/cases/<submitter_id>.json``
+    per case, printing a summary table at the end.
+    """
+    import asyncio
+    import time
+
+    from .agent import EventBus, EventKind
+    from .agent.melanoma_orchestrator import MelanomaOrchestrator
+
+    if not dataset.exists():
+        console.print(f"[red]Dataset not found:[/red] {dataset}")
+        raise typer.Exit(1)
+
+    case_dirs = sorted(d for d in dataset.iterdir() if d.is_dir())
+    if limit is not None:
+        case_dirs = case_dirs[:limit]
+    if not case_dirs:
+        console.print(f"[yellow]No case directories under {dataset}[/yellow]")
+        raise typer.Exit(1)
+
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    summary = Table(title=f"Batch summary ({len(case_dirs)} cases)", title_style="bold white")
+    summary.add_column("Case", style="magenta")
+    summary.add_column("Muts", justify="right")
+    summary.add_column("NCCN", justify="right")
+    summary.add_column("Final", overflow="fold")
+    summary.add_column("Duration", justify="right", style="cyan")
+    summary.add_column("Status")
+
+    async def run_one(case_dir: Path):
+        slide = case_dir / "slide.jpg"
+        vcf = case_dir / "tumor.vcf"
+        bus = EventBus()
+        orch = MelanomaOrchestrator(slide_path=slide, vcf_path=vcf, bus=bus)
+
+        async def drain():
+            async for _ in bus.stream():
+                pass
+
+        drain_task = asyncio.create_task(drain())
+        try:
+            case = await orch.run()
+        finally:
+            await drain_task
+        return case
+
+    async def run_all():
+        for case_dir in case_dirs:
+            sid = case_dir.name
+            t0 = time.time()
+            try:
+                case = await run_one(case_dir)
+                dt = time.time() - t0
+                out_path = output_dir / f"{sid}.json"
+                out_path.write_text(json.dumps(case.model_dump(), indent=2, default=str))
+                summary.add_row(
+                    sid,
+                    str(len(case.mutations)),
+                    str(len(case.nccn_path)),
+                    (case.final_recommendation or "—")[:60],
+                    f"{dt:.1f}s",
+                    "[green]✓[/green]",
+                )
+                console.print(f"[green]✓[/green] {sid} ({len(case.mutations)} muts, "
+                              f"{len(case.nccn_path)} NCCN nodes, {dt:.1f}s)")
+            except Exception as e:
+                dt = time.time() - t0
+                summary.add_row(
+                    sid, "—", "—", f"{type(e).__name__}: {e}"[:60], f"{dt:.1f}s", "[red]✗[/red]",
+                )
+                console.print(f"[red]✗[/red] {sid}: {type(e).__name__}: {e}")
+
+    asyncio.run(run_all())
+    console.print(summary)
+    console.print(f"[bold green]→ Wrote {len(case_dirs)} case JSON files to[/bold green] {output_dir}")
+
+
 if __name__ == "__main__":
     app()

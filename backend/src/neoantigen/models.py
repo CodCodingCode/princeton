@@ -207,6 +207,35 @@ class StructurePose(BaseModel):
 
 
 # ─────────────────────────────────────────────────────────────
+# Clinical trial matching
+# ─────────────────────────────────────────────────────────────
+
+
+TrialMatchStatus = Literal["eligible", "ineligible", "needs_more_data", "unscored"]
+
+
+class TrialMatch(BaseModel):
+    """One clinical trial paired with a structured eligibility verdict.
+
+    `unscored` = the trial is shown as context but we don't have hand-coded
+    predicates for it (applies to every non-Regeneron trial today).
+    """
+
+    nct_id: str
+    title: str
+    sponsor: str
+    phase: str | None = None
+    status: TrialMatchStatus = "unscored"
+    passing_criteria: list[str] = Field(default_factory=list)
+    failing_criteria: list[str] = Field(default_factory=list)
+    unknown_criteria: list[str] = Field(default_factory=list)
+    is_regeneron: bool = False
+    site_contacts: list[dict[str, str]] = Field(default_factory=list)
+    overall_status: str | None = None
+    url: str | None = None
+
+
+# ─────────────────────────────────────────────────────────────
 # Aggregate case file
 # ─────────────────────────────────────────────────────────────
 
@@ -222,3 +251,4 @@ class MelanomaCase(BaseModel):
     pipeline: PipelineResult | None = None
     poses: list[StructurePose] = Field(default_factory=list)
     cohort: CohortSnapshot | None = None
+    trials: list[TrialMatch] = Field(default_factory=list)

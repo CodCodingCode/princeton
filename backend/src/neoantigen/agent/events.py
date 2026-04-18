@@ -39,6 +39,8 @@ class EventKind(str, Enum):
     COHORT_TWINS_READY = "cohort_twins_ready"
     SURVIVAL_CURVE_READY = "survival_curve_ready"
 
+    TRIAL_MATCHES_READY = "trial_matches_ready"
+
 
 @dataclass
 class AgentEvent:

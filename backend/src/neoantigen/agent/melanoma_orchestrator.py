@@ -29,6 +29,8 @@ from ..cohort import (
 )
 from ..cohort.tcga import TCGAPatient
 from ..cohort.twins import QueryPatient
+from ..external.regeneron_rules import REGENERON_TRIALS, evaluate as evaluate_regeneron
+from ..external.trials import CTGovStudy, fetch_melanoma_trials
 from ..models import (
     CohortSnapshot,
     MelanomaCase,
@@ -36,6 +38,7 @@ from ..models import (
     PathologyFindings,
     PipelineResult,
     SurvivalPoint,
+    TrialMatch,
     TwinMatchRef,
 )
 from ..nccn.walker import NCCNWalker, PatientState
@@ -111,6 +114,7 @@ class MelanomaOrchestrator:
                 or any(s.node_id == "FINAL" for s in case.nccn_path)
 
             molecular_task = asyncio.create_task(build_landscape(mutations))
+            trials_task = asyncio.create_task(self._match_trials(case))
             pipeline_task: asyncio.Task[PipelineResult | None] | None = None
             if mutations:
                 pipeline_task = asyncio.create_task(self._run_pipeline(mutations))
@@ -139,6 +143,20 @@ class MelanomaOrchestrator:
                     )
             elif pipeline_task is not None:
                 pipeline_task.cancel()
+
+            # 5b. Clinical trial matching (Regeneron overlay + generic CT.gov).
+            try:
+                case.trials = await trials_task
+            except Exception as e:
+                await self.bus.emit(EventKind.TOOL_ERROR, f"Trial matching failed: {e}")
+                case.trials = []
+            eligible_n = sum(1 for t in case.trials if t.status == "eligible")
+            regeneron_n = sum(1 for t in case.trials if t.is_regeneron)
+            await self.bus.emit(
+                EventKind.TRIAL_MATCHES_READY,
+                f"🧪 {len(case.trials)} trials shown · {eligible_n} eligible · {regeneron_n} Regeneron",
+                {"trials": [t.model_dump() for t in case.trials]},
+            )
 
             # 6. Cohort match (Panel 4) — only when running on a TCGA patient.
             if self.tcga_patient_id and has_cohort():
