@@ -137,7 +137,7 @@ STATIC_DLA_TYPING_LABS: list[dict[str, Any]] = [
 
 async def _places_text_search(query: str, location: str) -> list[dict[str, Any]]:
     """Call Places API (New) — Text Search endpoint."""
-    api_key = os.environ.get("GOOGLE_PLACES_API_KEY")
+    api_key = os.environ.get("PLACES_API_KEY") or os.environ.get("GOOGLE_PLACES_API_KEY")
     if not api_key:
         return []
 

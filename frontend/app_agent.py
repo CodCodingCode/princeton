@@ -21,9 +21,15 @@ import streamlit as st
 from dotenv import load_dotenv
 
 from neoantigen.agent import AgentEvent, EventBus, EventKind, build_case_file
+from neoantigen.agent import gmail_auth
+from neoantigen.agent.emails import send_via_gmail
 from neoantigen.agent.orchestrator import CaseOrchestrator
 
 load_dotenv()
+
+BACKEND_DIR = Path(__file__).resolve().parent.parent / "backend"
+SAMPLE_DIR = BACKEND_DIR / "sample_data"
+OUT_DIR = BACKEND_DIR / "out"
 
 st.set_page_config(
     page_title="NeoVax — Autonomous Cancer Vaccine Pipeline",
@@ -46,6 +52,14 @@ if "done" not in st.session_state:
     st.session_state.done = False
 if "started_at" not in st.session_state:
     st.session_state.started_at = None
+if "gmail_signed_in" not in st.session_state:
+    st.session_state.gmail_signed_in = gmail_auth.is_signed_in()
+if "gmail_sender_email" not in st.session_state:
+    st.session_state.gmail_sender_email = (
+        gmail_auth.get_sender_email() if st.session_state.gmail_signed_in else None
+    )
+if "sent_email_keys" not in st.session_state:
+    st.session_state.sent_email_keys = {}
 
 
 # ─────────────────────────────────────────────────────────────
@@ -98,6 +112,50 @@ with col_title:
 st.divider()
 
 # ─────────────────────────────────────────────────────────────
+# Gmail sign-in panel
+# ─────────────────────────────────────────────────────────────
+with st.container(border=True):
+    if st.session_state.gmail_signed_in and st.session_state.gmail_sender_email:
+        col_status, col_action = st.columns([5, 1])
+        with col_status:
+            st.markdown(
+                f"**Gmail:** signed in as `{st.session_state.gmail_sender_email}` — "
+                "drafted emails can be sent directly."
+            )
+        with col_action:
+            if st.button("Sign out", key="gmail_sign_out", use_container_width=True):
+                gmail_auth.sign_out()
+                st.session_state.gmail_signed_in = False
+                st.session_state.gmail_sender_email = None
+                st.session_state.sent_email_keys = {}
+                st.rerun()
+    else:
+        col_status, col_action = st.columns([5, 1])
+        with col_status:
+            st.markdown(
+                "**Gmail:** not signed in. Drafts will still generate, but you "
+                "won't be able to send them."
+            )
+            st.caption(
+                f"Needs a Desktop-app OAuth client JSON at "
+                f"`{gmail_auth.default_client_secret_path()}` "
+                "(or set `NEOVAX_GOOGLE_CLIENT_SECRET`)."
+            )
+        with col_action:
+            if st.button("Sign in with Google", key="gmail_sign_in", use_container_width=True):
+                try:
+                    with st.spinner("Complete Google sign-in in the browser tab that just opened…"):
+                        _, sender = gmail_auth.run_sign_in_flow()
+                    st.session_state.gmail_signed_in = True
+                    st.session_state.gmail_sender_email = sender
+                    st.toast(f"Signed in as {sender}", icon="✅")
+                    st.rerun()
+                except FileNotFoundError as e:
+                    st.error(str(e))
+                except Exception as e:
+                    st.error(f"Sign-in failed: {type(e).__name__}: {e}")
+
+# ─────────────────────────────────────────────────────────────
 # Input section
 # ─────────────────────────────────────────────────────────────
 if not st.session_state.running and not st.session_state.done:
@@ -106,22 +164,22 @@ if not st.session_state.running and not st.session_state.done:
         c1, c2 = st.columns(2)
         with c1:
             pdf_file = st.file_uploader("Pathology report (PDF)", type=["pdf"], key="pdf_up")
-            if pdf_file is None and Path("sample_data/luna_pathology.pdf").exists():
+            if pdf_file is None and (SAMPLE_DIR / "luna_pathology.pdf").exists():
                 st.caption("No file? Try the bundled demo case →")
         with c2:
             vcf_file = st.file_uploader("Tumor VCF / TSV", type=["vcf", "tsv"], key="vcf_up")
-            if vcf_file is None and Path("sample_data/luna_tumor.vcf").exists():
-                st.caption("Bundled: `sample_data/luna_tumor.vcf` (10 mutations)")
+            if vcf_file is None and (SAMPLE_DIR / "luna_tumor.vcf").exists():
+                st.caption("Bundled: `backend/sample_data/luna_tumor.vcf` (10 mutations)")
 
         demo_btn = st.button("🐕 Run bundled demo (Luna)", type="primary", use_container_width=True)
         custom_btn = st.button("▶ Run on uploaded files", disabled=(pdf_file is None or vcf_file is None), use_container_width=True)
 
         if demo_btn or custom_btn:
             if demo_btn:
-                pdf_path = Path("sample_data/luna_pathology.pdf").resolve()
-                vcf_path = Path("sample_data/luna_tumor.vcf").resolve()
+                pdf_path = (SAMPLE_DIR / "luna_pathology.pdf").resolve()
+                vcf_path = (SAMPLE_DIR / "luna_tumor.vcf").resolve()
             else:
-                upload_dir = Path("out/uploads")
+                upload_dir = OUT_DIR / "uploads"
                 upload_dir.mkdir(parents=True, exist_ok=True)
                 pdf_path = upload_dir / pdf_file.name
                 vcf_path = upload_dir / vcf_file.name
@@ -305,14 +363,36 @@ def _render_package(container, case) -> None:
                         st.text(f"To: {email.recipient_email or '(not resolved)'}")
                         st.text(f"Subject: {email.subject}")
                         st.code(email.body, language="text")
-                        if email.sent:
-                            st.success(f"✓ Sent (message id: {email.sent_message_id})")
-                        else:
+
+                        sent_key = f"{email.subject}|{email.recipient_email or ''}"
+                        already_sent = email.sent or sent_key in st.session_state.sent_email_keys
+
+                        if already_sent:
+                            sent_id = (
+                                email.sent_message_id
+                                or st.session_state.sent_email_keys.get(sent_key, "—")
+                            )
+                            st.success(f"✓ Sent (message id: {sent_id})")
+                        elif not st.session_state.gmail_signed_in:
                             st.button(
                                 "📤 Send via Gmail",
                                 key=f"send_{i}",
-                                disabled=not email.recipient_email,
+                                disabled=True,
+                                help="Sign in with Google above to enable sending.",
                             )
+                        elif st.button(
+                            "📤 Send via Gmail",
+                            key=f"send_{i}",
+                            disabled=not email.recipient_email,
+                        ):
+                            with st.spinner(f"Sending to {email.recipient_email}…"):
+                                result = send_via_gmail(email)
+                            if "message_id" in result:
+                                st.session_state.sent_email_keys[sent_key] = result["message_id"]
+                                st.toast(f"Sent to {email.recipient_email}", icon="✅")
+                                st.rerun()
+                            else:
+                                st.error(f"Send failed: {result.get('error', 'unknown')}")
 
         # Timeline
         if case.timeline:
@@ -362,6 +442,6 @@ if st.session_state.running or st.session_state.done:
     # Reset button
     if st.session_state.done:
         if st.button("↻ New case", type="secondary"):
-            for k in ["events", "event_queue", "agent_thread", "running", "done", "started_at"]:
+            for k in ["events", "event_queue", "agent_thread", "running", "done", "started_at", "sent_email_keys"]:
                 st.session_state.pop(k, None)
             st.rerun()

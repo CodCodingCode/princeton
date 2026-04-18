@@ -1,0 +1,17 @@
+.DS_Store
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.env
+.env.*
+!.env.example
+
+# OAuth / Gmail
+client_secret*.json
+credentials.json
+backend/credentials.json
+gmail_token.json
+gmail_token.json.sender
+.config/

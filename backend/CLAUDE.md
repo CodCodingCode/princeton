@@ -6,6 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 NeoVax — a personalized cancer vaccine pipeline that turns tumor mutations (VCF/TSV) into ranked neoantigen candidates and mRNA vaccine constructs. Hackathon project (Princeton Hacks).
 
+The Streamlit UIs (`app.py`, `app_agent.py`) live in [../frontend/](../frontend/). This directory contains only the Python package, CLI, sample data, and scripts.
+
 ## Commands
 
 ```bash
@@ -20,10 +22,9 @@ mhcflurry-downloads fetch   # one-time model download
 neoantigen demo                           # bundled BRAF sample
 neoantigen run sample_data/braf_v600e.tsv # custom input
 neoantigen run input.vcf --mhcflurry --with-apis --top 20 --max-nm 500
-
-# Run web dashboard
-streamlit run app.py
 ```
+
+For the Streamlit dashboards, see [../frontend/](../frontend/).
 
 No test suite exists yet (test.py is empty).
 
@@ -92,7 +93,20 @@ CaseOrchestrator ── claude_agent_sdk.query() with an in-process MCP server
 
 - `ANTHROPIC_API_KEY` — for direct LLM calls in `pathology.py`, `emails.py`, `explain.py` (fall back to heuristics if missing). The agent SDK itself uses the `claude` CLI subprocess transport by default, which can reuse Claude Code's auth.
 - `GOOGLE_PLACES_API_KEY` — for real lab/vet geo lookups (`labs.py` merges real + curated static results).
-- `GOOGLE_CREDENTIALS_PATH` + `GMAIL_SENDER_EMAIL` — for actual email sending (`emails.send_via_gmail`). Drafts still generate without these.
+
+## Gmail sign-in (for email sending)
+
+Actual email sending (`emails.send_via_gmail`) goes through an OAuth installed-app flow handled by `agent/gmail_auth.py`. No env vars for creds or sender — the user clicks "Sign in with Google" in the Streamlit UI, a browser consent opens, and a token is cached on disk. The sender email is auto-discovered via `gmail.users.getProfile`. Drafts still generate without sign-in.
+
+Requirements:
+
+- A Desktop-app OAuth client in GCP Console. Download the client secrets JSON to `~/.config/neovax/client_secret.json` (override with `NEOVAX_GOOGLE_CLIENT_SECRET`).
+- Add intended demo recipients as test users on the OAuth consent screen while the app is unverified.
+- Scopes requested: `gmail.send`, `userinfo.email`.
+
+Token cache location: `$NEOANTIGEN_CACHE/gmail_token.json` (override with `NEOVAX_GMAIL_TOKEN`). Sign out deletes the token + sender sidecar.
+
+Headless machines: `run_local_server` needs a browser. Sign in once on a workstation, then copy the token file to the server if needed.
 
 ## Run commands
 
@@ -100,8 +114,7 @@ CaseOrchestrator ── claude_agent_sdk.query() with an in-process MCP server
 # CLI headless
 .venv/bin/neoantigen agent-demo --pdf sample_data/luna_pathology.pdf --vcf sample_data/luna_tumor.vcf
 
-# Streamlit live UI
-streamlit run app_agent.py
+# Streamlit live UI — see ../frontend/
 
 # Regenerate bundled demo pathology PDF after editing scripts/generate_luna_pdf.py
 .venv/bin/python scripts/generate_luna_pdf.py

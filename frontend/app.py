@@ -21,7 +21,8 @@ from neoantigen.pipeline.scoring import build_scorer
 
 st.set_page_config(page_title="NeoVax", page_icon="🧬", layout="wide")
 
-SAMPLE = Path(__file__).parent / "sample_data" / "braf_v600e.tsv"
+BACKEND_DIR = Path(__file__).resolve().parent.parent / "backend"
+SAMPLE = BACKEND_DIR / "sample_data" / "braf_v600e.tsv"
 
 # ── sidebar ──────────────────────────────────────────────────────────────────
 
