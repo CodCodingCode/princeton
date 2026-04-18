@@ -14,3 +14,21 @@
 2026-04-17 22:57:57,052 [INFO] neoantigen.k2: call_for_json OK: schema=EmailContent
 2026-04-17 22:57:57,758 [INFO] neoantigen.k2: call_for_json response: schema=EmailContent, finish_reason=stop, content_len=4713
 2026-04-17 22:57:57,759 [INFO] neoantigen.k2: call_for_json OK: schema=EmailContent
+2026-04-17 23:01:39,939 [INFO] neoantigen.k2: K2 logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log)
+2026-04-17 23:01:39,939 [INFO] neoantigen.k2: streamlit-context smoke test
+2026-04-17 23:02:08,403 [INFO] neoantigen.k2: K2 logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log)
+2026-04-17 23:02:08,551 [INFO] neoantigen.k2: call_for_json start: schema=PathologyReport, user_prompt_len=3720
+2026-04-17 23:02:09,023 [ERROR] neoantigen.k2: call_for_json HTTP error: schema=PathologyReport, err=NotFoundError: Error code: 404 - {'detail': 'No LLM found for model_name: medix-r1-30b'}
+2026-04-17 23:02:09,023 [WARNING] neoantigen.k2: extract_pathology fallback to heuristic: err=NotFoundError: Error code: 404 - {'detail': 'No LLM found for model_name: medix-r1-30b'}
+2026-04-17 23:02:09,824 [INFO] neoantigen.k2: call_for_json start: schema=EmailContent, user_prompt_len=659
+2026-04-17 23:02:09,826 [INFO] neoantigen.k2: call_for_json start: schema=EmailContent, user_prompt_len=738
+2026-04-17 23:02:09,827 [INFO] neoantigen.k2: call_for_json start: schema=EmailContent, user_prompt_len=683
+2026-04-17 23:02:09,829 [INFO] neoantigen.k2: call_for_json start: schema=EmailContent, user_prompt_len=674
+2026-04-17 23:02:10,158 [ERROR] neoantigen.k2: call_for_json HTTP error: schema=EmailContent, err=NotFoundError: Error code: 404 - {'detail': 'No LLM found for model_name: medix-r1-30b'}
+2026-04-17 23:02:10,158 [WARNING] neoantigen.k2: draft_email fallback: recipient_type=vet_oncologist, recipient_name=Ontario Veterinary College — Mona Campbell Centre, err=NotFoundError: Error code: 404 - {'detail': 'No LLM found for model_name: medix-r1-30b'}
+2026-04-17 23:02:10,922 [ERROR] neoantigen.k2: call_for_json HTTP error: schema=EmailContent, err=NotFoundError: Error code: 404 - {'detail': 'No LLM found for model_name: medix-r1-30b'}
+2026-04-17 23:02:10,923 [WARNING] neoantigen.k2: draft_email fallback: recipient_type=sequencing_lab, recipient_name=Vidium Animal Health, err=NotFoundError: Error code: 404 - {'detail': 'No LLM found for model_name: medix-r1-30b'}
+2026-04-17 23:02:10,929 [ERROR] neoantigen.k2: call_for_json HTTP error: schema=EmailContent, err=NotFoundError: Error code: 404 - {'detail': 'No LLM found for model_name: medix-r1-30b'}
+2026-04-17 23:02:10,929 [WARNING] neoantigen.k2: draft_email fallback: recipient_type=synthesis_vendor, recipient_name=TriLink BioTechnologies, err=NotFoundError: Error code: 404 - {'detail': 'No LLM found for model_name: medix-r1-30b'}
+2026-04-17 23:02:11,120 [ERROR] neoantigen.k2: call_for_json HTTP error: schema=EmailContent, err=NotFoundError: Error code: 404 - {'detail': 'No LLM found for model_name: medix-r1-30b'}
+2026-04-17 23:02:11,120 [WARNING] neoantigen.k2: draft_email fallback: recipient_type=ethics_board, recipient_name=Ethics Committee, err=NotFoundError: Error code: 404 - {'detail': 'No LLM found for model_name: medix-r1-30b'}

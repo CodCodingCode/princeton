@@ -44,7 +44,8 @@ def get_k2_logger() -> logging.Logger:
     if logger.handlers:
         return logger  # already configured
 
-    log_path = Path(os.environ.get("NEOVAX_LOG_PATH", "out/k2.log"))
+    default_log_path = Path(__file__).resolve().parents[3] / "out" / "k2.log"
+    log_path = Path(os.environ.get("NEOVAX_LOG_PATH", default_log_path))
     log_path.parent.mkdir(parents=True, exist_ok=True)
     handler = logging.FileHandler(log_path)
     handler.setFormatter(

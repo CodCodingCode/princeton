@@ -25,11 +25,11 @@ from neoantigen.agent import gmail_auth
 from neoantigen.agent.emails import send_via_gmail
 from neoantigen.agent.orchestrator import CaseOrchestrator
 
-load_dotenv()
-
 BACKEND_DIR = Path(__file__).resolve().parent.parent / "backend"
 SAMPLE_DIR = BACKEND_DIR / "sample_data"
 OUT_DIR = BACKEND_DIR / "out"
+
+load_dotenv(dotenv_path=BACKEND_DIR / ".env")
 
 st.set_page_config(
     page_title="NeoVax — Autonomous Cancer Vaccine Pipeline",
