@@ -1,0 +1,98 @@
+collection_date,ordered_by,lab_source,test_name,value,unit,reference_range,flag,notes
+2023-06-14,Chatterjee R,RRMC_MainLab,WBC,6.8,x10^9/L,3.5-10.5,,Baseline workup
+2023-06-14,Chatterjee R,RRMC_MainLab,Hemoglobin,12.9,g/dL,12.0-16.0,,
+2023-06-14,Chatterjee R,RRMC_MainLab,Platelets,274,x10^9/L,150-450,,
+2023-06-14,Chatterjee R,RRMC_MainLab,Sodium,141,mmol/L,135-145,,
+2023-06-14,Chatterjee R,RRMC_MainLab,Potassium,4.1,mmol/L,3.5-5.0,,
+2023-06-14,Chatterjee R,RRMC_MainLab,Creatinine,0.8,mg/dL,0.6-1.1,,
+2023-06-14,Chatterjee R,RRMC_MainLab,ALT,22,U/L,7-56,,
+2023-06-14,Chatterjee R,RRMC_MainLab,AST,24,U/L,10-40,,
+2023-06-14,Chatterjee R,RRMC_MainLab,Alk_Phos,91,U/L,44-147,,
+2023-06-14,Chatterjee R,RRMC_MainLab,LDH,226,U/L,140-280,,
+2023-06-14,Chatterjee R,RRMC_MainLab,Albumin,4.0,g/dL,3.5-5.0,,
+2023-07-12,Park L,UVA_Lab,CEA,18.2,ng/mL,<3.0,H,Elevated - baseline tumor marker
+2023-07-12,Park L,UVA_Lab,WBC,7.1,x10^9/L,3.5-10.5,,
+2023-07-12,Park L,UVA_Lab,Hemoglobin,12.7,g/dL,12.0-16.0,,
+2023-07-12,Park L,UVA_Lab,Platelets,268,x10^9/L,150-450,,
+2023-08-21,Park L,UVA_Lab,WBC,5.9,x10^9/L,3.5-10.5,,C2 pre-tx
+2023-08-21,Park L,UVA_Lab,Hemoglobin,12.2,g/dL,12.0-16.0,,
+2023-08-21,Park L,UVA_Lab,Platelets,255,x10^9/L,150-450,,
+2023-08-21,Park L,UVA_Lab,Creatinine,0.9,mg/dL,0.6-1.1,,
+2023-08-21,Park L,UVA_Lab,ALT,28,U/L,7-56,,
+2023-08-21,Park L,UVA_Lab,CEA,9.4,ng/mL,<3.0,H,Decreasing - response
+2023-10-16,Park L,UVA_Lab,WBC,5.5,x10^9/L,3.5-10.5,,
+2023-10-16,Park L,UVA_Lab,Hemoglobin,12.5,g/dL,12.0-16.0,,
+2023-10-16,Park L,UVA_Lab,Platelets,241,x10^9/L,150-450,,
+2023-10-16,Park L,UVA_Lab,Creatinine,0.9,mg/dL,0.6-1.1,,
+2023-10-16,Park L,UVA_Lab,CEA,5.8,ng/mL,<3.0,H,Continued decrease
+2024-01-18,Park L,UVA_Lab,WBC,5.8,x10^9/L,3.5-10.5,,Pre-restaging
+2024-01-18,Park L,UVA_Lab,Hemoglobin,12.4,g/dL,12.0-16.0,,
+2024-01-18,Park L,UVA_Lab,Platelets,241,x10^9/L,150-450,,
+2024-01-18,Park L,UVA_Lab,Creatinine,0.9,mg/dL,0.6-1.1,,
+2024-01-18,Park L,UVA_Lab,ALT,26,U/L,7-56,,
+2024-01-18,Park L,UVA_Lab,LDH,184,U/L,140-280,,
+2024-01-18,Park L,UVA_Lab,CEA,4.1,ng/mL,<3.0,H,Near normal
+2024-04-01,Park L,UVA_Lab,WBC,5.6,x10^9/L,3.5-10.5,,
+2024-04-01,Park L,UVA_Lab,Hemoglobin,12.6,g/dL,12.0-16.0,,
+2024-04-01,Park L,UVA_Lab,Platelets,258,x10^9/L,150-450,,
+2024-04-01,Park L,UVA_Lab,Creatinine,0.9,mg/dL,0.6-1.1,,
+2024-04-01,Park L,UVA_Lab,CEA,3.4,ng/mL,<3.0,H,
+2024-07-09,Riverside T,BlueRidge_LabCorp,WBC,5.6,x10^9/L,3.5-10.5,,Outside lab
+2024-07-09,Riverside T,BlueRidge_LabCorp,Hemoglobin,12.1,g/dL,12.0-16.0,,
+2024-07-09,Riverside T,BlueRidge_LabCorp,Platelets,234,x10^9/L,150-450,,
+2024-07-09,Riverside T,BlueRidge_LabCorp,Sodium,139,mmol/L,135-145,,
+2024-07-09,Riverside T,BlueRidge_LabCorp,Potassium,4.2,mmol/L,3.5-5.0,,
+2024-07-09,Riverside T,BlueRidge_LabCorp,Creatinine,0.80,mg/dL,0.70-1.30,,Different reference range (LabCorp - note 0.70 low)
+2024-07-09,Riverside T,BlueRidge_LabCorp,ALT,24,U/L,7-56,,
+2024-07-09,Riverside T,BlueRidge_LabCorp,CEA,3.8,ng/mL,<3.0,H,
+2024-07-09,Riverside T,BlueRidge_LabCorp,LDH,176,U/L,140-280,,
+2024-07-22,Park L,UVA_Lab,WBC,5.4,x10^9/L,3.5-10.5,,Restaging
+2024-07-22,Park L,UVA_Lab,Hemoglobin,12.3,g/dL,12.0-16.0,,
+2024-07-22,Park L,UVA_Lab,Platelets,229,x10^9/L,150-450,,
+2024-07-22,Park L,UVA_Lab,CEA,3.1,ng/mL,<3.0,H,
+2024-10-07,Park L,UVA_Lab,WBC,5.2,x10^9/L,3.5-10.5,,
+2024-10-07,Park L,UVA_Lab,Hemoglobin,12.1,g/dL,12.0-16.0,,
+2024-10-07,Park L,UVA_Lab,CEA,3.4,ng/mL,<3.0,H,
+2025-01-06,Park L,UVA_Lab,WBC,5.1,x10^9/L,3.5-10.5,,
+2025-01-06,Park L,UVA_Lab,Hemoglobin,11.9,g/dL,12.0-16.0,L,Mildly low
+2025-01-06,Park L,UVA_Lab,Platelets,222,x10^9/L,150-450,,
+2025-01-06,Park L,UVA_Lab,CEA,3.9,ng/mL,<3.0,H,Slight uptick - monitor
+2025-03-10,Park L,UVA_Lab,WBC,5.3,x10^9/L,3.5-10.5,,Restaging CT
+2025-03-10,Park L,UVA_Lab,Hemoglobin,11.7,g/dL,12.0-16.0,L,
+2025-03-10,Park L,UVA_Lab,CEA,4.6,ng/mL,<3.0,H,Trending up
+2025-03-10,Park L,UVA_Lab,CA_19-9,28,U/mL,0-37,,Added - nonspec elevation eval
+2025-05-26,Park L,UVA_Lab,WBC,5.0,x10^9/L,3.5-10.5,,
+2025-05-26,Park L,UVA_Lab,Hemoglobin,11.6,g/dL,12.0-16.0,L,
+2025-05-26,Park L,UVA_Lab,CEA,5.8,ng/mL,<3.0,H,Rising
+2025-07-21,Park L,UVA_Lab,WBC,4.9,x10^9/L,3.5-10.5,,
+2025-07-21,Park L,UVA_Lab,Hemoglobin,11.4,g/dL,12.0-16.0,L,
+2025-07-21,Park L,UVA_Lab,Platelets,210,x10^9/L,150-450,,
+2025-07-21,Park L,UVA_Lab,CEA,7.9,ng/mL,<3.0,H,Rising - concerning
+2025-09-12,Whitaker B,UVA_Lab,WBC,7.2,x10^9/L,3.5-10.5,,ED arrival
+2025-09-12,Whitaker B,UVA_Lab,Hemoglobin,11.8,g/dL,12.0-16.0,L,
+2025-09-12,Whitaker B,UVA_Lab,Platelets,227,x10^9/L,150-450,,
+2025-09-12,Whitaker B,UVA_Lab,Sodium,138,mmol/L,135-145,,
+2025-09-12,Whitaker B,UVA_Lab,Potassium,4.1,mmol/L,3.5-5.0,,
+2025-09-12,Whitaker B,UVA_Lab,Creatinine,0.8,mg/dL,0.6-1.1,,
+2025-09-12,Whitaker B,UVA_Lab,Glucose,104,mg/dL,70-99,H,Nonfasting
+2025-09-24,Park L,Guardant360,ctDNA_TumorFraction,8.4,%,—,,Plasma liquid biopsy
+2025-10-15,Park L,UVA_Lab,WBC,5.9,x10^9/L,3.5-10.5,,Pre 2L C1D1
+2025-10-15,Park L,UVA_Lab,Hemoglobin,11.3,g/dL,12.0-16.0,L,
+2025-10-15,Park L,UVA_Lab,Platelets,218,x10^9/L,150-450,,
+2025-10-15,Park L,UVA_Lab,Creatinine,0.9,mg/dL,0.6-1.1,,
+2025-10-15,Park L,UVA_Lab,Albumin,3.8,g/dL,3.5-5.0,,
+2025-10-15,Park L,UVA_Lab,CEA,6.4,ng/mL,<3.0,H,
+2025-12-03,Park L,UVA_Lab,WBC,5.4,x10^9/L,3.5-10.5,,C2 2L
+2025-12-03,Park L,UVA_Lab,Hemoglobin,11.2,g/dL,12.0-16.0,L,
+2025-12-03,Park L,UVA_Lab,Platelets,204,x10^9/L,150-450,,
+2025-12-03,Park L,UVA_Lab,Albumin,3.6,g/dL,3.5-5.0,,
+2025-12-03,Park L,UVA_Lab,CEA,5.1,ng/mL,<3.0,H,Partial response biochem
+2026-01-28,Park L,UVA_Lab,WBC,4.8,x10^9/L,3.5-10.5,,
+2026-01-28,Park L,UVA_Lab,Hemoglobin,10.9,g/dL,12.0-16.0,L,Trending down
+2026-01-28,Park L,UVA_Lab,Platelets,192,x10^9/L,150-450,,
+2026-01-28,Park L,UVA_Lab,Creatinine,1.0,mg/dL,0.6-1.1,,
+2026-01-28,Park L,UVA_Lab,Alk_Phos,134,U/L,44-147,,Trending up - r/o bone
+2026-01-28,Park L,UVA_Lab,ALT,31,U/L,7-56,,
+2026-01-28,Park L,UVA_Lab,CEA,6.8,ng/mL,<3.0,H,Rising - correlated w/ imaging
+2026-01-28,Park L,UVA_Lab,Calcium,9.2,mg/dL,8.5-10.5,,
+2026-01-28,Park L,UVA_Lab,CA_19-9,0.42,ng/mL,<37,,NOTE: result in ng/mL not U/mL — lab error flagged, retest

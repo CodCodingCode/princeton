@@ -5,23 +5,27 @@ import { GoogleMap, Marker, useJsApiLoader } from "@react-google-maps/api";
 import type { TrialSite } from "@/lib/types";
 
 const MAP_STYLE = [
-  { elementType: "geometry", stylers: [{ color: "#0f172a" }] },
-  { elementType: "labels.text.stroke", stylers: [{ color: "#0f172a" }] },
-  { elementType: "labels.text.fill", stylers: [{ color: "#94a3b8" }] },
+  { elementType: "geometry", stylers: [{ color: "#f5f5f5" }] },
+  { elementType: "labels.text.stroke", stylers: [{ color: "#ffffff" }] },
+  { elementType: "labels.text.fill", stylers: [{ color: "#666666" }] },
   {
     featureType: "road",
     elementType: "geometry",
-    stylers: [{ color: "#1e293b" }],
+    stylers: [{ color: "#ffffff" }],
   },
   {
     featureType: "water",
     elementType: "geometry",
-    stylers: [{ color: "#020617" }],
+    stylers: [{ color: "#e7e7e7" }],
   },
   {
     featureType: "administrative",
     elementType: "geometry",
-    stylers: [{ color: "#475569" }],
+    stylers: [{ color: "#c8c8c8" }],
+  },
+  {
+    featureType: "poi",
+    stylers: [{ visibility: "off" }],
   },
 ];
 
@@ -68,22 +72,22 @@ export function TrialMap({
 
   if (!apiKey) {
     return (
-      <div className="rounded-xl border border-ink-800 bg-ink-900/40 p-4">
-        <h3 className="text-sm font-semibold text-teal-400 mb-2">
+      <div className="rounded-xl border border-neutral-200 bg-white p-4">
+        <h3 className="text-[11px] uppercase tracking-widest font-semibold text-neutral-500 mb-2">
           Trial sites
         </h3>
-        <p className="text-xs text-ink-400 mb-2">
+        <p className="text-xs text-neutral-600 mb-2">
           Set{" "}
-          <code className="text-ink-300">NEXT_PUBLIC_GOOGLE_MAPS_API_KEY</code>{" "}
-          to render the interactive map. Showing the first 12 sites as a list.
+          <code className="text-black">NEXT_PUBLIC_GOOGLE_MAPS_API_KEY</code> to
+          render the interactive map. Showing the first 12 sites as a list.
         </p>
-        <ul className="text-sm text-ink-200 space-y-1 max-h-80 overflow-y-auto">
+        <ul className="text-sm text-neutral-800 space-y-1 max-h-80 overflow-y-auto">
           {sites.slice(0, 12).map((s, i) => (
             <li
               key={`${s.nct_id}-${i}`}
               className={`truncate ${selected && selected !== s.nct_id ? "opacity-40" : ""}`}
             >
-              <span className="text-teal-400 font-mono text-xs">
+              <span className="text-neutral-500 font-mono text-xs">
                 {s.nct_id}
               </span>{" "}
               {s.facility} · {s.city}, {s.state}
@@ -96,15 +100,15 @@ export function TrialMap({
 
   if (!isLoaded) {
     return (
-      <div className="rounded-xl border border-ink-800 bg-ink-900/40 p-6 text-ink-500 text-sm">
+      <div className="rounded-xl border border-neutral-200 bg-white p-6 text-neutral-500 text-sm">
         Loading map…
       </div>
     );
   }
 
   return (
-    <div className="rounded-xl border border-ink-800 bg-ink-900/40 overflow-hidden">
-      <div className="flex items-center justify-between px-4 py-2 text-xs text-ink-400 border-b border-ink-800">
+    <div className="rounded-xl border border-neutral-200 bg-white overflow-hidden">
+      <div className="flex items-center justify-between px-4 py-2 text-xs text-neutral-600 border-b border-neutral-200">
         <span>
           Trial sites ({filtered.length}
           {selected ? ` · filtered ${selected}` : ""})
@@ -112,7 +116,7 @@ export function TrialMap({
         {selected && (
           <button
             onClick={() => onSelect(null)}
-            className="text-teal-400 hover:text-teal-300"
+            className="text-brand-700 hover:text-black"
           >
             Clear filter
           </button>

@@ -92,6 +92,12 @@ def _medix_model_name() -> str:
     return os.environ.get("MEDIX_MODEL", MEDIX_DEFAULT_MODEL)
 
 
+# Per-request timeouts (seconds). Without these, a dead SSH tunnel causes the
+# orchestrator to hang indefinitely on stage 1.
+K2_TIMEOUT_S = float(os.environ.get("NEOVAX_K2_TIMEOUT_S", "90"))
+MEDIX_TIMEOUT_S = float(os.environ.get("NEOVAX_MEDIX_TIMEOUT_S", "60"))
+
+
 @lru_cache(maxsize=1)
 def _openai_client():
     """K2 cloud client — used for text reasoning (NCCN walker, JSON tasks)."""
@@ -100,7 +106,7 @@ def _openai_client():
     api_key = os.environ.get("K2_API_KEY")
     if not api_key:
         raise RuntimeError("K2_API_KEY not set")
-    return AsyncOpenAI(base_url=K2_BASE_URL, api_key=api_key)
+    return AsyncOpenAI(base_url=K2_BASE_URL, api_key=api_key, timeout=K2_TIMEOUT_S)
 
 
 @lru_cache(maxsize=1)
@@ -111,7 +117,9 @@ def _medix_client():
     api_key = os.environ.get("MEDIX_API_KEY")
     if not api_key:
         raise RuntimeError("MEDIX_API_KEY not set — bring up the GH200 tunnel first")
-    return AsyncOpenAI(base_url=MEDIX_BASE_URL, api_key=api_key)
+    return AsyncOpenAI(
+        base_url=MEDIX_BASE_URL, api_key=api_key, timeout=MEDIX_TIMEOUT_S
+    )
 
 
 # ─────────────────────────────────────────────────────────────

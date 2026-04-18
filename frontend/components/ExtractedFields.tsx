@@ -14,10 +14,10 @@ function isEmpty(value: unknown): boolean {
 function Row({ label, value }: { label: string; value: unknown }) {
   const empty = isEmpty(value);
   return (
-    <div className="flex justify-between gap-4 py-1 text-sm border-b border-ink-800/60 last:border-none">
-      <span className="text-ink-400">{label}</span>
-      <span className="text-ink-100 text-right">
-        {empty ? <span className="text-ink-500">—</span> : String(value)}
+    <div className="flex justify-between gap-4 py-1 text-sm border-b border-neutral-100 last:border-none">
+      <span className="text-neutral-600">{label}</span>
+      <span className="text-black text-right">
+        {empty ? <span className="text-neutral-400">—</span> : String(value)}
       </span>
     </div>
   );
@@ -46,16 +46,16 @@ export function ExtractedFields({
   const isMelanoma = primaryCancerType === "cutaneous_melanoma";
 
   return (
-    <div className="rounded-xl border border-ink-800 bg-ink-900/40 p-5">
-      <h2 className="text-sm font-semibold text-teal-400 uppercase tracking-widest mb-1">
+    <div className="rounded-xl border border-neutral-200 bg-white p-5">
+      <h2 className="text-[11px] font-semibold text-neutral-500 uppercase tracking-widest mb-1">
         Extracted oncology data
       </h2>
 
       <div className="mt-4">
-        <div className="text-xs uppercase tracking-wider text-teal-300/80 mb-1">
+        <div className="text-xs uppercase tracking-wider text-neutral-500 mb-1">
           Diagnosis
         </div>
-        <p className="text-xs text-ink-500 mb-2">
+        <p className="text-xs text-neutral-500 mb-2">
           Drives the dynamic railway and RAG retrieval from the phase-2+ trial
           corpus.
         </p>
@@ -91,9 +91,9 @@ export function ExtractedFields({
             {mutations.map((m, i) => (
               <span
                 key={`${m.gene}-${m.position}-${i}`}
-                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-teal-400/10 text-teal-300 font-mono text-xs"
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-neutral-100 text-neutral-700 font-mono text-xs"
               >
-                <span className="text-ink-100">{m.gene}</span>
+                <span className="text-black">{m.gene}</span>
                 {m.ref_aa}
                 {m.position}
                 {m.alt_aa}
@@ -104,10 +104,10 @@ export function ExtractedFields({
       </div>
 
       <div className="mt-6">
-        <div className="text-xs uppercase tracking-wider text-ink-400 mb-1">
+        <div className="text-xs uppercase tracking-wider text-neutral-500 mb-1">
           Melanoma-specific pathology
         </div>
-        <p className="text-xs text-ink-500 mb-2">
+        <p className="text-xs text-neutral-500 mb-2">
           {isMelanoma
             ? "Fields used by the melanoma NCCN framework."
             : "Populated only for melanoma cases — expect these to be empty for other tumor types."}
@@ -152,10 +152,10 @@ export function ExtractedFields({
       </div>
 
       <div className="mt-6">
-        <div className="text-xs uppercase tracking-wider text-ink-400 mb-1">
+        <div className="text-xs uppercase tracking-wider text-neutral-500 mb-1">
           Trial eligibility
         </div>
-        <p className="text-xs text-ink-500 mb-2">
+        <p className="text-xs text-neutral-500 mb-2">
           Inputs the Regeneron trial matcher reads. Separate from the railway —
           missing values here do not block phase-level recommendations.
         </p>

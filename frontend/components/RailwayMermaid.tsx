@@ -9,14 +9,14 @@ async function getMermaid() {
     mermaidInitPromise = import("mermaid").then((mod) => {
       mod.default.initialize({
         startOnLoad: false,
-        theme: "dark",
+        theme: "neutral",
         securityLevel: "loose",
         themeVariables: {
           background: "transparent",
-          primaryColor: "#134e4a",
-          primaryTextColor: "#e5e7eb",
-          primaryBorderColor: "#0d9488",
-          lineColor: "#6b7280",
+          primaryColor: "#ffffff",
+          primaryTextColor: "#0a0a0a",
+          primaryBorderColor: "#0a0a0a",
+          lineColor: "#6b6b6b",
           fontSize: "13px",
         },
         flowchart: {
@@ -67,17 +67,19 @@ export function RailwayMermaid({
 
   if (empty) {
     return (
-      <div className="rounded-xl border border-ink-800 bg-ink-900/40 p-8 text-ink-400 text-sm text-center">
+      <div className="rounded-xl border border-neutral-200 bg-white p-8 text-neutral-500 text-sm text-center">
         Railway will appear here as the phase-walker runs…
       </div>
     );
   }
 
   return (
-    <div className="rounded-xl border border-ink-800 bg-ink-900/40 p-4 overflow-x-auto">
-      {rendering && <div className="text-ink-500 text-xs mb-2">rendering…</div>}
+    <div className="rounded-xl border border-neutral-200 bg-white p-4 overflow-x-auto">
+      {rendering && (
+        <div className="text-neutral-500 text-xs mb-2">rendering…</div>
+      )}
       {err && (
-        <div className="text-red-400 text-xs mb-2">mermaid error: {err}</div>
+        <div className="text-red-600 text-xs mb-2">mermaid error: {err}</div>
       )}
       <div ref={ref} className="mermaid" />
     </div>

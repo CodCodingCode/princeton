@@ -11,15 +11,10 @@ import type {
   TrialMatch,
   TrialSite,
 } from "@/lib/types";
-import { deriveTStage, toPatientFriendly } from "@/lib/plainEnglish";
-import { RailwayMermaid } from "@/components/RailwayMermaid";
-import { ExtractedFields } from "@/components/ExtractedFields";
-import { TrialList } from "@/components/TrialList";
-import { TrialMap } from "@/components/TrialMap";
-import { ChatPanel } from "@/components/ChatPanel";
+import { toPatientFriendly } from "@/lib/plainEnglish";
+import { AvatarPanel } from "@/components/AvatarPanel";
+import { CaseTabs } from "@/components/CaseTabs";
 import { ReportButton } from "@/components/ReportButton";
-import { EventLog } from "@/components/EventLog";
-import { DocumentsPanel } from "@/components/DocumentsPanel";
 
 export default function CasePage() {
   const params = useParams<{ id: string }>();
@@ -28,8 +23,12 @@ export default function CasePage() {
   const [caseData, setCaseData] = useState<PatientCase | null>(null);
   const [events, setEvents] = useState<AgentEvent[]>([]);
   const [done, setDone] = useState(false);
-  const [selectedNct, setSelectedNct] = useState<string | null>(null);
-  const [showClinician, setShowClinician] = useState(false);
+  const [extractProgress, setExtractProgress] = useState<{
+    done: number;
+    total: number;
+    latest: string;
+  } | null>(null);
+  const [currentStage, setCurrentStage] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -44,6 +43,22 @@ export default function CasePage() {
   useEffect(() => {
     const cleanup = subscribeCaseEvents(caseId, (ev) => {
       setEvents((prev) => [...prev, ev]);
+
+      // Track extraction progress & current stage for the status strip.
+      const payload = ev.payload as Record<string, unknown> | undefined;
+      const phase = payload?.phase as string | undefined;
+      const stage = payload?.stage as string | undefined;
+      if (stage && phase === "start") setCurrentStage(stage);
+      if (phase === "extract_start") {
+        const total = Number(payload?.total ?? 0);
+        setExtractProgress({ done: 0, total, latest: "" });
+      } else if (phase === "extract_progress") {
+        setExtractProgress({
+          done: Number(payload?.done ?? 0),
+          total: Number(payload?.total ?? 0),
+          latest: String(payload?.filename ?? ""),
+        });
+      }
 
       if (ev.kind === "case_update") {
         setCaseData(ev.payload as unknown as PatientCase);
@@ -109,312 +124,130 @@ export default function CasePage() {
     return cleanup;
   }, [caseId]);
 
+  // Fall back to an empty-case stub so the cockpit shell renders immediately
+  // even when the backend is unreachable or still spinning up. The tabs each
+  // handle empty arrays gracefully, and the AvatarPanel has no case deps.
+  const effectiveCase = caseData ?? emptyCase(caseId);
   const friendly = useMemo(
-    () => (caseData ? toPatientFriendly(caseData) : null),
-    [caseData],
+    () => toPatientFriendly(effectiveCase),
+    [effectiveCase],
   );
 
   const statusLabel = useMemo(() => {
-    if (!caseData) return "Loading…";
     if (done) return "Ready";
+    if (
+      extractProgress &&
+      extractProgress.total > 0 &&
+      extractProgress.done < extractProgress.total
+    ) {
+      return `Reading records · ${extractProgress.done}/${extractProgress.total}`;
+    }
+    if (!caseData) return "Waiting for backend…";
     if (caseData.trial_sites.length > 0) return "Locating trial sites…";
     if (caseData.trial_matches.length > 0) return "Matching trials…";
     if (caseData.railway?.steps.length) return "Planning your treatment…";
-    if (caseData.documents.length > 0) return "Reading your records with AI…";
+    if (currentStage === "2") return "Reconciling your records…";
+    if (caseData.documents.length > 0) return "Reading your records…";
     return "Starting…";
-  }, [caseData, done]);
+  }, [caseData, done, extractProgress, currentStage]);
 
-  if (!caseData || !friendly) {
-    return (
-      <div className="max-w-6xl mx-auto px-6 py-20 text-ink-400">
-        Loading case {caseId}…
-      </div>
-    );
-  }
-
-  const tStage = deriveTStage(
-    caseData.pathology.breslow_thickness_mm,
-    caseData.pathology.ulceration,
-  );
+  const extractPct = extractProgress?.total
+    ? Math.round((extractProgress.done / extractProgress.total) * 100)
+    : 0;
 
   return (
-    <div className="px-4 py-3 max-w-[1400px] mx-auto flex flex-col gap-3 min-h-[calc(100vh-56px)]">
-      {/* ── HERO ───────────────────────────────────────────── */}
-      <section className="rounded-2xl border border-teal-400/30 bg-gradient-to-br from-teal-400/10 via-ink-900/80 to-ink-900/40 p-5 flex items-start justify-between gap-4">
+    <div className="flex flex-col h-[calc(100vh-65px)]">
+      {/* Compact case strip */}
+      <header className="border-b border-neutral-200 bg-white px-6 py-3 flex items-center justify-between gap-4 shrink-0">
         <div className="min-w-0">
-          <div className="text-xs uppercase tracking-widest text-teal-400 mb-1">
-            Case {caseId} ·{" "}
+          <div className="text-[10px] uppercase tracking-widest text-neutral-500 font-semibold flex items-center gap-2">
+            <span>Case {caseId}</span>
+            <span className="text-neutral-300">·</span>
             <span
-              className={done ? "text-emerald-400" : "text-teal-400 pulse-dot"}
+              className={done ? "text-emerald-600" : "text-black pulse-dot"}
             >
               {statusLabel}
             </span>
           </div>
-          <h1 className="text-2xl md:text-3xl font-semibold tracking-tight leading-tight">
+          <h1 className="text-lg md:text-xl font-semibold tracking-tight text-black truncate">
             {friendly.diagnosisHeadline}
           </h1>
-          <p className="text-ink-400 text-sm mt-1 max-w-2xl">
-            {friendly.diagnosisDetails}
-          </p>
         </div>
         <div className="shrink-0">
           <ReportButton caseId={caseId} enabled={done} />
         </div>
-      </section>
+      </header>
 
-      {/* ── MAIN GRID ─────────────────────────────────────── */}
-      <section className="grid grid-cols-12 gap-3 flex-1 min-h-0">
-        {/* Recommended action */}
-        <div className="col-span-12 md:col-span-4 rounded-2xl border border-teal-400/40 bg-teal-400/5 p-5 flex flex-col">
-          <div className="text-[11px] uppercase tracking-widest text-teal-400 font-semibold mb-2">
-            Recommended next step
-          </div>
-          <div className="text-lg font-medium leading-snug text-ink-100 mb-3">
-            {friendly.recommendedAction}
-          </div>
-          <div className="text-sm text-ink-400 mb-4 leading-relaxed">
-            <span className="text-ink-300 font-medium">Why: </span>
-            {friendly.recommendedActionDetail}
-          </div>
-
-          {friendly.nextSteps.length > 0 && (
-            <div className="mb-4">
-              <div className="text-[11px] uppercase tracking-widest text-ink-500 mb-1">
-                Plan at a glance
-              </div>
-              <ol className="text-sm text-ink-200 space-y-1">
-                {friendly.nextSteps.map((s, i) => (
-                  <li key={i} className="flex gap-2">
-                    <span className="text-teal-400 shrink-0">{i + 1}.</span>
-                    <span>{s}</span>
-                  </li>
-                ))}
-              </ol>
+      {/* Extraction progress bar — visible while stage 1 is running */}
+      {extractProgress &&
+        extractProgress.total > 0 &&
+        extractProgress.done < extractProgress.total && (
+          <div className="border-b border-neutral-200 bg-neutral-50 px-6 py-2 shrink-0">
+            <div className="flex items-center justify-between gap-4 text-[11px] text-neutral-600 mb-1">
+              <span className="truncate">
+                Reading {extractProgress.done} of {extractProgress.total}{" "}
+                records
+                {extractProgress.latest ? ` · ${extractProgress.latest}` : ""}
+              </span>
+              <span className="tabular-nums text-neutral-500 shrink-0">
+                {extractPct}%
+              </span>
             </div>
-          )}
-
-          <button
-            disabled={!done}
-            onClick={() => {
-              // Placeholder — in production, hook into a scheduler.
-              window.open(
-                "https://www.cancer.net/find-a-cancer-doctor",
-                "_blank",
-              );
-            }}
-            className={`mt-auto w-full px-4 py-2.5 rounded-xl text-sm font-semibold transition ${
-              done
-                ? "bg-teal-500 hover:bg-teal-400 text-ink-950"
-                : "bg-ink-800 text-ink-500 cursor-not-allowed"
-            }`}
-          >
-            {friendly.ctaLabel}
-          </button>
-        </div>
-
-        {/* About you */}
-        <div className="col-span-12 md:col-span-4 rounded-2xl border border-ink-800 bg-ink-900/40 p-5 flex flex-col">
-          <div className="text-[11px] uppercase tracking-widest text-teal-400 font-semibold mb-3">
-            About you
-          </div>
-          <ul className="space-y-2.5 flex-1">
-            {friendly.aboutYou.map((item, i) => (
-              <li key={i}>
-                <div className="text-[11px] uppercase tracking-wider text-ink-500">
-                  {item.label}
-                </div>
-                <div className="text-sm text-ink-100 leading-snug">
-                  {item.value}
-                </div>
-              </li>
-            ))}
-          </ul>
-          {caseData.conflicts.length > 0 && (
-            <div className="mt-3 rounded-lg bg-amber-400/10 border border-amber-400/30 p-2 text-xs text-amber-200">
-              <span className="font-semibold">Worth reviewing:</span>{" "}
-              {caseData.conflicts.length} fact
-              {caseData.conflicts.length === 1 ? "" : "s"} disagreed between
-              your documents.
-            </div>
-          )}
-        </div>
-
-        {/* Chat */}
-        <div className="col-span-12 md:col-span-4 min-h-[24rem] md:min-h-0 flex flex-col">
-          <ChatPanel caseId={caseId} />
-        </div>
-      </section>
-
-      {/* ── TRIALS ROW ────────────────────────────────────── */}
-      <section className="grid grid-cols-12 gap-3">
-        <div className="col-span-12 lg:col-span-7">
-          <div className="text-[11px] uppercase tracking-widest text-teal-400 font-semibold mb-2">
-            Trials near you
-          </div>
-          <div className="text-sm text-ink-300 mb-2">{friendly.trialsCta}</div>
-          <TrialMap
-            sites={caseData.trial_sites}
-            selected={selectedNct}
-            onSelect={setSelectedNct}
-          />
-        </div>
-        <div className="col-span-12 lg:col-span-5">
-          <div className="text-[11px] uppercase tracking-widest text-teal-400 font-semibold mb-2">
-            Matching trials
-          </div>
-          <div className="max-h-80 overflow-y-auto pr-1">
-            <TrialList
-              matches={caseData.trial_matches}
-              selected={selectedNct}
-              onSelect={setSelectedNct}
-            />
-          </div>
-        </div>
-      </section>
-
-      {/* ── CLINICIAN DRAWER ──────────────────────────────── */}
-      <section>
-        <button
-          onClick={() => setShowClinician((v) => !v)}
-          className="w-full flex items-center justify-between px-4 py-3 rounded-xl border border-ink-800 bg-ink-900/40 hover:border-ink-600 text-sm"
-        >
-          <span className="text-ink-300">
-            <span className="text-teal-400 mr-2">⚕</span>
-            Clinical detail for your oncologist — treatment railway, source
-            documents, pipeline events
-          </span>
-          <span className="text-ink-500 text-xs">
-            {showClinician ? "Hide" : "Show"}
-          </span>
-        </button>
-
-        {showClinician && (
-          <div className="mt-3 space-y-3">
-            <ExtractedFields
-              pathology={caseData.pathology}
-              intake={caseData.intake}
-              enrichment={caseData.enrichment}
-              mutations={caseData.mutations}
-              primaryCancerType={caseData.primary_cancer_type}
-              tStage={tStage}
-            />
-
-            <div>
-              <div className="text-xs uppercase tracking-widest text-teal-400 mb-2">
-                Treatment railway (4 phases, phase-2+ trial-grounded)
-              </div>
-              <RailwayMermaid
-                mermaidSource={caseData.railway?.mermaid ?? ""}
-                empty={!caseData.railway?.mermaid}
+            <div className="h-1 w-full bg-neutral-200 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-black transition-[width] duration-300"
+                style={{ width: `${extractPct}%` }}
               />
-              {(caseData.railway?.steps?.length ?? 0) > 0 && (
-                <RailwayStepsTable steps={caseData.railway!.steps} />
-              )}
             </div>
-
-            <DocumentsPanel
-              documents={caseData.documents}
-              provenance={caseData.provenance}
-              conflicts={caseData.conflicts}
-            />
-
-            <EventLog events={events} />
           </div>
         )}
-      </section>
+
+      {/* Cockpit split — avatar dominates, tabs beside it */}
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] min-h-0">
+        <AvatarPanel />
+        <CaseTabs caseData={effectiveCase} events={events} />
+      </div>
     </div>
   );
 }
 
-function RailwayStepsTable({ steps }: { steps: RailwayStep[] }) {
-  // Group steps by phase while preserving declaration order.
-  const grouped: {
-    phaseId: string;
-    phaseTitle: string;
-    steps: RailwayStep[];
-  }[] = [];
-  for (const s of steps) {
-    const pid = s.phase_id || "main";
-    const title = s.phase_title || "";
-    const last = grouped[grouped.length - 1];
-    if (last && last.phaseId === pid) {
-      last.steps.push(s);
-    } else {
-      grouped.push({ phaseId: pid, phaseTitle: title, steps: [s] });
-    }
-  }
-
-  return (
-    <div className="mt-2 space-y-3">
-      {grouped.map((group) => (
-        <div
-          key={group.phaseId}
-          className="rounded-xl border border-ink-800 bg-ink-900/40"
-        >
-          {group.phaseTitle && (
-            <div className="px-3 py-2 border-b border-ink-800 text-[11px] uppercase tracking-widest text-teal-400 font-semibold">
-              {group.phaseTitle}
-            </div>
-          )}
-          <div className="divide-y divide-ink-800">
-            {group.steps.map((s) => (
-              <details key={s.node_id} className="p-3 group">
-                <summary className="cursor-pointer flex items-start gap-3 list-none">
-                  <span className="text-xs font-mono text-teal-400 shrink-0 w-32 truncate">
-                    {s.node_id}
-                  </span>
-                  <div className="flex-1">
-                    <div className="text-sm text-ink-100">
-                      {s.title}
-                      {!s.is_terminal && (
-                        <span className="text-teal-400">
-                          {" "}
-                          → {s.chosen_option_label}
-                        </span>
-                      )}
-                    </div>
-                    {s.chosen_rationale && (
-                      <div className="text-xs text-ink-400 mt-0.5">
-                        {s.chosen_rationale}
-                      </div>
-                    )}
-                  </div>
-                  <span className="text-ink-500 text-xs group-open:rotate-90 transition">
-                    ▸
-                  </span>
-                </summary>
-                {s.alternatives.length > 0 && (
-                  <div className="mt-3 pl-36 space-y-1.5 text-xs">
-                    {s.alternatives.map((a, i) => (
-                      <div key={i}>
-                        <span className="text-ink-300">{a.option_label}:</span>{" "}
-                        <span className="text-ink-500">
-                          {a.reason_not_chosen || "—"}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                {s.citations.length > 0 && (
-                  <div className="mt-3 pl-36 space-y-1 text-xs">
-                    {s.citations.map((c) => (
-                      <a
-                        key={c.pmid}
-                        href={`https://pubmed.ncbi.nlm.nih.gov/${c.pmid}/`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="block text-teal-400 hover:text-teal-300 truncate"
-                      >
-                        PMID {c.pmid} — {c.title}
-                      </a>
-                    ))}
-                  </div>
-                )}
-              </details>
-            ))}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
+function emptyCase(caseId: string): PatientCase {
+  return {
+    case_id: caseId,
+    pathology: {
+      primary_cancer_type: "unknown",
+      histology: "",
+      primary_site: "",
+      melanoma_subtype: "unknown",
+      breslow_thickness_mm: null,
+      ulceration: null,
+      mitotic_rate_per_mm2: null,
+      tils_present: "",
+      pdl1_estimate: "",
+      lag3_ihc_percent: null,
+      confidence: 0,
+      notes: "",
+    },
+    primary_cancer_type: "unknown",
+    intake: {
+      ecog: null,
+      lag3_ihc_percent: null,
+      measurable_disease_recist: null,
+      life_expectancy_months: null,
+      prior_systemic_therapy: null,
+      prior_anti_pd1: null,
+      ajcc_stage: null,
+      age_years: null,
+    },
+    enrichment: null,
+    mutations: [],
+    documents: [],
+    provenance: [],
+    conflicts: [],
+    pdf_text_excerpt: "",
+    railway: null,
+    trial_matches: [],
+    trial_sites: [],
+    final_recommendation: "",
+  };
 }

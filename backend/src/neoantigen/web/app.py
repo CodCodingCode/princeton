@@ -14,7 +14,7 @@ except ImportError:
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from .routes import cases, chat
+from .routes import cases, chat, heygen
 
 
 def _allowed_origins() -> list[str]:
@@ -47,6 +47,7 @@ app.add_middleware(
 
 app.include_router(cases.router)
 app.include_router(chat.router)
+app.include_router(heygen.router)
 
 
 @app.get("/api/health")
@@ -54,6 +55,7 @@ async def health() -> dict:
     from ..chat.k2_client import has_kimi_key
     from ..agent._llm import has_api_key
     from ..rag import has_store as rag_available
+    from .routes.heygen import has_heygen_key
 
     return {
         "ok": True,
@@ -61,4 +63,5 @@ async def health() -> dict:
         "kimi_api_key": has_kimi_key(),
         "rag_store": rag_available(),
         "google_maps_api_key": bool(os.environ.get("GOOGLE_MAPS_API_KEY")),
+        "heygen_api_key": has_heygen_key(),
     }

@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@heygen/streaming-avatar": "^2.1.0",
     "@react-google-maps/api": "^2.20.3",
     "mermaid": "^11.4.1",
     "next": "^15.0.3",

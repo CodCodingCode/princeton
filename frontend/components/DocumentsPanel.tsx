@@ -16,7 +16,7 @@ export function DocumentsPanel({
 
   if (!documents.length) {
     return (
-      <div className="rounded-xl border border-ink-800 bg-ink-900/40 p-5 text-sm text-ink-400">
+      <div className="rounded-xl border border-neutral-200 bg-white p-5 text-sm text-neutral-600">
         Documents will appear here once the orchestrator starts extracting…
       </div>
     );
@@ -31,15 +31,15 @@ export function DocumentsPanel({
   );
 
   return (
-    <div className="rounded-xl border border-ink-800 bg-ink-900/40 p-5">
+    <div className="rounded-xl border border-neutral-200 bg-white p-5">
       <div className="flex items-center justify-between mb-3">
-        <h2 className="text-sm font-semibold text-teal-400 uppercase tracking-widest">
+        <h2 className="text-[11px] font-semibold text-neutral-500 uppercase tracking-widest">
           Source documents ({documents.length})
         </h2>
-        <span className="text-xs text-ink-500">
+        <span className="text-xs text-neutral-500">
           {provenance.length} provenance entries
           {conflicts.length > 0 && (
-            <span className="ml-3 text-amber-400">
+            <span className="ml-3 text-amber-700">
               {conflicts.length} conflict{conflicts.length === 1 ? "" : "s"}
             </span>
           )}
@@ -47,17 +47,17 @@ export function DocumentsPanel({
       </div>
 
       {conflicts.length > 0 && (
-        <div className="mb-3 rounded-lg bg-amber-400/10 border border-amber-400/30 p-3 text-xs text-amber-200 space-y-1">
+        <div className="mb-3 rounded-lg bg-amber-50 border border-amber-200 p-3 text-xs text-amber-800 space-y-1">
           {conflicts.map((c, i) => (
             <div key={i}>
-              <span className="text-amber-400 mr-2">⚠</span>
+              <span className="text-amber-700 mr-2">⚠</span>
               {c}
             </div>
           ))}
         </div>
       )}
 
-      <div className="divide-y divide-ink-800">
+      <div className="divide-y divide-neutral-200">
         {documents.map((doc) => {
           const isOpen = open === doc.filename;
           const mutCount = doc.pages.reduce(
@@ -69,21 +69,21 @@ export function DocumentsPanel({
             <div key={doc.filename} className="py-2">
               <button
                 onClick={() => setOpen(isOpen ? null : doc.filename)}
-                className="w-full text-left flex items-start gap-3 hover:bg-ink-800/30 -mx-2 px-2 py-1 rounded"
+                className="w-full text-left flex items-start gap-3 hover:bg-neutral-50 -mx-2 px-2 py-1 rounded"
               >
-                <span className="text-teal-400 text-xs mt-0.5 shrink-0">
+                <span className="text-neutral-500 text-xs mt-0.5 shrink-0">
                   {isOpen ? "▾" : "▸"}
                 </span>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 text-sm">
-                    <span className="font-mono text-ink-100 truncate">
+                    <span className="font-mono text-black truncate">
                       {doc.filename}
                     </span>
-                    <span className="px-1.5 py-0.5 rounded text-xs bg-ink-800 text-ink-400">
+                    <span className="px-1.5 py-0.5 rounded text-xs bg-neutral-100 text-neutral-600">
                       {doc.document_kind}
                     </span>
                   </div>
-                  <div className="text-xs text-ink-500 mt-0.5">
+                  <div className="text-xs text-neutral-500 mt-0.5">
                     {doc.page_count} pages ·{" "}
                     {doc.used_vision_fallback ? "VLM vision" : "text-only"} ·{" "}
                     {mutCount} mutation mentions · {provRows.length} extracted
@@ -96,20 +96,18 @@ export function DocumentsPanel({
                 <div className="mt-2 ml-5 space-y-3 text-xs">
                   {provRows.length > 0 && (
                     <div>
-                      <div className="text-ink-500 uppercase tracking-wider mb-1">
+                      <div className="text-neutral-500 uppercase tracking-wider mb-1">
                         Fields sourced from this document
                       </div>
                       <div className="space-y-0.5">
                         {provRows.map((p, i) => (
                           <div key={i} className="flex gap-2">
-                            <span className="text-ink-400 w-40 shrink-0 truncate">
+                            <span className="text-neutral-500 w-40 shrink-0 truncate">
                               {p.field}
                             </span>
-                            <span className="text-ink-200 flex-1">
-                              {p.value}
-                            </span>
+                            <span className="text-black flex-1">{p.value}</span>
                             {p.page_number && (
-                              <span className="text-ink-500 shrink-0">
+                              <span className="text-neutral-400 shrink-0">
                                 page {p.page_number}
                               </span>
                             )}
@@ -120,16 +118,16 @@ export function DocumentsPanel({
                   )}
                   {doc.pages.length > 0 && (
                     <div>
-                      <div className="text-ink-500 uppercase tracking-wider mb-1">
+                      <div className="text-neutral-500 uppercase tracking-wider mb-1">
                         Per-page VLM notes
                       </div>
                       <div className="space-y-0.5 max-h-48 overflow-y-auto">
                         {doc.pages.slice(0, 20).map((page) => (
                           <div
                             key={page.page_number}
-                            className="flex gap-2 text-ink-300"
+                            className="flex gap-2 text-neutral-700"
                           >
-                            <span className="text-ink-500 w-14 shrink-0">
+                            <span className="text-neutral-400 w-14 shrink-0">
                               p.{page.page_number}
                             </span>
                             <span className="truncate">{page.description}</span>

@@ -36,6 +36,7 @@ class TrialRule:
     requires_resectable_high_risk: bool = False
     requires_braf_v600: bool | None = None
     min_age_years: int | None = None
+    max_age_years: int | None = None
     eligible_stage_buckets: set[str] = field(default_factory=set)
     requires_ecog_0_1: bool = False
     requires_no_prior_systemic_advanced: bool = False
@@ -45,62 +46,29 @@ class TrialRule:
     min_life_expectancy_months: int | None = None
     never_in_tcga_gates: list[str] = field(default_factory=list)
 
+    # Multi-cancer routing + biomarker gates (added for the cancer-agnostic pivot).
+    cancer_types: frozenset[str] = field(default_factory=frozenset)
+    # Supported biomarker_gates keys: BRAF_V600, EGFR_mutation, EGFR_T790M,
+    # ALK_fusion, ROS1_fusion, MET_exon14, KRAS_G12C, HER2_positive, HER2_low,
+    # BRCA_mutation, MSI_high, PDL1_positive. Values: "required" | "excluded" | "any".
+    biomarker_gates: dict[str, str] = field(default_factory=dict)
+    pdl1_min_tps: int | None = None
+    scraped_at: str = ""                  # ISO date the scraper wrote this record
+    raw_source: str = "ClinicalTrials.gov v2"
 
-REGENERON_TRIALS: dict[str, TrialRule] = {
-    "NCT05352672": TrialRule(
-        nct_id="NCT05352672",
-        title="Harmony Melanoma — fianlimab + cemiplimab vs pembrolizumab",
-        phase="Phase 3",
-        setting="1L unresectable Stage III / Stage IV melanoma",
-        requires_advanced_disease=True,
-        min_age_years=12,
-        eligible_stage_buckets={"III", "IV"},
-        requires_ecog_0_1=True,
-        requires_no_prior_systemic_advanced=True,
-        requires_measurable_disease=True,
-        requires_lag3_ihc_result=True,
-        min_life_expectancy_months=3,
-    ),
-    "NCT06246916": TrialRule(
-        nct_id="NCT06246916",
-        title="Harmony Head-to-Head — fianlimab + cemiplimab vs nivo + relatlimab",
-        phase="Phase 3",
-        setting="1L unresectable Stage III / Stage IV melanoma",
-        requires_advanced_disease=True,
-        min_age_years=18,
-        eligible_stage_buckets={"III", "IV"},
-        requires_ecog_0_1=True,
-        requires_no_prior_systemic_advanced=True,
-        requires_measurable_disease=True,
-        requires_lag3_ihc_result=True,
-    ),
-    "NCT06190951": TrialRule(
-        nct_id="NCT06190951",
-        title="Neoadjuvant fianlimab + cemiplimab in high-risk resectable melanoma",
-        phase="Phase 2",
-        setting="High-risk clinically-detectable Stage II/III, surgically resectable",
-        requires_resectable_high_risk=True,
-        min_age_years=12,
-        eligible_stage_buckets={"II", "III"},
-        requires_ecog_0_1=True,
-        never_in_tcga_gates=[
-            "Clinically-detectable, surgically resectable disease",
-            "No prior immunotherapy for melanoma",
-        ],
-    ),
-    "NCT04526899": TrialRule(
-        nct_id="NCT04526899",
-        title="BNT111 + Libtayo (cemiplimab) — fixed-antigen mRNA vaccine combination",
-        phase="Phase 2",
-        setting="Anti-PD-1-refractory / relapsed unresectable Stage III or IV melanoma",
-        requires_advanced_disease=True,
-        min_age_years=18,
-        eligible_stage_buckets={"III", "IV"},
-        requires_ecog_0_1=True,
-        requires_prior_anti_pd1=True,
-        requires_measurable_disease=True,
-    ),
-}
+
+def _load_trials() -> dict[str, TrialRule]:
+    """Import the per-trial registry from the ``regeneron`` subpackage.
+
+    Each trial lives in its own ``nct<id>.py`` file under
+    ``external/regeneron/``. Regenerate with
+    ``scripts/scrape_regeneron_trials.py``.
+    """
+    from .regeneron import REGENERON_TRIALS as _loaded
+    return _loaded
+
+
+REGENERON_TRIALS: dict[str, TrialRule] = _load_trials()
 
 
 def _has_braf_v600(case: PatientCase) -> bool:
@@ -108,6 +76,186 @@ def _has_braf_v600(case: PatientCase) -> bool:
         m.gene.upper() == "BRAF" and m.position == 600 and m.alt_aa.upper() == "E"
         for m in case.mutations
     )
+
+
+# ─────────────────────────────────────────────────────────────
+# Biomarker gate resolvers — one per supported key. Each returns
+# (verdict, label) where verdict ∈ {"pass","fail","unknown"}.
+# Verdict is with respect to the `required` flag:
+#   required=True  → pass if biomarker present
+#   required=False → pass if biomarker absent  (for "excluded" gates)
+# ─────────────────────────────────────────────────────────────
+
+
+def _gene_present(case: PatientCase, gene: str) -> bool:
+    return any(m.gene.upper() == gene.upper() for m in case.mutations)
+
+
+def _mutation_text_match(case: PatientCase, pattern: str) -> bool:
+    """Scan raw mutation text strings captured per-page."""
+    needle = pattern.lower()
+    for doc in case.documents:
+        for page in doc.pages:
+            for mtxt in page.mutations_text:
+                if needle in mtxt.lower():
+                    return True
+    return False
+
+
+def _gate_braf_v600(case: PatientCase, *, required: bool) -> tuple[str, str]:
+    present = _has_braf_v600(case)
+    label = "BRAF V600 mutation"
+    return ("pass" if present == required else "fail", f"{label} ({'present' if present else 'absent'})")
+
+
+def _gate_egfr_mutation(case: PatientCase, *, required: bool) -> tuple[str, str]:
+    # EGFR in structured mutations list (covers L858R etc.) OR free-text
+    # "exon 19 del" / "exon 19 deletion" / "exon 20 ins" on any page.
+    present = (
+        _gene_present(case, "EGFR")
+        or _mutation_text_match(case, "egfr exon 19")
+        or _mutation_text_match(case, "egfr exon 20")
+        or _mutation_text_match(case, "egfr l858r")
+    )
+    label = "EGFR activating mutation"
+    return ("pass" if present == required else "fail", f"{label} ({'present' if present else 'absent'})")
+
+
+def _gate_egfr_t790m(case: PatientCase, *, required: bool) -> tuple[str, str]:
+    present = any(
+        m.gene.upper() == "EGFR" and m.position == 790 and m.alt_aa.upper() == "M"
+        for m in case.mutations
+    ) or _mutation_text_match(case, "t790m")
+    label = "EGFR T790M"
+    return ("pass" if present == required else "fail", f"{label} ({'present' if present else 'absent'})")
+
+
+def _gate_alk_fusion(case: PatientCase, *, required: bool) -> tuple[str, str]:
+    # Fusions rarely appear as a clean AA change — rely on text and gene presence.
+    present = (
+        _gene_present(case, "ALK")
+        or _mutation_text_match(case, "alk fusion")
+        or _mutation_text_match(case, "alk rearrangement")
+        or _mutation_text_match(case, "eml4-alk")
+    )
+    label = "ALK fusion / rearrangement"
+    return ("pass" if present == required else "fail", f"{label} ({'present' if present else 'absent'})")
+
+
+def _gate_ros1_fusion(case: PatientCase, *, required: bool) -> tuple[str, str]:
+    present = (
+        _gene_present(case, "ROS1")
+        or _mutation_text_match(case, "ros1 fusion")
+        or _mutation_text_match(case, "ros1 rearrangement")
+    )
+    label = "ROS1 fusion / rearrangement"
+    return ("pass" if present == required else "fail", f"{label} ({'present' if present else 'absent'})")
+
+
+def _gate_met_exon14(case: PatientCase, *, required: bool) -> tuple[str, str]:
+    present = (
+        _mutation_text_match(case, "met exon 14")
+        or _mutation_text_match(case, "metex14")
+    )
+    label = "MET exon 14 skipping"
+    return ("pass" if present == required else "fail", f"{label} ({'present' if present else 'absent'})")
+
+
+def _gate_kras_g12c(case: PatientCase, *, required: bool) -> tuple[str, str]:
+    present = any(
+        m.gene.upper() == "KRAS" and m.position == 12 and m.alt_aa.upper() == "C"
+        for m in case.mutations
+    )
+    label = "KRAS G12C"
+    return ("pass" if present == required else "fail", f"{label} ({'present' if present else 'absent'})")
+
+
+def _gate_her2_positive(case: PatientCase, *, required: bool) -> tuple[str, str]:
+    present = (
+        _mutation_text_match(case, "her2 amplification")
+        or _mutation_text_match(case, "her2 positive")
+        or _mutation_text_match(case, "erbb2 amplification")
+    )
+    label = "HER2 positive (amplified / 3+)"
+    # When absent we can't tell whether the test was simply not done — return unknown.
+    if not present:
+        return ("unknown", f"{label} (status not extracted)")
+    return ("pass" if required else "fail", label)
+
+
+def _gate_her2_low(case: PatientCase, *, required: bool) -> tuple[str, str]:
+    present = (
+        _mutation_text_match(case, "her2 low")
+        or _mutation_text_match(case, "her2 1+")
+        or _mutation_text_match(case, "her2 2+")
+    )
+    label = "HER2 low (IHC 1+/2+, ISH non-amplified)"
+    if not present:
+        return ("unknown", f"{label} (status not extracted)")
+    return ("pass" if required else "fail", label)
+
+
+def _gate_brca_mutation(case: PatientCase, *, required: bool) -> tuple[str, str]:
+    present = (
+        _gene_present(case, "BRCA1")
+        or _gene_present(case, "BRCA2")
+        or _mutation_text_match(case, "brca1")
+        or _mutation_text_match(case, "brca2")
+    )
+    label = "BRCA1/2 pathogenic variant"
+    return ("pass" if present == required else "fail", f"{label} ({'present' if present else 'absent'})")
+
+
+def _gate_msi_high(case: PatientCase, *, required: bool) -> tuple[str, str]:
+    present = (
+        _mutation_text_match(case, "msi-h")
+        or _mutation_text_match(case, "msi high")
+        or _mutation_text_match(case, "mmr-deficient")
+        or _mutation_text_match(case, "dmmr")
+    )
+    label = "MSI-H / dMMR"
+    if not present:
+        return ("unknown", f"{label} (status not extracted)")
+    return ("pass" if required else "fail", label)
+
+
+def _gate_pdl1_positive(case: PatientCase, *, required: bool) -> tuple[str, str]:
+    level = (case.pathology.pdl1_estimate or "unknown").lower()
+    label = f"PD-L1 expression ({level})"
+    if level == "unknown":
+        return ("unknown", label)
+    positive = level in {"low", "high"}
+    return ("pass" if positive == required else "fail", label)
+
+
+def _pdl1_min_tps_gate(case: PatientCase, min_tps: int) -> tuple[str, str]:
+    """Numeric PD-L1 threshold. We only have a coarse {negative/low/high} bucket,
+    so we map conservatively: high → TPS≥50, low → TPS≥1, negative → TPS<1."""
+    level = (case.pathology.pdl1_estimate or "unknown").lower()
+    label = f"PD-L1 TPS ≥ {min_tps}% (extracted bucket: {level})"
+    if level == "unknown":
+        return ("unknown", label)
+    if level == "high":
+        return ("pass" if min_tps <= 50 else "unknown", label)
+    if level == "low":
+        return ("pass" if min_tps <= 49 else "fail", label)
+    return ("fail", label)
+
+
+_BIOMARKER_RESOLVERS = {
+    "BRAF_V600": _gate_braf_v600,
+    "EGFR_mutation": _gate_egfr_mutation,
+    "EGFR_T790M": _gate_egfr_t790m,
+    "ALK_fusion": _gate_alk_fusion,
+    "ROS1_fusion": _gate_ros1_fusion,
+    "MET_exon14": _gate_met_exon14,
+    "KRAS_G12C": _gate_kras_g12c,
+    "HER2_positive": _gate_her2_positive,
+    "HER2_low": _gate_her2_low,
+    "BRCA_mutation": _gate_brca_mutation,
+    "MSI_high": _gate_msi_high,
+    "PDL1_positive": _gate_pdl1_positive,
+}
 
 
 def _stage_bucket(intake: ClinicianIntake) -> str | None:
@@ -261,6 +409,12 @@ def evaluate(case: PatientCase, rule: TrialRule) -> TrialMatch:
         label = "No BRAF V600 mutation (BRAF-wildtype arm)"
         (failing if _has_braf_v600(case) else passing).append(label)
 
+    if rule.max_age_years is not None and intake.age_years is not None:
+        if intake.age_years <= rule.max_age_years:
+            passing.append(f"Age {intake.age_years} ≤ {rule.max_age_years}")
+        else:
+            failing.append(f"Age {intake.age_years} > {rule.max_age_years}")
+
     if rule.requires_ecog_0_1:
         _record(_ecog_verdict(intake))
     if rule.requires_no_prior_systemic_advanced:
@@ -273,6 +427,20 @@ def evaluate(case: PatientCase, rule: TrialRule) -> TrialMatch:
         _record(_lag3_verdict(intake))
     if rule.min_life_expectancy_months is not None:
         _record(_life_expectancy_verdict(intake, rule.min_life_expectancy_months))
+
+    # Biomarker gates — dispatch via the resolver table. "any" is a no-op;
+    # "required" / "excluded" resolve through their gate function.
+    for key, mode in rule.biomarker_gates.items():
+        if mode == "any":
+            continue
+        resolver = _BIOMARKER_RESOLVERS.get(key)
+        if resolver is None:
+            unknown.append(f"Biomarker gate {key}={mode} (resolver not implemented)")
+            continue
+        _record(resolver(case, required=(mode == "required")))
+
+    if rule.pdl1_min_tps is not None:
+        _record(_pdl1_min_tps_gate(case, rule.pdl1_min_tps))
 
     for gate in rule.never_in_tcga_gates:
         unknown.append(gate)
@@ -299,8 +467,19 @@ def evaluate(case: PatientCase, rule: TrialRule) -> TrialMatch:
 
 
 def evaluate_all(case: PatientCase) -> list[TrialMatch]:
-    """Run every Regeneron rule against a case, returning ranked matches."""
-    matches = [evaluate(case, rule) for rule in REGENERON_TRIALS.values()]
+    """Run every Regeneron rule against a case, returning ranked matches.
+
+    Pre-filters trials by ``case.primary_cancer_type`` — a lung case only
+    evaluates lung-bucketed trials. ``cancer_types`` is treated as a wildcard
+    when empty (basket trials, unscoped legacy rules) or when the case's
+    primary cancer type is ``unknown`` (let the predicate verdicts decide).
+    """
+    ct = (case.primary_cancer_type or "unknown").strip()
+    matches: list[TrialMatch] = []
+    for rule in REGENERON_TRIALS.values():
+        if rule.cancer_types and ct != "unknown" and ct not in rule.cancer_types:
+            continue
+        matches.append(evaluate(case, rule))
     status_order = {"eligible": 0, "needs_more_data": 1, "ineligible": 2, "unscored": 3}
     matches.sort(key=lambda m: (status_order.get(m.status, 9), m.nct_id))
     return matches

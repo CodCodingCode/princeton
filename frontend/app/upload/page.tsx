@@ -111,15 +111,30 @@ export default function UploadPage() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto px-6 pt-16 pb-24">
-      <h1 className="text-3xl font-semibold tracking-tight mb-2">
-        Upload a patient&apos;s document folder
-      </h1>
-      <p className="text-ink-400 mb-8 leading-relaxed">
-        Drop every PDF from the patient&apos;s workup — pathology reports, NGS,
-        imaging, H&amp;P notes. MediX VLM reads each page; Kimi K2 reconciles
-        across documents into one de-noised record with provenance.
-      </p>
+    <div className="max-w-5xl mx-auto px-6 pt-20 pb-28">
+      <div className="text-xs uppercase tracking-widest text-neutral-500 mb-6">
+        About NeoVax
+      </div>
+
+      <div className="grid md:grid-cols-[1fr_2fr] gap-12 mb-20">
+        <div />
+        <div>
+          <h1 className="font-sans text-4xl md:text-5xl font-semibold tracking-tight leading-[1.05] text-black mb-8">
+            NeoVax is not just another oncology tool
+          </h1>
+          <p className="text-neutral-600 leading-relaxed mb-5 max-w-xl">
+            Drop every PDF from a patient&apos;s workup — pathology, NGS,
+            imaging, H&amp;P notes. A medical vision model reads each page; Kimi
+            K2 reconciles across documents into one de-noised record with
+            provenance you can audit.
+          </p>
+          <p className="text-neutral-600 leading-relaxed max-w-xl">
+            What comes back is a dynamic NCCN-style railway grounded in phase-2+
+            trial literature, a ranked list of matching Regeneron trials, a map
+            of enrolling sites, and a downloadable oncologist report.
+          </p>
+        </div>
+      </div>
 
       <div
         onDragOver={(e) => {
@@ -132,10 +147,10 @@ export default function UploadPage() {
           setDragOver(false);
           addFromDataTransfer(e.dataTransfer);
         }}
-        className={`border-2 border-dashed rounded-xl p-12 text-center transition ${
+        className={`border border-dashed rounded-2xl p-14 text-center transition ${
           dragOver
-            ? "border-teal-400 bg-teal-400/5"
-            : "border-ink-700 bg-ink-900/40"
+            ? "border-black bg-neutral-50"
+            : "border-neutral-300 bg-white"
         }`}
       >
         <input
@@ -159,30 +174,31 @@ export default function UploadPage() {
           className="sr-only"
           onChange={(e) => addFiles(e.target.files)}
         />
-        <div className="text-ink-300">
-          <div className="text-5xl mb-4 text-teal-400">{busy ? "…" : "📁"}</div>
+        <div>
           {busy ? (
-            <p>Uploading {picked.length} PDFs and starting pipeline…</p>
+            <p className="text-neutral-600">
+              Uploading {picked.length} PDFs and starting pipeline…
+            </p>
           ) : (
             <>
-              <p className="font-medium text-ink-100 mb-1">
+              <p className="font-medium text-black text-lg mb-1">
                 Drop the patient&apos;s folder here
               </p>
-              <p className="text-sm text-ink-400 mb-4">
-                or pick a folder / individual PDFs below
+              <p className="text-sm text-neutral-500 mb-6">
+                or pick a folder or individual PDFs below
               </p>
               <div className="flex flex-wrap justify-center gap-3">
                 <button
                   type="button"
                   onClick={() => folderInputRef.current?.click()}
-                  className="px-4 py-2 rounded-lg bg-ink-800 hover:bg-ink-700 text-ink-100 text-sm"
+                  className="px-5 py-2.5 rounded-full border border-black text-black hover:bg-black hover:text-white text-sm transition"
                 >
                   Select folder
                 </button>
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="px-4 py-2 rounded-lg bg-ink-800 hover:bg-ink-700 text-ink-100 text-sm"
+                  className="px-5 py-2.5 rounded-full border border-neutral-300 text-neutral-700 hover:border-black hover:text-black text-sm transition"
                 >
                   Select PDFs
                 </button>
@@ -193,16 +209,16 @@ export default function UploadPage() {
       </div>
 
       {picked.length > 0 && (
-        <div className="mt-6 rounded-xl border border-ink-800 bg-ink-900/40 p-4">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm text-ink-300">
+        <div className="mt-6 rounded-2xl border border-neutral-200 bg-white p-5">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-sm text-neutral-700">
               Queued {picked.length} document{picked.length === 1 ? "" : "s"}
             </span>
             <button
               type="button"
               onClick={() => setPicked([])}
               disabled={busy}
-              className="text-xs text-ink-500 hover:text-ink-300 disabled:opacity-40"
+              className="text-xs text-neutral-500 hover:text-black disabled:opacity-40"
             >
               clear
             </button>
@@ -211,10 +227,10 @@ export default function UploadPage() {
             {picked.map((f, i) => (
               <li
                 key={`${f.name}-${i}`}
-                className="flex items-center justify-between gap-2 text-ink-200"
+                className="flex items-center justify-between gap-2 text-neutral-800"
               >
                 <span className="truncate font-mono text-xs">{f.name}</span>
-                <span className="text-ink-500 text-xs shrink-0">
+                <span className="text-neutral-500 text-xs shrink-0">
                   {Math.round(f.size / 1024)} kB
                 </span>
               </li>
@@ -224,7 +240,7 @@ export default function UploadPage() {
             type="button"
             onClick={submit}
             disabled={busy || !picked.length}
-            className="mt-4 w-full px-4 py-2 rounded-lg bg-teal-500 hover:bg-teal-400 text-ink-950 font-medium text-sm disabled:opacity-30 disabled:cursor-not-allowed"
+            className="mt-5 w-full px-4 py-3 rounded-full bg-black hover:bg-neutral-800 text-white font-medium text-sm disabled:opacity-30 disabled:cursor-not-allowed transition"
           >
             {busy ? "Starting…" : `Run NeoVax on ${picked.length} PDFs`}
           </button>
@@ -232,27 +248,39 @@ export default function UploadPage() {
       )}
 
       {error && (
-        <p className="mt-4 text-red-400 text-sm whitespace-pre-wrap">{error}</p>
+        <p className="mt-4 text-red-600 text-sm whitespace-pre-wrap">{error}</p>
       )}
 
-      <div className="mt-12 grid md:grid-cols-3 gap-4 text-sm text-ink-400">
-        <div className="p-4 rounded-lg bg-ink-900/50 border border-ink-800">
-          <div className="text-teal-400 font-medium mb-1">1 · Per-doc VLM</div>
-          Every page rasterized → MediX vision → structured findings
-        </div>
-        <div className="p-4 rounded-lg bg-ink-900/50 border border-ink-800">
-          <div className="text-teal-400 font-medium mb-1">
-            2 · Kimi reconcile
+      <div className="mt-28 grid md:grid-cols-3 gap-6 border-t border-neutral-200 pt-12">
+        {[
+          {
+            num: "01",
+            title: "Per-doc VLM",
+            body: "Every page rasterized → MediX vision → structured findings",
+          },
+          {
+            num: "02",
+            title: "Kimi reconcile",
+            body: "Resolve contradictions, dedup mutations, track provenance",
+          },
+          {
+            num: "03",
+            title: "Railway + trials",
+            body: "Dynamic 4-phase railway, matched trials, map, PDF report",
+          },
+        ].map((step) => (
+          <div key={step.num}>
+            <div className="font-serif text-6xl md:text-7xl leading-none text-black mb-3">
+              {step.num}
+            </div>
+            <div className="text-sm font-semibold text-black mb-1">
+              {step.title}
+            </div>
+            <div className="text-sm text-neutral-600 leading-relaxed">
+              {step.body}
+            </div>
           </div>
-          Resolve contradictions, dedup mutations, track provenance
-        </div>
-        <div className="p-4 rounded-lg bg-ink-900/50 border border-ink-800">
-          <div className="text-teal-400 font-medium mb-1">
-            3 · Railway + trials
-          </div>
-          4-phase dynamic railway grounded in phase-2+ trial literature, matched
-          trials, map, PDF report
-        </div>
+        ))}
       </div>
     </div>
   );

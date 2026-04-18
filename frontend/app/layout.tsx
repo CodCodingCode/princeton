@@ -1,5 +1,19 @@
 import type { Metadata } from "next";
+import { Inter, Instrument_Serif } from "next/font/google";
 import "./globals.css";
+
+const sans = Inter({
+  subsets: ["latin"],
+  variable: "--font-sans",
+  display: "swap",
+});
+
+const serif = Instrument_Serif({
+  subsets: ["latin"],
+  weight: "400",
+  variable: "--font-serif",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "NeoVax — oncologist copilot",
@@ -13,20 +27,20 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body className="min-h-screen font-sans antialiased bg-ink-950 text-ink-100">
-        <header className="border-b border-ink-800 bg-ink-900/60 backdrop-blur sticky top-0 z-30">
-          <div className="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between">
-            <a href="/" className="flex items-baseline gap-2">
-              <span className="text-teal-400 font-semibold text-lg tracking-tight">
+    <html lang="en" className={`${sans.variable} ${serif.variable}`}>
+      <body className="min-h-screen font-sans antialiased bg-white text-black">
+        <header className="border-b border-neutral-200 bg-white/80 backdrop-blur sticky top-0 z-30">
+          <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+            <a href="/" className="flex items-baseline gap-3">
+              <span className="text-black font-semibold text-lg tracking-tight">
                 NeoVax
               </span>
-              <span className="text-ink-400 text-xs uppercase tracking-widest">
+              <span className="text-neutral-500 text-xs uppercase tracking-widest">
                 oncology copilot
               </span>
             </a>
-            <nav className="text-sm text-ink-400">
-              <a href="/upload" className="hover:text-teal-400">
+            <nav className="text-sm text-neutral-600">
+              <a href="/upload" className="hover:text-black transition">
                 New case
               </a>
             </nav>

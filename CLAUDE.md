@@ -4,12 +4,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-Princeton Hacks project — **NeoVax**, a melanoma oncologist copilot. The user drops a pathology PDF; the backend extracts oncology fields, walks the NCCN railway (streaming `<think>` tokens from a medical reasoning model), matches Regeneron trials, geocodes trial sites, and produces a downloadable oncologist report. A sidebar Kimi chat drills into the case once the run lands.
+Princeton Hacks project — **NeoVax**, a melanoma oncologist copilot. The user drops a pathology PDF; the backend extracts oncology fields, walks the NCCN railway (streaming `<think>` tokens from a medical reasoning model), matches Regeneron trials, geocodes trial sites, and produces a downloadable oncologist report. The case page is a **cockpit**: a HeyGen video avatar on the left acts as a TTS puppet for Kimi K2 (Kimi generates the answer, HeyGen just speaks it), while the case data sits behind URL-synced tabs on the right.
 
 Two services:
 
 - [backend/](backend/) — Python 3.11+ package (`neoantigen`). Typer CLI with a single `serve` command that boots a FastAPI + SSE app on :8000. Shipped extras: `agent` (OpenAI + LangGraph), `web` (FastAPI/uvicorn/sse-starlette/reportlab/googlemaps), `pdf-vision` (pdf2image for VLM fallback on scanned PDFs), `rag` (Chroma + sentence-transformers).
-- [frontend/](frontend/) — Next.js 15 + Tailwind dashboard. Pages: [/upload](frontend/app/upload) (PDF drop) and [/case/[id]](frontend/app/case) (live dashboard: extracted fields, Mermaid railway, trials list, Google Maps, Kimi chat, SSE event log, downloadable report).
+- [frontend/](frontend/) — Next.js 15 + Tailwind. Pages: `/upload` (PDF drop, BioCure-style serif hero) and `/case/[id]` (cockpit: [`AvatarPanel`](frontend/components/AvatarPanel.tsx) left, [`CaseTabs`](frontend/components/CaseTabs.tsx) right — the latter wraps existing data components into five tabs in [`components/tabs/`](frontend/components/tabs/): Overview, Plan, Trials, Documents, Clinical). Active tab is URL-synced (`?tab=…`) so the avatar can drive navigation via tool calls once the SDK is wired.
 
 [backend/CLAUDE.md](backend/CLAUDE.md) has a deeper architecture reference but parts of it still describe the older Streamlit + VCF + melanoma_orchestrator design — trust the code over that file when they disagree.
 
@@ -42,13 +42,21 @@ POST /api/cases (multipart PDF)
     4. external/trial_sites.fetch_trial_sites  → geocoded TrialSite list ┘
     5. report/pdf_report.build_report_pdf lazily on GET /report.pdf
   → every step publishes on an asyncio EventBus stored in web/storage.CaseRecord
-GET  /api/cases/{id}/stream (SSE)             → frontend ChatPanel / RailwayMermaid / EventLog
+GET  /api/cases/{id}/stream (SSE)             → [case/[id]/page.tsx](frontend/app/case/[id]/page.tsx) event reducer → caseData propagates to all five tabs
 GET  /api/cases/{id}                          → current PatientCase snapshot
 GET  /api/cases/{id}/report.pdf               → reportlab-built PDF
 POST /api/cases/{id}/chat                     → LangGraph Kimi agent (chat/agent.py)
 ```
 
 Case state lives in an in-memory `CaseStore` ([web/storage.py](backend/src/neoantigen/web/storage.py)) — restarting the backend drops all cases. Each case owns one `EventBus`; multiple SSE subscribers are fanned out via per-client queues.
+
+## Frontend cockpit
+
+- [`app/case/[id]/page.tsx`](frontend/app/case/[id]/page.tsx) owns all case state (SSE subscription, event reducer, `caseData` snapshot) and renders a two-pane shell: [`AvatarPanel`](frontend/components/AvatarPanel.tsx) + [`CaseTabs`](frontend/components/CaseTabs.tsx). If `fetchCase` hasn't returned yet, the page falls back to `emptyCase(caseId)` so the cockpit layout renders without a backend — useful for layout work and for `/case/anything` previews.
+- `AvatarPanel` is currently a **placeholder** (black video frame, fake transcript, Start/End session button). The planned wiring: user types or speaks → `/api/cases/{id}/chat` (existing Kimi endpoint) → Kimi streams answer text + `chat_ui_focus` tool calls → frontend pipes text to `avatar.speak({ text })` and applies focus calls by updating `?tab=` / `?nct=`. Do not let HeyGen's built-in LLM drive the conversation; it's purely TTS + video. `components/ChatPanel.tsx` was removed — its role is subsumed by `AvatarPanel`.
+- `CaseTabs` reads/writes the active tab via `useSearchParams` + `router.replace`. Adding a tab means: add an entry to the `TABS` array, create `components/tabs/<Name>Tab.tsx` accepting `{ caseData }` (and `events` if needed), render it from the switch in `CaseTabs`.
+- Shared data components ([`RailwayMermaid`](frontend/components/RailwayMermaid.tsx), [`TrialMap`](frontend/components/TrialMap.tsx), [`TrialList`](frontend/components/TrialList.tsx), [`DocumentsPanel`](frontend/components/DocumentsPanel.tsx), [`ExtractedFields`](frontend/components/ExtractedFields.tsx), [`EventLog`](frontend/components/EventLog.tsx)) live outside `tabs/` and are imported by the tab wrappers — don't move them into `tabs/` without a reason.
+- **Theme**: light mode only. White background, black text, mid-grays for secondary copy. The `brand` palette (navy) in [`tailwind.config.ts`](frontend/tailwind.config.ts) is the sole accent and is used only for primary CTAs and the one live-status dot. The legacy `teal-*` palette is retained as a key but every shade points at a neutral — adding visible color saturation is a design regression. Fonts are loaded in [`app/layout.tsx`](frontend/app/layout.tsx) via `next/font/google`: Inter (`--font-sans`) for UI, Instrument Serif (`--font-serif`) for display numbers and the BioCure-style hero only.
 
 ## LLM layer
 
@@ -64,7 +72,7 @@ Env vars (put them in `backend/.env`; the CLI loads it via `python-dotenv`):
 | `K2_BASE_URL`                     | OpenAI-compatible base URL for the medical model                                     | `https://api.k2think.ai/v1`        |
 | `K2_API_KEY`                      | Required by the OpenAI client (vLLM ignores the value but one must be set)           | —                                  |
 | `NEOVAX_MODEL`                    | Served model name (`medix-r1-30b` on vLLM)                                           | `MBZUAI-IFM/K2-Think-v2`           |
-| `KIMI_API_KEY`                    | Sidebar chat; chat is cleanly disabled when unset                                    | —                                  |
+| `KIMI_API_KEY`                    | Avatar/chat brain; `/chat` endpoint returns 503 when unset                           | —                                  |
 | `NEOVAX_LOG_PATH`                 | Every model call is logged here — **check this first when agent output looks wrong** | `backend/out/k2.log`               |
 | `GOOGLE_MAPS_API_KEY`             | Geocodes trial sites server-side; falls back to no coords                            | —                                  |
 | `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` | Renders the map in the browser; `TrialMap` degrades to a text list without it        | —                                  |
@@ -77,13 +85,13 @@ For the GH200 vLLM path, the user has a saved SSH tunnel — see memory `ssh_tun
 
 The orchestrator never hard-fails on missing deps — it degrades to `needs_more_data` and logs a line. Symptom → cause map:
 
-| Symptom                                                                        | Missing                                                                                             | Check                                                                                                            |
-| ------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| NCCN railway renders every node as "standard of care" with no `<think>` stream | `K2_API_KEY` unset                                                                                  | [\_llm.py `has_api_key()`](backend/src/neoantigen/agent/_llm.py) false → walker falls back to safest option      |
-| NCCN steps have no PubMed citations                                            | `scripts/build_pubmed_rag.py` never run                                                             | [rag/store.py `has_store()`](backend/src/neoantigen/rag/store.py) false → walker omits citation block            |
-| Sidebar chat never appears / `/api/health` shows `kimi_api_key: false`         | `KIMI_API_KEY` unset                                                                                | [chat/k2_client.py `has_kimi_key()`](backend/src/neoantigen/chat/k2_client.py) false → chat endpoint returns 503 |
-| Trial sites list present but map is blank                                      | `GOOGLE_MAPS_API_KEY` unset server-side, **or** `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` unset client-side | `/api/health` reports server-side; client-side is compile-time                                                   |
-| PDF upload succeeds but `pathology` is mostly empty                            | Scanned PDF + `pdf-vision` extra not installed                                                      | [io/pdf_extract.py](backend/src/neoantigen/io/pdf_extract.py) falls back to text-only extraction                 |
+| Symptom                                                                                           | Missing                                                                                             | Check                                                                                                            |
+| ------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| NCCN railway renders every node as "standard of care" with no `<think>` stream                    | `K2_API_KEY` unset                                                                                  | [\_llm.py `has_api_key()`](backend/src/neoantigen/agent/_llm.py) false → walker falls back to safest option      |
+| NCCN steps have no PubMed citations                                                               | `scripts/build_pubmed_rag.py` never run                                                             | [rag/store.py `has_store()`](backend/src/neoantigen/rag/store.py) false → walker omits citation block            |
+| Avatar transcript stays on the seed script / `/api/health` shows `kimi_api_key: false` once wired | `KIMI_API_KEY` unset                                                                                | [chat/k2_client.py `has_kimi_key()`](backend/src/neoantigen/chat/k2_client.py) false → chat endpoint returns 503 |
+| Trial sites list present but map is blank                                                         | `GOOGLE_MAPS_API_KEY` unset server-side, **or** `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` unset client-side | `/api/health` reports server-side; client-side is compile-time                                                   |
+| PDF upload succeeds but `pathology` is mostly empty                                               | Scanned PDF + `pdf-vision` extra not installed                                                      | [io/pdf_extract.py](backend/src/neoantigen/io/pdf_extract.py) falls back to text-only extraction                 |
 
 ## Working in this repo
 
