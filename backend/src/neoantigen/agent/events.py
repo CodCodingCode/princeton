@@ -1,8 +1,8 @@
-"""Live activity feed for the melanoma orchestrator.
+"""Live activity feed for the patient orchestrator.
 
-The EventBus is an asyncio.Queue wrapper with typed events. The orchestrator and
-the NCCN walker emit events at every meaningful step; the Streamlit UI consumes
-them via an async generator and routes by EventKind.
+The EventBus is an asyncio.Queue wrapper with typed events. The orchestrator,
+NCCN walker, and chat agent emit events at every meaningful step; the Next.js
+UI consumes them via Server-Sent Events and routes by EventKind.
 """
 
 from __future__ import annotations
@@ -24,30 +24,22 @@ class EventKind(str, Enum):
     THINKING_DELTA = "thinking_delta"
     ANSWER_DELTA = "answer_delta"
 
-    VLM_FINDING = "vlm_finding"
+    # Patient-flow events
+    PDF_EXTRACTED = "pdf_extracted"
     NCCN_NODE_VISITED = "nccn_node_visited"
-    NCCN_PATH_COMPLETE = "nccn_path_complete"
-
-    MOLECULE_READY = "molecule_ready"
-    DRUG_COMPLEX_READY = "drug_complex_ready"
-
-    PIPELINE_RESULT = "pipeline_result"
-    STRUCTURE_READY = "structure_ready"
+    RAILWAY_STEP = "railway_step"
+    RAILWAY_READY = "railway_ready"
+    RAG_CITATIONS = "rag_citations"
+    TRIAL_MATCHES_READY = "trial_matches_ready"
+    TRIAL_SITES_READY = "trial_sites_ready"
     CASE_UPDATE = "case_update"
 
-    RAG_CITATIONS = "rag_citations"
-    COHORT_TWINS_READY = "cohort_twins_ready"
-    SURVIVAL_CURVE_READY = "survival_curve_ready"
-
-    TRIAL_MATCHES_READY = "trial_matches_ready"
-    ENRICHMENT_READY = "enrichment_ready"
-
+    # Chat agent events
     CHAT_THINKING_DELTA = "chat_thinking_delta"
     CHAT_ANSWER_DELTA = "chat_answer_delta"
     CHAT_TOOL_CALL = "chat_tool_call"
     CHAT_TOOL_RESULT = "chat_tool_result"
     CHAT_UI_FOCUS = "chat_ui_focus"
-    CHAT_RERANK = "chat_rerank"
     CHAT_DONE = "chat_done"
 
 
@@ -89,7 +81,6 @@ class EventBus:
             pass
 
     def push_interrupt(self, message: str) -> None:
-        """Record a user interjection that the walker should consult before its next step."""
         self._interrupt = message
 
     def consume_interrupt(self) -> str | None:

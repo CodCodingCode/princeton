@@ -6,38 +6,24 @@ Four trials (checked April 2026):
   NCT06190951 — Neoadjuvant Phase 2 (fianlimab + cemiplimab, high-risk resectable)
   NCT04526899 — BNT111 + Libtayo (BioNTech partnership, fixed-antigen vaccine + PD-1)
 
-Predicates are split into three buckets:
-
-  * Structured gates resolved from a ``MelanomaCase`` + optional
-    ``TCGAPatient`` clinical record: age, AJCC stage bucket, T-stage,
-    driver mutations.
-  * Structured predicates resolved from :class:`ClinicianIntake` (primary
-    source) + :class:`EnrichedBiomarkers` (fallback for prior-therapy when
-    cBioPortal yielded a hit): ECOG, prior systemic therapy, prior
-    anti-PD-1, RECIST measurability, LAG-3 IHC, life expectancy.
-  * ``never_in_tcga_gates``: text labels for criteria that still lack a
-    structured predicate. These always land in ``unknown_criteria``.
+Predicates resolve from a :class:`PatientCase` — its `pathology`, `intake`,
+`enrichment`, and `mutations`. Unresolvable gates land in ``unknown_criteria``.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from ..cohort.tcga import TCGAPatient
-from ..models import ClinicianIntake, EnrichedBiomarkers, MelanomaCase, TrialMatch
+from ..models import (
+    ClinicianIntake,
+    EnrichedBiomarkers,
+    PatientCase,
+    TrialMatch,
+)
 
 
-# AJCC 8 T-stage buckets that suggest locally-advanced or high-risk disease.
-# Used as a (necessary-but-not-sufficient) proxy for "advanced" when we only
-# have pathology (no nodes / mets assessment).
 ADVANCED_T_STAGES = {"T3a", "T3b", "T4a", "T4b"}
 HIGH_RISK_RESECTABLE_T_STAGES = {"T2b", "T3a", "T3b", "T4a", "T4b"}
-
-# BNT111 (NCT04526899) is a fixed-antigen vaccine targeting these four shared
-# melanoma antigens. Patients whose personalised neoantigens include any of
-# them are combination candidates — surfaced as a *bonus* passing criterion,
-# not a hard eligibility gate.
-BNT111_ANTIGENS: frozenset[str] = frozenset({"TYR", "MAGEA3", "CTAG1B", "TPTE"})
 
 
 @dataclass
@@ -46,22 +32,17 @@ class TrialRule:
     title: str
     phase: str
     setting: str
-    # Case/TCGA-resolved gates
     requires_advanced_disease: bool = False
     requires_resectable_high_risk: bool = False
     requires_braf_v600: bool | None = None
     min_age_years: int | None = None
     eligible_stage_buckets: set[str] = field(default_factory=set)
-    # Intake + enrichment-resolved gates
     requires_ecog_0_1: bool = False
     requires_no_prior_systemic_advanced: bool = False
     requires_prior_anti_pd1: bool = False
     requires_measurable_disease: bool = False
     requires_lag3_ihc_result: bool = False
     min_life_expectancy_months: int | None = None
-    # BNT111 bonus (overlap → added to passing_criteria)
-    surfaces_bnt111_antigen_overlap: bool = False
-    # Residual free-text gates
     never_in_tcga_gates: list[str] = field(default_factory=list)
 
 
@@ -118,45 +99,41 @@ REGENERON_TRIALS: dict[str, TrialRule] = {
         requires_ecog_0_1=True,
         requires_prior_anti_pd1=True,
         requires_measurable_disease=True,
-        surfaces_bnt111_antigen_overlap=True,
     ),
 }
 
 
-# ─────────────────────────────────────────────────────────────
-# Derivers
-# ─────────────────────────────────────────────────────────────
-
-
-def _has_braf_v600(case: MelanomaCase) -> bool:
+def _has_braf_v600(case: PatientCase) -> bool:
     return any(
         m.gene.upper() == "BRAF" and m.position == 600 and m.alt_aa.upper() == "E"
         for m in case.mutations
     )
 
 
-def bnt111_overlap_genes(case: MelanomaCase) -> list[str]:
-    """Genes in the candidate peptide list that are in the BNT111 antigen set."""
-    if case.pipeline is None:
-        return []
-    return sorted({
-        c.peptide.mutation.gene.upper()
-        for c in case.pipeline.candidates
-        if c.peptide.mutation.gene.upper() in BNT111_ANTIGENS
-    })
+def _stage_bucket(intake: ClinicianIntake) -> str | None:
+    stage = (intake.ajcc_stage or "").strip().upper()
+    if not stage:
+        return None
+    for bucket in ("IV", "III", "II", "I"):
+        if stage.startswith(bucket):
+            return bucket
+    return None
 
 
-def _advanced_verdict(case: MelanomaCase) -> tuple[str, str]:
+def _advanced_verdict(case: PatientCase) -> tuple[str, str]:
     t = case.pathology.t_stage
-    label = f"Advanced disease per T-stage ({t})"
-    if t == "Tx":
-        return "unknown", label
+    bucket = _stage_bucket(case.intake)
+    label = f"Advanced disease (T-stage {t}, AJCC {case.intake.ajcc_stage or 'unknown'})"
+    if bucket in {"III", "IV"}:
+        return "pass", label
     if t in ADVANCED_T_STAGES:
         return "pass", label
-    return "unknown", label  # T1–T2 can still be stage III/IV via nodes/mets
+    if t == "Tx" and bucket is None:
+        return "unknown", label
+    return "unknown", label
 
 
-def _resectable_high_risk_verdict(case: MelanomaCase) -> tuple[str, str]:
+def _resectable_high_risk_verdict(case: PatientCase) -> tuple[str, str]:
     t = case.pathology.t_stage
     label = f"High-risk resectable per T-stage ({t})"
     if t == "Tx":
@@ -166,46 +143,64 @@ def _resectable_high_risk_verdict(case: MelanomaCase) -> tuple[str, str]:
     return "fail", label
 
 
-def _age_verdict(tcga: TCGAPatient | None, min_age: int) -> tuple[str, str]:
-    if tcga is None or tcga.age_at_diagnosis is None:
+def _age_verdict(intake: ClinicianIntake, min_age: int) -> tuple[str, str]:
+    if intake.age_years is None:
         return "unknown", f"Age ≥ {min_age} years"
-    age = tcga.age_at_diagnosis
-    label = f"Age {age} ≥ {min_age} (TCGA clinical record)"
-    return ("pass" if age >= min_age else "fail", label)
+    return (
+        "pass" if intake.age_years >= min_age else "fail",
+        f"Age {intake.age_years} {'≥' if intake.age_years >= min_age else '<'} {min_age}",
+    )
 
 
-def _stage_verdict(tcga: TCGAPatient | None, eligible: set[str]) -> tuple[str, str]:
+def _stage_verdict(intake: ClinicianIntake, eligible: set[str]) -> tuple[str, str]:
     pretty = "/".join(sorted(eligible))
-    if tcga is None:
+    bucket = _stage_bucket(intake)
+    if bucket is None:
         return "unknown", f"AJCC stage in {{{pretty}}}"
-    bucket = tcga.stage_bucket
-    if bucket == "Unknown":
-        return "unknown", f"AJCC stage in {{{pretty}}} (TCGA record: stage not listed)"
-    label = f"AJCC stage {bucket} (TCGA clinical record) ∈ {{{pretty}}}"
+    label = f"AJCC {intake.ajcc_stage} ∈ {{{pretty}}}"
     return ("pass" if bucket in eligible else "fail", label)
 
 
-def _ecog_verdict(intake: ClinicianIntake | None) -> tuple[str, str]:
-    if intake is None or intake.ecog is None:
+def _ecog_verdict(intake: ClinicianIntake) -> tuple[str, str]:
+    if intake.ecog is None:
         return "unknown", "ECOG 0–1"
     verdict = "pass" if intake.ecog <= 1 else "fail"
-    return verdict, f"ECOG {intake.ecog} (clinician intake)"
+    return verdict, f"ECOG {intake.ecog}"
+
+
+def _resolve_prior_systemic(
+    intake: ClinicianIntake, enrichment: EnrichedBiomarkers | None
+) -> bool | None:
+    if intake.prior_systemic_therapy is not None:
+        return intake.prior_systemic_therapy
+    if enrichment is not None and enrichment.prior_systemic_therapies:
+        return True
+    return None
+
+
+def _resolve_prior_pd1(
+    intake: ClinicianIntake, enrichment: EnrichedBiomarkers | None
+) -> bool | None:
+    if intake.prior_anti_pd1 is not None:
+        return intake.prior_anti_pd1
+    if enrichment is not None and enrichment.prior_anti_pd1 is not None:
+        return enrichment.prior_anti_pd1
+    return None
 
 
 def _no_prior_systemic_verdict(
-    intake: ClinicianIntake | None, enrichment: EnrichedBiomarkers | None
+    intake: ClinicianIntake, enrichment: EnrichedBiomarkers | None
 ) -> tuple[str, str]:
     prior = _resolve_prior_systemic(intake, enrichment)
     if prior is None:
         return "unknown", "No prior systemic therapy for advanced disease"
     if prior:
-        src = "clinician intake" if intake and intake.prior_systemic_therapy is not None else "cBioPortal"
-        return "fail", f"Prior systemic therapy recorded ({src})"
+        return "fail", "Prior systemic therapy recorded"
     return "pass", "No prior systemic therapy for advanced disease"
 
 
 def _prior_pd1_verdict(
-    intake: ClinicianIntake | None, enrichment: EnrichedBiomarkers | None
+    intake: ClinicianIntake, enrichment: EnrichedBiomarkers | None
 ) -> tuple[str, str]:
     pd1 = _resolve_prior_pd1(intake, enrichment)
     if pd1 is None:
@@ -215,67 +210,32 @@ def _prior_pd1_verdict(
     return "fail", "No prior anti-PD-1 therapy"
 
 
-def _measurable_verdict(intake: ClinicianIntake | None) -> tuple[str, str]:
-    if intake is None or intake.measurable_disease_recist is None:
+def _measurable_verdict(intake: ClinicianIntake) -> tuple[str, str]:
+    if intake.measurable_disease_recist is None:
         return "unknown", "Measurable disease per RECIST 1.1"
     if intake.measurable_disease_recist:
-        return "pass", "Measurable disease per RECIST 1.1 (clinician)"
+        return "pass", "Measurable disease per RECIST 1.1"
     return "fail", "No measurable disease per RECIST 1.1"
 
 
-def _lag3_verdict(intake: ClinicianIntake | None) -> tuple[str, str]:
-    if intake is None or intake.lag3_ihc_percent is None:
+def _lag3_verdict(intake: ClinicianIntake) -> tuple[str, str]:
+    if intake.lag3_ihc_percent is None:
         return "unknown", "LAG-3 IHC expression result available"
-    return "pass", f"LAG-3 IHC {intake.lag3_ihc_percent:.0f}% (clinician)"
+    return "pass", f"LAG-3 IHC {intake.lag3_ihc_percent:.0f}%"
 
 
-def _life_expectancy_verdict(intake: ClinicianIntake | None, min_months: int) -> tuple[str, str]:
-    if intake is None or intake.life_expectancy_months is None:
+def _life_expectancy_verdict(intake: ClinicianIntake, min_months: int) -> tuple[str, str]:
+    if intake.life_expectancy_months is None:
         return "unknown", f"Life expectancy ≥ {min_months} months"
     if intake.life_expectancy_months >= min_months:
         return "pass", f"Life expectancy {intake.life_expectancy_months} mo ≥ {min_months}"
     return "fail", f"Life expectancy {intake.life_expectancy_months} mo < {min_months}"
 
 
-def _resolve_prior_systemic(
-    intake: ClinicianIntake | None, enrichment: EnrichedBiomarkers | None
-) -> bool | None:
-    if intake is not None and intake.prior_systemic_therapy is not None:
-        return intake.prior_systemic_therapy
-    if enrichment is not None and enrichment.prior_systemic_therapies:
-        return True
-    return None
-
-
-def _resolve_prior_pd1(
-    intake: ClinicianIntake | None, enrichment: EnrichedBiomarkers | None
-) -> bool | None:
-    if intake is not None and intake.prior_anti_pd1 is not None:
-        return intake.prior_anti_pd1
-    if enrichment is not None and enrichment.prior_anti_pd1 is not None:
-        return enrichment.prior_anti_pd1
-    return None
-
-
-# ─────────────────────────────────────────────────────────────
-# Evaluation
-# ─────────────────────────────────────────────────────────────
-
-
-def evaluate(
-    case: MelanomaCase,
-    rule: TrialRule,
-    tcga: TCGAPatient | None = None,
-    intake: ClinicianIntake | None = None,
-    enrichment: EnrichedBiomarkers | None = None,
-) -> TrialMatch:
-    """Apply `rule` to `case`, refined by optional TCGA/intake/enrichment data."""
-    # Backwards-compat: if the caller didn't pass intake/enrichment, pull
-    # them off the case (orchestrator attaches them there).
-    if intake is None:
-        intake = case.intake
-    if enrichment is None:
-        enrichment = case.enrichment
+def evaluate(case: PatientCase, rule: TrialRule) -> TrialMatch:
+    """Apply `rule` to `case`, resolving structured + intake/enrichment gates."""
+    intake = case.intake
+    enrichment = case.enrichment
 
     passing: list[str] = []
     failing: list[str] = []
@@ -285,19 +245,15 @@ def evaluate(
         verdict, label = v
         (passing if verdict == "pass" else failing if verdict == "fail" else unknown).append(label)
 
-    # Pathology / T-stage
     if rule.requires_advanced_disease:
         _record(_advanced_verdict(case))
     if rule.requires_resectable_high_risk:
         _record(_resectable_high_risk_verdict(case))
-
-    # TCGA clinical
     if rule.min_age_years is not None:
-        _record(_age_verdict(tcga, rule.min_age_years))
+        _record(_age_verdict(intake, rule.min_age_years))
     if rule.eligible_stage_buckets:
-        _record(_stage_verdict(tcga, rule.eligible_stage_buckets))
+        _record(_stage_verdict(intake, rule.eligible_stage_buckets))
 
-    # BRAF driver
     if rule.requires_braf_v600 is True:
         label = "BRAF V600 mutation present"
         (passing if _has_braf_v600(case) else failing).append(label)
@@ -305,7 +261,6 @@ def evaluate(
         label = "No BRAF V600 mutation (BRAF-wildtype arm)"
         (failing if _has_braf_v600(case) else passing).append(label)
 
-    # Intake + enrichment predicates
     if rule.requires_ecog_0_1:
         _record(_ecog_verdict(intake))
     if rule.requires_no_prior_systemic_advanced:
@@ -319,16 +274,6 @@ def evaluate(
     if rule.min_life_expectancy_months is not None:
         _record(_life_expectancy_verdict(intake, rule.min_life_expectancy_months))
 
-    # BNT111 bonus — overlap surfaces as a passing criterion when any shared
-    # antigen is in the personalised peptide list. Never a gate.
-    if rule.surfaces_bnt111_antigen_overlap:
-        overlap = bnt111_overlap_genes(case)
-        if overlap:
-            passing.append(
-                "Neoantigens overlap BNT111 shared-antigen set: " + ", ".join(overlap)
-            )
-
-    # Residual free-text gates
     for gate in rule.never_in_tcga_gates:
         unknown.append(gate)
 
@@ -351,3 +296,11 @@ def evaluate(
         is_regeneron=True,
         url=f"https://clinicaltrials.gov/study/{rule.nct_id}",
     )
+
+
+def evaluate_all(case: PatientCase) -> list[TrialMatch]:
+    """Run every Regeneron rule against a case, returning ranked matches."""
+    matches = [evaluate(case, rule) for rule in REGENERON_TRIALS.values()]
+    status_order = {"eligible": 0, "needs_more_data": 1, "ineligible": 2, "unscored": 3}
+    matches.sort(key=lambda m: (status_order.get(m.status, 9), m.nct_id))
+    return matches

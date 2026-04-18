@@ -1,52 +1,43 @@
-"""Tools the post-run chat agent can call.
+"""Tools the patient-facing chat agent can call.
 
 Each tool:
   * is registered with a JSON schema in ``TOOL_SCHEMAS`` for K2's tool-call API
-  * emits a ``CHAT_TOOL_*`` event before returning so the UI can render the
-    side-effect (highlight a panel, re-rank a table, …)
-  * returns a short string back to K2 so it can keep reasoning
+  * emits a ``CHAT_*`` event so the UI can react (scroll, highlight, open pane)
+  * returns a short JSON string so K2 can keep reasoning
 
-Tools never mutate the underlying ``MelanomaCase`` — UI side-effects only.
+Tools never mutate the underlying ``PatientCase`` — UI side-effects only.
 """
 
 from __future__ import annotations
 
 import json
-from typing import Any
 
 from ..agent.events import EventKind, emit
 from ..rag import has_store as _rag_available, query_papers
 
 
-# ──────────────────────────────────────────────────────────────────
-# Tool schemas (OpenAI tool-call format, what K2 expects)
-# ──────────────────────────────────────────────────────────────────
-
 TOOL_SCHEMAS: list[dict] = [
     {
         "type": "function",
         "function": {
-            "name": "highlight_panel",
+            "name": "highlight_section",
             "description": (
-                "Scroll the doctor's UI to a specific panel and optionally "
-                "highlight a sub-element. Use when the doctor asks to 'show me' "
-                "or 'open' a part of the case (a protein structure, a peptide, "
-                "an NCCN node, the survival curve)."
+                "Scroll the patient's dashboard to a specific section. Use when "
+                "the user asks to 'show me' or 'open' a pane."
             ),
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "panel": {
-                        "type": "integer",
-                        "enum": [1, 2, 3, 4],
-                        "description": "1=NCCN walker, 2=molecular, 3=vaccine, 4=cohort",
+                    "section": {
+                        "type": "string",
+                        "enum": ["pathology", "railway", "trials", "map", "report"],
                     },
                     "focus": {
                         "type": "string",
-                        "description": "Optional sub-element key (gene name, peptide, node id, twin id)",
+                        "description": "Optional sub-element key (node id, NCT id, ...)",
                     },
                 },
-                "required": ["panel"],
+                "required": ["section"],
             },
         },
     },
@@ -56,9 +47,8 @@ TOOL_SCHEMAS: list[dict] = [
             "name": "pubmed_search",
             "description": (
                 "Run a fresh PubMed semantic search over the pre-built RAG store. "
-                "Use when the doctor asks for 'recent papers', 'evidence', or "
-                "wants to verify a claim against literature. Returns the top "
-                "matches with PMIDs and snippets."
+                "Use when the user asks for 'recent papers', 'evidence', or wants to "
+                "verify a claim against literature."
             ),
             "parameters": {
                 "type": "object",
@@ -73,59 +63,15 @@ TOOL_SCHEMAS: list[dict] = [
     {
         "type": "function",
         "function": {
-            "name": "show_twin",
-            "description": (
-                "Open a specific twin patient's full record in Panel 4. Use when "
-                "the doctor asks about a particular submitter id or 'tell me more "
-                "about that patient'."
-            ),
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "submitter_id": {"type": "string", "description": "TCGA submitter id, e.g. TCGA-EE-A2GU"},
-                },
-                "required": ["submitter_id"],
-            },
-        },
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "rerank_peptides",
-            "description": (
-                "Re-sort the vaccine candidate table in Panel 3 by an alternative "
-                "criterion. Use when the doctor asks 'which is the longest?', "
-                "'sort by gene', etc."
-            ),
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "by": {
-                        "type": "string",
-                        "enum": ["binding", "length", "gene", "rank"],
-                        "description": "binding=affinity nM ascending, length=peptide length descending, gene=alphabetical, rank=original",
-                    },
-                },
-                "required": ["by"],
-            },
-        },
-    },
-    {
-        "type": "function",
-        "function": {
             "name": "explain_node",
             "description": (
-                "Return the agent's recorded reasoning for a specific NCCN node "
-                "the walker visited. Use when the doctor asks 'why did you pick X "
-                "at the BRAF test step?'"
+                "Return the agent's recorded reasoning for a specific NCCN node on "
+                "the railway. Use when the user asks 'why did you pick X at node Y?'"
             ),
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "node_id": {
-                        "type": "string",
-                        "description": "NCCN node id like START, STAGE_T, BRAF_TEST, BRAF_MUT_TX, FINAL",
-                    },
+                    "node_id": {"type": "string"},
                 },
                 "required": ["node_id"],
             },
@@ -134,54 +80,68 @@ TOOL_SCHEMAS: list[dict] = [
     {
         "type": "function",
         "function": {
-            "name": "explain_bnt111_overlap",
+            "name": "explain_branch",
             "description": (
-                "Explain whether this patient's personalised neoantigens overlap "
-                "with the BNT111 fixed-antigen vaccine targets (TYR, MAGE-A3, "
-                "NY-ESO-1/CTAG1B, TPTE — Regeneron+BioNTech trial NCT04526899). "
-                "Use when the doctor asks about BNT111, the cemiplimab+BNT111 "
-                "combo, or which peptides could be boosted by a fixed-antigen "
-                "vaccine. Also highlights Panel 3."
+                "Explain why a specific sibling option was NOT chosen at a decision "
+                "node. Use when the user asks 'what about the other branch' or "
+                "'why not option X?'"
             ),
-            "parameters": {"type": "object", "properties": {}, "required": []},
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "node_id": {"type": "string"},
+                    "option_label": {
+                        "type": "string",
+                        "description": "Label of the sibling option the user is asking about",
+                    },
+                },
+                "required": ["node_id", "option_label"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "show_trial",
+            "description": (
+                "Focus the trials panel + map on one NCT. Use when the user asks "
+                "about a specific clinical trial or 'where is this trial running?'"
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "nct_id": {"type": "string"},
+                },
+                "required": ["nct_id"],
+            },
         },
     },
 ]
 
 
-# ──────────────────────────────────────────────────────────────────
-# Tool dispatch
-# ──────────────────────────────────────────────────────────────────
-
-
 async def execute_tool(name: str, arguments: dict, case: dict) -> str:
-    """Run one tool by name. ``case`` is the slim MelanomaCase dict."""
-    if name == "highlight_panel":
-        return await _highlight_panel(arguments)
+    if name == "highlight_section":
+        return await _highlight_section(arguments)
     if name == "pubmed_search":
         return await _pubmed_search(arguments)
-    if name == "show_twin":
-        return await _show_twin(arguments, case)
-    if name == "rerank_peptides":
-        return await _rerank_peptides(arguments, case)
     if name == "explain_node":
         return await _explain_node(arguments, case)
-    if name == "explain_bnt111_overlap":
-        return await _explain_bnt111_overlap(case)
+    if name == "explain_branch":
+        return await _explain_branch(arguments, case)
+    if name == "show_trial":
+        return await _show_trial(arguments, case)
     return json.dumps({"error": f"unknown tool: {name}"})
 
 
-async def _highlight_panel(args: dict) -> str:
-    panel = int(args.get("panel", 1))
+async def _highlight_section(args: dict) -> str:
+    section = str(args.get("section", "railway"))
     focus = args.get("focus") or ""
-    label_map = {1: "NCCN walker", 2: "molecular landscape", 3: "vaccine designer", 4: "twin cohort"}
-    label = label_map.get(panel, f"Panel {panel}")
     await emit(
         EventKind.CHAT_UI_FOCUS,
-        f"🎯 Highlight Panel {panel} ({label})" + (f" → {focus}" if focus else ""),
-        {"panel": panel, "focus": focus},
+        f"Focus {section}" + (f" → {focus}" if focus else ""),
+        {"section": section, "focus": focus},
     )
-    return json.dumps({"ok": True, "panel": panel, "label": label, "focus": focus})
+    return json.dumps({"ok": True, "section": section, "focus": focus})
 
 
 async def _pubmed_search(args: dict) -> str:
@@ -209,132 +169,115 @@ async def _pubmed_search(args: dict) -> str:
     ]
     await emit(
         EventKind.CHAT_TOOL_RESULT,
-        f"📚 pubmed_search('{query[:48]}') → {len(payload)} hits",
+        f"pubmed_search({query[:48]!r}) → {len(payload)} hits",
         {"tool": "pubmed_search", "query": query, "results": payload},
     )
     return json.dumps({"query": query, "results": payload})
 
 
-async def _show_twin(args: dict, case: dict) -> str:
-    sid = str(args.get("submitter_id", "")).strip()
-    twins = ((case.get("cohort") or {}).get("twins")) or []
-    match = next((t for t in twins if t.get("submitter_id") == sid), None)
-    if not match:
-        return json.dumps({"error": f"twin {sid!r} not in current cohort"})
-    await emit(
-        EventKind.CHAT_UI_FOCUS,
-        f"🧑‍🤝‍🧑 Open twin {sid}",
-        {"panel": 4, "focus": sid},
-    )
-    return json.dumps({"twin": match})
-
-
-async def _rerank_peptides(args: dict, case: dict) -> str:
-    by = str(args.get("by", "binding"))
-    pipeline = case.get("pipeline") or {}
-    candidates = pipeline.get("candidates") or []
-    if not candidates:
-        return json.dumps({"error": "no candidates available"})
-
-    def _key(c: dict):
-        p = c.get("peptide") or {}
-        if by == "length":
-            return -int(p.get("length") or 0)
-        if by == "gene":
-            return ((p.get("mutation") or {}).get("gene") or "")
-        if by == "rank":
-            return int(c.get("rank") or 0)
-        return float(p.get("score_nm") if p.get("score_nm") is not None else 1e9)
-
-    sorted_view = sorted(candidates, key=_key)[:10]
-    summary = [
-        {
-            "rank": c.get("rank"),
-            "sequence": (c.get("peptide") or {}).get("sequence"),
-            "score_nm": (c.get("peptide") or {}).get("score_nm"),
-            "gene": ((c.get("peptide") or {}).get("mutation") or {}).get("gene"),
-        }
-        for c in sorted_view
-    ]
-    await emit(
-        EventKind.CHAT_RERANK,
-        f"🔁 Re-ranked peptides by {by}",
-        {"by": by, "ordered": summary},
-    )
-    return json.dumps({"by": by, "top": summary})
-
-
-_BNT111_ANTIGENS = frozenset({"TYR", "MAGEA3", "CTAG1B", "TPTE"})
-
-
-async def _explain_bnt111_overlap(case: dict) -> str:
-    """Report which candidates overlap the BNT111 shared-antigen set."""
-    pipeline = case.get("pipeline") or {}
-    candidates = pipeline.get("candidates") or []
-    hits: list[dict] = []
-    for c in candidates:
-        gene = ((c.get("peptide") or {}).get("mutation") or {}).get("gene") or ""
-        if gene.upper() in _BNT111_ANTIGENS:
-            hits.append({
-                "rank": c.get("rank"),
-                "gene": gene.upper(),
-                "peptide": (c.get("peptide") or {}).get("sequence"),
-                "mutation": ((c.get("peptide") or {}).get("mutation") or {}).get("label")
-                or f"{((c.get('peptide') or {}).get('mutation') or {}).get('ref_aa', '')}"
-                   f"{((c.get('peptide') or {}).get('mutation') or {}).get('position', '')}"
-                   f"{((c.get('peptide') or {}).get('mutation') or {}).get('alt_aa', '')}",
-            })
-    total = len(candidates)
-    await emit(
-        EventKind.CHAT_UI_FOCUS,
-        f"🧬 BNT111 overlap · {len(hits)}/{total} candidates",
-        {"panel": 3, "focus": "bnt111"},
-    )
-    if not hits:
-        return json.dumps({
-            "overlap": False,
-            "message": (
-                "None of this patient's personalised neoantigens target the BNT111 "
-                "shared-antigen set (TYR, MAGE-A3, NY-ESO-1, TPTE). A BNT111 combination "
-                "would act as a fixed-antigen boost independent of the personalised "
-                "candidates — candidacy depends on standard NCT04526899 gates "
-                "(anti-PD-1-refractory disease, ECOG 0-1, measurable disease)."
-            ),
-            "total_candidates": total,
-        })
-    return json.dumps({
-        "overlap": True,
-        "hits": hits,
-        "total_candidates": total,
-        "genes": sorted({h["gene"] for h in hits}),
-        "message": (
-            f"{len(hits)} of {total} candidates target BNT111 antigens — this patient "
-            f"is a candidacy for the NCT04526899 cemiplimab + BNT111 combination arm. "
-            f"BNT111 would boost response to the fixed antigens ({sorted({h['gene'] for h in hits})}) "
-            f"while the personalised mRNA covers the rest."
-        ),
-    })
+def _find_step(case: dict, node_id: str) -> dict | None:
+    node_id_upper = node_id.upper()
+    railway = case.get("railway") or {}
+    for step in railway.get("steps") or []:
+        if str(step.get("node_id", "")).upper() == node_id_upper:
+            return step
+    return None
 
 
 async def _explain_node(args: dict, case: dict) -> str:
-    node_id = str(args.get("node_id", "")).upper()
-    path = case.get("nccn_path") or []
-    step = next((s for s in path if str(s.get("node_id", "")).upper() == node_id), None)
+    node_id = str(args.get("node_id", "")).strip()
+    step = _find_step(case, node_id)
     if not step:
+        available = [
+            s.get("node_id") for s in (case.get("railway") or {}).get("steps") or []
+        ]
         return json.dumps({
-            "error": f"node {node_id!r} not in walked path",
-            "available": [s.get("node_id") for s in path],
+            "error": f"node {node_id!r} not on railway",
+            "available": available,
         })
     await emit(
         EventKind.CHAT_UI_FOCUS,
-        f"🩺 Open NCCN node {node_id}",
-        {"panel": 1, "focus": node_id},
+        f"Open NCCN node {step.get('node_id')}",
+        {"section": "railway", "focus": step.get("node_id")},
     )
     return json.dumps({
         "node_id": step.get("node_id"),
-        "node_title": step.get("node_title"),
-        "chosen_option": step.get("chosen_option"),
+        "title": step.get("title"),
+        "chosen_option": step.get("chosen_option_label"),
+        "rationale": step.get("chosen_rationale"),
         "reasoning": step.get("reasoning"),
         "evidence": step.get("evidence"),
-        "citations": [c.get("title") + f" (PMID {c.get('pmid')})" for c in (step.get("citations") or [])],
+        "citations": [
+            f"{c.get('title')} (PMID {c.get('pmid')})"
+            for c in step.get("citations") or []
+        ],
+    })
+
+
+async def _explain_branch(args: dict, case: dict) -> str:
+    node_id = str(args.get("node_id", "")).strip()
+    option_label = str(args.get("option_label", "")).strip()
+    step = _find_step(case, node_id)
+    if not step:
+        return json.dumps({"error": f"node {node_id!r} not on railway"})
+    alternatives = step.get("alternatives") or []
+    match = next(
+        (
+            a for a in alternatives
+            if option_label.lower() in str(a.get("option_label", "")).lower()
+            or str(a.get("option_label", "")).lower() in option_label.lower()
+        ),
+        None,
+    )
+    if not match:
+        return json.dumps({
+            "error": f"no sibling option matching {option_label!r} at {node_id}",
+            "available": [a.get("option_label") for a in alternatives],
+        })
+    await emit(
+        EventKind.CHAT_UI_FOCUS,
+        f"Branch {node_id} / {match.get('option_label')}",
+        {"section": "railway", "focus": node_id},
+    )
+    return json.dumps({
+        "node_id": node_id,
+        "option_label": match.get("option_label"),
+        "option_description": match.get("option_description"),
+        "reason_not_chosen": match.get("reason_not_chosen"),
+    })
+
+
+async def _show_trial(args: dict, case: dict) -> str:
+    nct_id = str(args.get("nct_id", "")).strip().upper()
+    matches = case.get("trial_matches") or []
+    match = next((m for m in matches if str(m.get("nct_id", "")).upper() == nct_id), None)
+    if not match:
+        return json.dumps({
+            "error": f"{nct_id} not in matched trials",
+            "available": [m.get("nct_id") for m in matches],
+        })
+    sites = [s for s in (case.get("trial_sites") or []) if str(s.get("nct_id", "")).upper() == nct_id]
+    await emit(
+        EventKind.CHAT_UI_FOCUS,
+        f"Focus trial {nct_id}",
+        {"section": "trials", "focus": nct_id},
+    )
+    return json.dumps({
+        "nct_id": match.get("nct_id"),
+        "title": match.get("title"),
+        "status": match.get("status"),
+        "passing": match.get("passing_criteria"),
+        "failing": match.get("failing_criteria"),
+        "unknown": match.get("unknown_criteria"),
+        "sites": [
+            {
+                "facility": s.get("facility"),
+                "city": s.get("city"),
+                "state": s.get("state"),
+                "lat": s.get("lat"),
+                "lng": s.get("lng"),
+            }
+            for s in sites
+        ],
+        "url": match.get("url"),
     })
