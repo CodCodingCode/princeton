@@ -33,6 +33,7 @@ OUT_DIR = BACKEND_DIR / "out"
 
 DEMO_VCF = SAMPLE_DIR / "tcga_skcm_demo.vcf"
 DEMO_SLIDE = SAMPLE_DIR / "tcga_skcm_demo_slide.jpg"
+CASES_ROOT = BACKEND_DIR / "data" / "tcga_skcm" / "cases"
 
 load_dotenv(dotenv_path=BACKEND_DIR / ".env")
 
@@ -66,6 +67,15 @@ DEFAULTS = {
     "citations_by_node": {},
     "cohort": None,
     "trials": [],
+    "case_chat": None,
+    "case_chat_history": [],
+    "case_chat_queue": None,
+    "case_chat_thread": None,
+    "case_chat_streaming": False,
+    "case_chat_buf_thinking": "",
+    "case_chat_buf_answer": "",
+    "case_chat_tool_calls": [],
+    "final_case": None,
 }
 for key, default in DEFAULTS.items():
     if key not in st.session_state:
@@ -171,6 +181,34 @@ def _ingest_event(ev: AgentEvent) -> None:
         st.session_state.cohort = cohort
     elif ev.kind == EventKind.TRIAL_MATCHES_READY:
         st.session_state.trials = p.get("trials", [])
+    elif ev.kind == EventKind.DONE:
+        if "case" in p:
+            st.session_state.final_case = p["case"]
+    elif ev.kind == EventKind.CHAT_THINKING_DELTA:
+        st.session_state.case_chat_buf_thinking += p.get("delta", "")
+    elif ev.kind == EventKind.CHAT_ANSWER_DELTA:
+        st.session_state.case_chat_buf_answer += p.get("delta", "")
+    elif ev.kind == EventKind.CHAT_TOOL_CALL:
+        st.session_state.case_chat_tool_calls.append({
+            "name": p.get("name"),
+            "arguments": p.get("arguments"),
+        })
+    elif ev.kind == EventKind.CHAT_UI_FOCUS:
+        focus = p.get("focus") or ""
+        panel = p.get("panel")
+        if panel == 1 and focus:
+            st.session_state.selected_node = focus
+    elif ev.kind == EventKind.CHAT_DONE:
+        st.session_state.case_chat_history.append({
+            "role": "assistant",
+            "content": st.session_state.case_chat_buf_answer.strip(),
+            "thinking": st.session_state.case_chat_buf_thinking.strip(),
+            "tool_calls": list(st.session_state.case_chat_tool_calls),
+        })
+        st.session_state.case_chat_buf_thinking = ""
+        st.session_state.case_chat_buf_answer = ""
+        st.session_state.case_chat_tool_calls = []
+        st.session_state.case_chat_streaming = False
 
 
 # ─────────────────────────────────────────────────────────────
@@ -625,6 +663,87 @@ def _render_trials_panel() -> None:
 
 
 # ─────────────────────────────────────────────────────────────
+# Post-run chat helpers
+# ─────────────────────────────────────────────────────────────
+def _short_args(args) -> str:
+    if not args:
+        return ""
+    s = ", ".join(f"{k}={v!r}" for k, v in (args.items() if isinstance(args, dict) else []))
+    return s if len(s) < 60 else s[:57] + "…"
+
+
+def _send_case_chat(user_msg: str) -> None:
+    """Spawn a thread to stream one chat turn through the existing event queue."""
+    if st.session_state.case_chat_streaming:
+        return
+    case_dump = st.session_state.final_case
+    if case_dump is None:
+        st.warning("Run the agent first.")
+        return
+
+    chat = st.session_state.case_chat
+    if chat is None:
+        try:
+            from neoantigen.chat import CaseChatAgent
+            from neoantigen.models import MelanomaCase
+        except ImportError as e:
+            st.error(f"Chat unavailable: {e}")
+            return
+        try:
+            case_obj = MelanomaCase.model_validate(case_dump)
+        except Exception as e:
+            st.error(f"Failed to load case for chat: {e}")
+            return
+        chat = CaseChatAgent(case=case_obj)
+        if not chat.available:
+            st.warning(
+                "KIMI_API_KEY not set in backend/.env — post-run chat disabled. "
+                "Add `KIMI_API_KEY=...` and reload."
+            )
+            return
+        st.session_state.case_chat = chat
+
+    st.session_state.case_chat_history.append({"role": "user", "content": user_msg})
+    st.session_state.case_chat_buf_thinking = ""
+    st.session_state.case_chat_buf_answer = ""
+    st.session_state.case_chat_tool_calls = []
+    st.session_state.case_chat_streaming = True
+
+    q = st.session_state.event_queue
+    if q is None:
+        q = queue.Queue()
+        st.session_state.event_queue = q
+
+    def _runner():
+        from neoantigen.agent.events import EventBus
+
+        async def _bridge():
+            chat.bus = EventBus()
+
+            async def _drain():
+                async for ev in chat.bus.stream():
+                    q.put(ev)
+
+            drain_task = asyncio.create_task(_drain())
+            try:
+                await chat.send(user_msg)
+            finally:
+                await chat.bus.close()
+                await drain_task
+
+        try:
+            asyncio.run(_bridge())
+        except Exception as e:
+            from neoantigen.agent import AgentEvent
+            q.put(AgentEvent(kind=EventKind.TOOL_ERROR, label=f"Chat fatal: {e}"))
+            q.put(AgentEvent(kind=EventKind.CHAT_DONE, label="done"))
+
+    t = threading.Thread(target=_runner, daemon=True)
+    t.start()
+    st.session_state.case_chat_thread = t
+
+
+# ─────────────────────────────────────────────────────────────
 # Sidebar — inputs + thinking feed + chat
 # ─────────────────────────────────────────────────────────────
 def _start_run(slide_path: Path, vcf_path: Path, tcga_patient_id: str | None = None) -> None:
@@ -691,6 +810,35 @@ with st.sidebar:
                 pass
             _start_run(slide_for_demo, DEMO_VCF, tcga_patient_id=tcga_id)
 
+    # Dataset case picker — requires `python backend/scripts/build_tcga_skcm_cases.py`.
+    # Each case dir holds slide.jpg + tumor.vcf; the dir name is the TCGA submitter_id,
+    # so passing it as tcga_patient_id unlocks the cohort/twin-matching panel.
+    if CASES_ROOT.exists():
+        dataset_cases = sorted(
+            p.name for p in CASES_ROOT.iterdir()
+            if p.is_dir() and (p / "slide.jpg").exists() and (p / "tumor.vcf").exists()
+        )
+        if dataset_cases:
+            st.markdown("##### 📚 Or pick from dataset")
+            selected_sid = st.selectbox(
+                f"{len(dataset_cases)} TCGA-SKCM cases",
+                dataset_cases,
+                index=0,
+                disabled=st.session_state.running,
+                label_visibility="collapsed",
+            )
+            if st.button(
+                f"Run {selected_sid}",
+                disabled=st.session_state.running,
+                use_container_width=True,
+            ):
+                case_dir = CASES_ROOT / selected_sid
+                _start_run(
+                    case_dir / "slide.jpg",
+                    case_dir / "tumor.vcf",
+                    tcga_patient_id=selected_sid,
+                )
+
     if st.session_state.done and st.button("↻ New case", use_container_width=True):
         for k in list(DEFAULTS.keys()):
             st.session_state[k] = DEFAULTS[k]
@@ -710,20 +858,71 @@ with st.sidebar:
         st.caption("Reasoning will stream here while the agent walks the guideline.")
 
     st.divider()
-    st.markdown("### 💬 Ask / interrupt")
+    if st.session_state.running:
+        st.markdown("### 💬 Interrupt the walker")
+        st.caption("Type a message to inject context into the next NCCN decision.")
+    elif st.session_state.done:
+        st.markdown("### 💬 Ask the case (Kimi K2)")
+        st.caption("The agent has the full case. Ask follow-ups, request panels, pull papers.")
+    else:
+        st.markdown("### 💬 Chat")
+
     for msg in st.session_state.chat_messages:
         role_icon = "🧑‍⚕️" if msg["role"] == "user" else "🤖"
         st.markdown(f"{role_icon} {msg['content']}")
-    user_msg = st.chat_input("Interject…", disabled=not st.session_state.running)
+
+    for msg in st.session_state.case_chat_history:
+        if msg["role"] == "user":
+            st.markdown(f"🧑‍⚕️ {msg['content']}")
+        else:
+            with st.container(border=True):
+                if msg.get("thinking"):
+                    with st.expander("💭 reasoning", expanded=False):
+                        st.markdown(
+                            f"<div style='font-family: ui-monospace,monospace; font-size:0.78em; "
+                            f"color:#475569; white-space:pre-wrap;'>{msg['thinking']}</div>",
+                            unsafe_allow_html=True,
+                        )
+                if msg.get("tool_calls"):
+                    for tc in msg["tool_calls"]:
+                        st.caption(f"🔧 {tc.get('name')}({_short_args(tc.get('arguments'))})")
+                st.markdown(f"🤖 {msg['content']}")
+
+    if st.session_state.case_chat_streaming:
+        with st.container(border=True):
+            if st.session_state.case_chat_buf_thinking:
+                st.markdown(
+                    f"<div style='font-family: ui-monospace,monospace; font-size:0.78em; "
+                    f"color:#94a3b8; white-space:pre-wrap; max-height:140px; overflow-y:auto;'>"
+                    f"💭 {st.session_state.case_chat_buf_thinking}</div>",
+                    unsafe_allow_html=True,
+                )
+            if st.session_state.case_chat_buf_answer:
+                st.markdown(f"🤖 {st.session_state.case_chat_buf_answer}")
+            else:
+                st.caption("…")
+
+    chat_disabled = not (st.session_state.running or st.session_state.done) or st.session_state.case_chat_streaming
+    placeholder = (
+        "Interject…"
+        if st.session_state.running
+        else "Ask anything about the case…" if st.session_state.done
+        else "Run the agent first"
+    )
+    user_msg = st.chat_input(placeholder, disabled=chat_disabled)
     if user_msg:
-        st.session_state.chat_messages.append({"role": "user", "content": user_msg})
-        bus_holder = st.session_state.get("active_bus") or {}
-        bus = bus_holder.get("bus")
-        if bus is not None:
-            bus.push_interrupt(user_msg)
-            st.session_state.chat_messages.append(
-                {"role": "agent", "content": "Acknowledged — will reconsider at the next NCCN node."}
-            )
+        if st.session_state.running:
+            st.session_state.chat_messages.append({"role": "user", "content": user_msg})
+            bus_holder = st.session_state.get("active_bus") or {}
+            bus = bus_holder.get("bus")
+            if bus is not None:
+                bus.push_interrupt(user_msg)
+                st.session_state.chat_messages.append(
+                    {"role": "agent", "content": "Acknowledged — will reconsider at the next NCCN node."}
+                )
+        elif st.session_state.done:
+            _send_case_chat(user_msg)
+            st.rerun()
 
 
 # ─────────────────────────────────────────────────────────────
@@ -784,6 +983,6 @@ with st.container(border=True):
 status_label = "▶ Running" if st.session_state.running else "✅ Complete"
 st.caption(f"{status_label} · {len(st.session_state.events)} events · NCCN nodes walked: {len(st.session_state.nccn_steps)}")
 
-if st.session_state.running:
+if st.session_state.running or st.session_state.case_chat_streaming:
     time.sleep(0.4)
     st.rerun()

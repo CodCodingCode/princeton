@@ -107,8 +107,10 @@ def load_cohort() -> list[TCGAPatient]:
         p.mutated_genes = genes
         p.mutation_count = int(len(group))
         # Cheap label fields used by the twin-matcher feature vector.
+        # GDC annotates BRAF against a longer transcript: canonical V600E
+        # appears as p.V640E. Accept both.
         for hgvs in group["hgvs_p"].dropna().astype(str):
-            if "V600E" in hgvs and ("BRAF" in genes):
+            if ("V600E" in hgvs or "V640E" in hgvs) and ("BRAF" in genes):
                 p.braf_v600e = True
             if hgvs.startswith("p.Q61") and ("NRAS" in genes):
                 p.nras_q61 = True
@@ -153,6 +155,10 @@ def mutations_for_patient(submitter_id: str) -> list[Mutation]:
         ref, pos, alt = m.group(1), int(m.group(2)), m.group(3)
         if ref == "*" or alt == "*":  # nonsense / stop-gain — pipeline expects missense
             continue
+        # Normalize BRAF to canonical UniProt P15056 numbering. GDC uses a
+        # longer transcript offset by +40 residues (e.g. V640E = canonical V600E).
+        if gene.upper() == "BRAF" and pos > 600:
+            pos -= 40
         key = (gene, pos, ref, alt)
         if key in seen:
             continue

@@ -210,7 +210,11 @@ def pick_braf_v600e_demo_patient(parquet_path: Path) -> str:
     import pandas as pd
 
     df = pd.read_parquet(parquet_path)
-    braf = df[(df.gene == "BRAF") & (df.hgvs_p.fillna("").str.contains("V600E"))]
+    # GDC's MuTect2 output annotates BRAF against a longer transcript that
+    # numbers residues +40 vs. the canonical UniProt P15056 — V600E appears
+    # as p.V640E. Accept both so this keeps working if GDC switches transcripts.
+    hgvs = df.hgvs_p.fillna("")
+    braf = df[(df.gene == "BRAF") & (hgvs.str.contains("V640E") | hgvs.str.contains("V600E"))]
     if braf.empty:
         raise SystemExit("No BRAF V600E patients found in MAF — unexpected.")
     candidates = braf.submitter_id.value_counts().head(20).index.tolist()
