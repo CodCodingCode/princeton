@@ -40,6 +40,7 @@ class EventKind(str, Enum):
     SURVIVAL_CURVE_READY = "survival_curve_ready"
 
     TRIAL_MATCHES_READY = "trial_matches_ready"
+    ENRICHMENT_READY = "enrichment_ready"
 
     CHAT_THINKING_DELTA = "chat_thinking_delta"
     CHAT_ANSWER_DELTA = "chat_answer_delta"

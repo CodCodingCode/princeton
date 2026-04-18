@@ -131,6 +131,21 @@ TOOL_SCHEMAS: list[dict] = [
             },
         },
     },
+    {
+        "type": "function",
+        "function": {
+            "name": "explain_bnt111_overlap",
+            "description": (
+                "Explain whether this patient's personalised neoantigens overlap "
+                "with the BNT111 fixed-antigen vaccine targets (TYR, MAGE-A3, "
+                "NY-ESO-1/CTAG1B, TPTE — Regeneron+BioNTech trial NCT04526899). "
+                "Use when the doctor asks about BNT111, the cemiplimab+BNT111 "
+                "combo, or which peptides could be boosted by a fixed-antigen "
+                "vaccine. Also highlights Panel 3."
+            ),
+            "parameters": {"type": "object", "properties": {}, "required": []},
+        },
+    },
 ]
 
 
@@ -151,6 +166,8 @@ async def execute_tool(name: str, arguments: dict, case: dict) -> str:
         return await _rerank_peptides(arguments, case)
     if name == "explain_node":
         return await _explain_node(arguments, case)
+    if name == "explain_bnt111_overlap":
+        return await _explain_bnt111_overlap(case)
     return json.dumps({"error": f"unknown tool: {name}"})
 
 
@@ -245,6 +262,58 @@ async def _rerank_peptides(args: dict, case: dict) -> str:
         {"by": by, "ordered": summary},
     )
     return json.dumps({"by": by, "top": summary})
+
+
+_BNT111_ANTIGENS = frozenset({"TYR", "MAGEA3", "CTAG1B", "TPTE"})
+
+
+async def _explain_bnt111_overlap(case: dict) -> str:
+    """Report which candidates overlap the BNT111 shared-antigen set."""
+    pipeline = case.get("pipeline") or {}
+    candidates = pipeline.get("candidates") or []
+    hits: list[dict] = []
+    for c in candidates:
+        gene = ((c.get("peptide") or {}).get("mutation") or {}).get("gene") or ""
+        if gene.upper() in _BNT111_ANTIGENS:
+            hits.append({
+                "rank": c.get("rank"),
+                "gene": gene.upper(),
+                "peptide": (c.get("peptide") or {}).get("sequence"),
+                "mutation": ((c.get("peptide") or {}).get("mutation") or {}).get("label")
+                or f"{((c.get('peptide') or {}).get('mutation') or {}).get('ref_aa', '')}"
+                   f"{((c.get('peptide') or {}).get('mutation') or {}).get('position', '')}"
+                   f"{((c.get('peptide') or {}).get('mutation') or {}).get('alt_aa', '')}",
+            })
+    total = len(candidates)
+    await emit(
+        EventKind.CHAT_UI_FOCUS,
+        f"🧬 BNT111 overlap · {len(hits)}/{total} candidates",
+        {"panel": 3, "focus": "bnt111"},
+    )
+    if not hits:
+        return json.dumps({
+            "overlap": False,
+            "message": (
+                "None of this patient's personalised neoantigens target the BNT111 "
+                "shared-antigen set (TYR, MAGE-A3, NY-ESO-1, TPTE). A BNT111 combination "
+                "would act as a fixed-antigen boost independent of the personalised "
+                "candidates — candidacy depends on standard NCT04526899 gates "
+                "(anti-PD-1-refractory disease, ECOG 0-1, measurable disease)."
+            ),
+            "total_candidates": total,
+        })
+    return json.dumps({
+        "overlap": True,
+        "hits": hits,
+        "total_candidates": total,
+        "genes": sorted({h["gene"] for h in hits}),
+        "message": (
+            f"{len(hits)} of {total} candidates target BNT111 antigens — this patient "
+            f"is a candidacy for the NCT04526899 cemiplimab + BNT111 combination arm. "
+            f"BNT111 would boost response to the fixed antigens ({sorted({h['gene'] for h in hits})}) "
+            f"while the personalised mRNA covers the rest."
+        ),
+    })
 
 
 async def _explain_node(args: dict, case: dict) -> str:

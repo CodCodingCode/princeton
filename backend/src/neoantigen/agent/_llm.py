@@ -29,6 +29,8 @@ import logging
 import mimetypes
 import os
 import re
+import types
+import typing
 from functools import lru_cache
 from pathlib import Path
 from typing import AsyncIterator, Literal, TypeVar
@@ -177,6 +179,147 @@ def _extract_json(text: str) -> str:
 
 
 # ─────────────────────────────────────────────────────────────
+# Lenient pre-validation coercion + error formatting
+#
+# VLMs frequently paraphrase enum values ("Nodular Melanoma" vs "nodular"),
+# return prose for booleans ("Yes", "not present"), or write "not applicable"
+# in numeric fields. The hints in the system prompt help but don't fully fix
+# this. These helpers normalize common drift before Pydantic sees the dict so
+# the first attempt validates more often, and `_format_validation_errors`
+# renders any remaining failures into a corrective message for one retry.
+# ─────────────────────────────────────────────────────────────
+
+
+_LITERAL_PUNCT = re.compile(r"[\s\-]+")
+_PARENTHETICAL = re.compile(r"\s*\([^)]*\)")
+_NUMERIC_TOKEN = re.compile(r"-?\d+(?:\.\d+)?")
+
+_BOOL_TRUE = {"yes", "true", "present", "positive", "ulcerated", "y"}
+_BOOL_FALSE = {"no", "false", "absent", "not present", "negative", "none", "n"}
+_NULL_STRINGS = {"not applicable", "n/a", "na", "unknown", "none", "null", ""}
+
+
+def _normalize_literal(s: str) -> str:
+    s = _PARENTHETICAL.sub("", s).strip().lower()
+    s = _LITERAL_PUNCT.sub("_", s)
+    return s.strip("_")
+
+
+_UNKNOWN_PHRASES = {
+    "unknown", "not_applicable", "not_assessable", "not_assessed",
+    "not_present", "not_evaluated", "none", "na", "n_a", "not_specified",
+    "not_reported", "indeterminate", "unclear",
+}
+
+
+def _match_literal(value, allowed: tuple) -> object:
+    if value in allowed:
+        return value
+    if not isinstance(value, str):
+        return value
+    norm = _normalize_literal(value)
+    if norm in allowed:
+        return norm
+    parts = norm.split("_")
+    for n in (parts[0], parts[-1], "_".join(parts[:-1])):
+        if n and n in allowed:
+            return n
+    candidates = [a for a in allowed if isinstance(a, str) and (a in norm or norm in a)]
+    if len(candidates) == 1:
+        return candidates[0]
+    # "not applicable" / "not assessable" / "not present" → "unknown" when allowed
+    if "unknown" in allowed and norm in _UNKNOWN_PHRASES:
+        return "unknown"
+    return value
+
+
+def _annotation_alternatives(annotation):
+    """Flatten a possibly-Union annotation into [(origin, args), ...].
+
+    Handles both `typing.Union[X, Y]` and PEP-604 `X | Y` (types.UnionType).
+    """
+    origin = typing.get_origin(annotation)
+    if origin is typing.Union or origin is types.UnionType:
+        out = []
+        for a in typing.get_args(annotation):
+            inner = typing.get_origin(a)
+            out.append((inner if inner is not None else a, typing.get_args(a)))
+        return out
+    return [(origin if origin is not None else annotation, typing.get_args(annotation))]
+
+
+def _coerce_field(value, annotation):
+    if value is None:
+        return value
+    alts = _annotation_alternatives(annotation)
+    accepts_none = any(a is type(None) for a, _ in alts)
+
+    for a, args in alts:
+        if a is Literal and args and all(isinstance(x, str) for x in args):
+            return _match_literal(value, args)
+
+    if any(a is bool for a, _ in alts):
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, str):
+            lo = value.strip().lower()
+            if lo in _BOOL_TRUE:
+                return True
+            if lo in _BOOL_FALSE:
+                return False
+            if accepts_none and lo in _NULL_STRINGS:
+                return None
+        return value
+
+    if any(a in (int, float) for a, _ in alts):
+        if isinstance(value, (int, float)) and not isinstance(value, bool):
+            return value
+        if isinstance(value, str):
+            lo = value.strip().lower()
+            if accepts_none and lo in _NULL_STRINGS:
+                return None
+            m = _NUMERIC_TOKEN.search(value)
+            if m:
+                try:
+                    num = float(m.group(0))
+                except ValueError:
+                    return value
+                return num if any(a is float for a, _ in alts) else int(num)
+        return value
+
+    return value
+
+
+def _coerce_to_schema(data: dict, schema: type[BaseModel]) -> dict:
+    """Apply lenient coercions to common VLM-output mismatches before Pydantic validates."""
+    if not isinstance(data, dict):
+        return data
+    out = dict(data)
+    for name, field in schema.model_fields.items():
+        if name in out:
+            try:
+                out[name] = _coerce_field(out[name], field.annotation)
+            except Exception:
+                pass
+    return out
+
+
+def _format_validation_errors(err: BaseException) -> str:
+    cause = err
+    if isinstance(err, ValueError) and isinstance(err.__cause__, ValidationError):
+        cause = err.__cause__
+    if isinstance(cause, ValidationError):
+        lines = []
+        for e in cause.errors():
+            loc = ".".join(str(p) for p in e.get("loc", ())) or "(root)"
+            msg = e.get("msg", "")
+            inp = e.get("input")
+            lines.append(f"  - {loc}: {msg} (got: {inp!r})")
+        return "\n".join(lines) or f"  - {cause}"
+    return f"  - {type(err).__name__}: {err}"
+
+
+# ─────────────────────────────────────────────────────────────
 # Image encoding
 # ─────────────────────────────────────────────────────────────
 
@@ -243,6 +386,29 @@ async def call_with_vision(
     content blocks. Requires ``MEDIX_API_KEY`` and an open SSH tunnel
     (default ``MEDIX_BASE_URL=http://localhost:8000/v1``).
     """
+    findings, _raw = await call_with_vision_raw(
+        schema=schema,
+        system_prompt=system_prompt,
+        user_prompt=user_prompt,
+        images=images,
+        max_tokens=max_tokens,
+    )
+    return findings
+
+
+async def call_with_vision_raw(
+    schema: type[T],
+    system_prompt: str,
+    user_prompt: str,
+    *,
+    images: list[Path | bytes] | None = None,
+    max_tokens: int = 2000,
+) -> tuple[T, str]:
+    """Like ``call_with_vision`` but also returns the raw model response text.
+
+    Used by UI layers that want to render the model's ``<think>`` reasoning
+    alongside the parsed structured output.
+    """
     return await _call_json_impl(
         schema=schema,
         system_prompt=system_prompt,
@@ -251,6 +417,7 @@ async def call_with_vision(
         max_tokens=max_tokens,
         client=_medix_client(),
         model=_medix_model_name(),
+        return_raw=True,
     )
 
 
@@ -263,8 +430,13 @@ async def _call_json_impl(
     max_tokens: int,
     client,
     model: str,
-) -> T:
-    """Shared JSON-extracting call. Routed by caller to K2 or MediX."""
+    return_raw: bool = False,
+):
+    """Shared JSON-extracting call. Routed by caller to K2 or MediX.
+
+    Returns ``T`` by default, or ``(T, raw_text)`` when ``return_raw=True`` so
+    callers can surface the model's reasoning alongside the parsed object.
+    """
     log = get_logger()
     raw_schema = schema.model_json_schema()
     # Build compact per-field hints so VL models don't pattern-match the JSON
@@ -305,40 +477,75 @@ async def _call_json_impl(
         "call schema=%s images=%d user_len=%d",
         schema.__name__, len(images or []), len(user_prompt),
     )
-    try:
-        resp = await client.chat.completions.create(
-            model=model,
-            max_tokens=max_tokens,
-            messages=[
-                {"role": "system", "content": augmented_system},
-                {"role": "user", "content": user_content},
-            ],
-        )
-    except Exception as e:
-        log.error("call HTTP error schema=%s model=%s err=%s: %s",
-                  schema.__name__, model, type(e).__name__, e)
-        raise
+    async def _attempt(messages: list[dict]) -> tuple[T, str]:
+        try:
+            resp = await client.chat.completions.create(
+                model=model,
+                max_tokens=max_tokens,
+                messages=messages,
+            )
+        except Exception as e:
+            log.error("call HTTP error schema=%s model=%s err=%s: %s",
+                      schema.__name__, model, type(e).__name__, e)
+            raise
+        raw = resp.choices[0].message.content or ""
+        log.info("call response schema=%s len=%d", schema.__name__, len(raw))
+        try:
+            data = json.loads(_extract_json(raw))
+        except json.JSONDecodeError as e:
+            log.error("JSON parse failed schema=%s raw=%r", schema.__name__, raw[:600])
+            raise ValueError(f"model did not return valid JSON: {raw[:300]!r}") from e
+        # Unwrap JSON-Schema envelope if the model echoed `{description, properties: {...}}`
+        # instead of a flat instance (common failure mode on VL models).
+        if isinstance(data, dict) and isinstance(data.get("properties"), dict):
+            wanted = set(schema.model_json_schema().get("properties", {}).keys())
+            inner_keys = set(data["properties"].keys())
+            if inner_keys & wanted:
+                log.info("unwrapped schema envelope schema=%s", schema.__name__)
+                data = data["properties"]
+        coerced = _coerce_to_schema(data, schema) if isinstance(data, dict) else data
+        try:
+            validated = schema.model_validate(coerced)
+        except ValidationError as e:
+            log.error("validation failed schema=%s err=%s data=%s", schema.__name__, e, coerced)
+            raise
+        return validated, raw
 
-    raw = resp.choices[0].message.content or ""
-    log.info("call response schema=%s len=%d", schema.__name__, len(raw))
+    messages: list[dict] = [
+        {"role": "system", "content": augmented_system},
+        {"role": "user", "content": user_content},
+    ]
     try:
-        data = json.loads(_extract_json(raw))
-    except json.JSONDecodeError as e:
-        log.error("JSON parse failed schema=%s raw=%r", schema.__name__, raw[:600])
-        raise ValueError(f"model did not return valid JSON: {raw[:300]!r}") from e
-    # Unwrap JSON-Schema envelope if the model echoed `{description, properties: {...}}`
-    # instead of a flat instance (common failure mode on VL models).
-    if isinstance(data, dict) and isinstance(data.get("properties"), dict):
-        wanted = set(schema.model_json_schema().get("properties", {}).keys())
-        inner_keys = set(data["properties"].keys())
-        if inner_keys & wanted:
-            log.info("unwrapped schema envelope schema=%s", schema.__name__)
-            data = data["properties"]
-    try:
-        return schema.model_validate(data)
-    except ValidationError as e:
-        log.error("validation failed schema=%s err=%s data=%s", schema.__name__, e, data)
-        raise ValueError(f"model JSON failed {schema.__name__} validation: {e}") from e
+        validated, raw = await _attempt(messages)
+    except (ValidationError, ValueError) as first_err:
+        err_text = _format_validation_errors(first_err)
+        log.warning(
+            "retrying schema=%s after first-attempt failure:\n%s",
+            schema.__name__, err_text,
+        )
+        messages.append({
+            "role": "assistant",
+            "content": "(previous response omitted — failed validation)",
+        })
+        messages.append({
+            "role": "user",
+            "content": (
+                f"Your previous JSON failed validation:\n{err_text}\n\n"
+                "Return a corrected JSON object using the literal values listed in the "
+                "schema above. Output ONLY the JSON object — no <think> block, no "
+                "markdown, no prose."
+            ),
+        })
+        try:
+            validated, raw = await _attempt(messages)
+        except (ValidationError, ValueError) as second_err:
+            log.error("retry failed schema=%s err=%s", schema.__name__, second_err)
+            raise ValueError(
+                f"model JSON failed {schema.__name__} validation after retry: {second_err}"
+            ) from second_err
+    if return_raw:
+        return validated, raw
+    return validated
 
 
 async def stream_with_thinking(

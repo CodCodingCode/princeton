@@ -345,5 +345,81 @@ def melanoma_batch_command(
     console.print(f"[bold green]→ Wrote {len(case_dirs)} case JSON files to[/bold green] {output_dir}")
 
 
+@app.command("funnel")
+def funnel_command(
+    input_dir: Annotated[Path, typer.Option("--input-dir", help="Directory of per-case JSONs from melanoma-batch")] = Path("out/cases"),
+    output: Annotated[Path, typer.Option("--output", help="Where to write funnel_summary.json")] = Path("out/cases/funnel_summary.json"),
+    top_k: Annotated[int, typer.Option("--top-k", help="Drop-off criteria per trial to surface")] = 5,
+) -> None:
+    """Aggregate a batch of case JSONs into a Regeneron trial-screening funnel.
+
+    Reads every ``*.json`` under ``--input-dir`` (skipping ``funnel_summary.json``
+    itself) and writes an aggregated trial-eligibility summary plus
+    drop-off-by-criterion histogram. The output JSON powers the Streamlit
+    portfolio page.
+    """
+    from .cohort.funnel import compute_funnel, top_drop_off, write_summary
+
+    if not input_dir.exists():
+        console.print(f"[red]Input dir not found:[/red] {input_dir}")
+        raise typer.Exit(1)
+
+    case_paths = sorted(
+        p for p in input_dir.glob("*.json") if p.name != output.name
+    )
+    if not case_paths:
+        console.print(f"[yellow]No per-case JSON files under {input_dir}[/yellow]")
+        raise typer.Exit(1)
+
+    stats = compute_funnel(case_paths)
+    write_summary(stats, output)
+
+    # ── Per-trial eligibility ────────────────────────────────
+    eligibility = Table(title=f"Regeneron trial funnel · cohort n={stats.cohort_size}", title_style="bold white")
+    eligibility.add_column("NCT", style="cyan")
+    eligibility.add_column("Trial", overflow="fold")
+    eligibility.add_column("Eligible", justify="right", style="green")
+    eligibility.add_column("Unknown", justify="right", style="yellow")
+    eligibility.add_column("Ineligible", justify="right", style="red")
+    eligibility.add_column("n", justify="right")
+    for nct, buckets in sorted(stats.per_trial.items()):
+        eligibility.add_row(
+            nct,
+            (stats.per_trial_title.get(nct) or "—")[:60],
+            str(buckets.get("eligible", 0)),
+            str(buckets.get("needs_more_data", 0)),
+            str(buckets.get("ineligible", 0)),
+            str(buckets.get("total", 0)),
+        )
+    console.print(eligibility)
+    console.print(
+        f"[bold]{stats.at_least_one_regeneron_eligible}[/bold] / "
+        f"{stats.cohort_size} cohort patients eligible for at least one Regeneron trial"
+    )
+
+    # ── Drop-off histogram per trial ─────────────────────────
+    for nct in sorted(stats.per_trial.keys()):
+        rows = top_drop_off(stats, nct, top_k=top_k)
+        if not rows:
+            continue
+        drop = Table(title=f"{nct} · top drop-off criteria", title_style="bold white")
+        drop.add_column("Criterion", overflow="fold")
+        drop.add_column("n cases", justify="right", style="yellow")
+        for label, count in rows:
+            drop.add_row(label, str(count))
+        console.print(drop)
+
+    # ── Enrichment coverage ──────────────────────────────────
+    if stats.enrichment_coverage:
+        coverage = Table(title="Enrichment coverage", title_style="bold white")
+        coverage.add_column("Field")
+        coverage.add_column("% cohort filled", justify="right", style="cyan")
+        for field_name, frac in sorted(stats.enrichment_coverage.items()):
+            coverage.add_row(field_name, f"{frac * 100:.1f}%")
+        console.print(coverage)
+
+    console.print(f"[bold green]→ Wrote funnel summary:[/bold green] {output}")
+
+
 if __name__ == "__main__":
     app()

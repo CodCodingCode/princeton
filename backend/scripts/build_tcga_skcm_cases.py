@@ -57,8 +57,28 @@ def _short_to_three(hgvs_short: str | None) -> str | None:
     return f"p.{ref3}{pos}{alt3}"
 
 
+_VCF_BASES = {"A", "C", "G", "T"}
+
+
+def _normalize_chrom(c) -> str:
+    """MAF Chromosome column is usually `chr1`/`chrX`; VCF convention accepts either,
+    but we strip the `chr` prefix for determinism."""
+    s = str(c).strip() if c is not None else ""
+    if s.lower().startswith("chr"):
+        s = s[3:]
+    return s or "."
+
+
 def _write_vcf(rows: list[dict], path: Path) -> int:
-    """Write a minimal SnpEff-ANN VCF. Returns number of mutations written."""
+    """Write a minimal SnpEff-ANN VCF. Returns number of mutations written.
+
+    When a row carries real genomic coordinates (``chromosome``, ``start_position``,
+    ``ref_allele``, ``alt_allele`` — added to the parquet by the refreshed
+    ``fetch_tcga_skcm.py``) we emit them verbatim so downstream UV-signature
+    inference has real dinucleotide context. For older parquets lacking those
+    columns we fall back to the historical ``chr1 100+i A→T`` placeholder —
+    the pipeline's parser only consumes HGVSp, so mutation extraction keeps
+    working either way."""
     lines = [
         "##fileformat=VCFv4.2",
         "##INFO=<ID=ANN,Number=.,Type=String,Description=\"SnpEff annotations\">",
@@ -74,7 +94,21 @@ def _write_vcf(rows: list[dict], path: Path) -> int:
             f"T|missense_variant|MODERATE|{gene}|ENSG|transcript|ENST|"
             f"protein_coding|1/1|c.NNN|{three}"
         )
-        lines.append(f"1\t{100 + written}\t.\tA\tT\t.\t.\tANN={ann}")
+
+        chrom = _normalize_chrom(row.get("chromosome"))
+        pos_raw = row.get("start_position")
+        ref = str(row.get("ref_allele") or "").strip().upper()
+        alt = str(row.get("alt_allele") or "").strip().upper()
+        real_coords = (
+            chrom not in {".", ""}
+            and pos_raw not in (None, "")
+            and ref in _VCF_BASES
+            and alt in _VCF_BASES
+        )
+        if real_coords:
+            lines.append(f"{chrom}\t{int(pos_raw)}\t.\t{ref}\t{alt}\t.\t.\tANN={ann}")
+        else:
+            lines.append(f"1\t{100 + written}\t.\tA\tT\t.\t.\tANN={ann}")
         written += 1
     path.write_text("\n".join(lines) + "\n")
     return written

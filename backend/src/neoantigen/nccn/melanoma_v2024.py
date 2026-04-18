@@ -63,7 +63,7 @@ GRAPH: dict[str, NCCNNode] = {n.id: n for n in [
             ("Confirmed primary cutaneous melanoma", "STAGE_T", "Proceed to T-stage assignment"),
             ("Insufficient material — re-biopsy", "REBIOPSY", "Diagnostic tissue inadequate"),
         ],
-        evidence=["melanoma_subtype", "notes"],
+        evidence=["melanoma_subtype", "confidence"],
     ),
     _node(
         "REBIOPSY",
@@ -155,8 +155,9 @@ GRAPH: dict[str, NCCNNode] = {n.id: n for n in [
             ("Anti-PD-1 monotherapy (preferred for high TMB / PD-L1+)", "VACCINE_CANDIDATE", "Hold targeted in reserve"),
             ("Ipilimumab + nivolumab combo IO", "VACCINE_CANDIDATE", "Aggressive disease, no contraindication"),
             ("BRAF + MEK inhibitor (dabrafenib + trametinib)", "VACCINE_CANDIDATE", "Rapid response needed; symptomatic"),
+            ("Nivolumab + relatlimab (anti-LAG-3) combo", "VACCINE_CANDIDATE", "LAG-3 IHC positive — Regeneron fianlimab thesis"),
         ],
-        evidence=["mutations", "tils_present", "pdl1_estimate", "tumor_mutational_burden"],
+        evidence=["mutations", "tils_present", "pdl1_estimate", "tumor_mutational_burden", "lag3_ihc_percent"],
     ),
     _node(
         "BRAF_WT_TX",
@@ -165,9 +166,9 @@ GRAPH: dict[str, NCCNNode] = {n.id: n for n in [
         [
             ("Anti-PD-1 monotherapy (nivolumab or pembrolizumab)", "VACCINE_CANDIDATE", "Standard first line"),
             ("Ipilimumab + nivolumab combo IO", "VACCINE_CANDIDATE", "Higher response, more toxicity"),
-            ("Nivolumab + relatlimab (anti-LAG3) combo", "VACCINE_CANDIDATE", "Approved alternative combo"),
+            ("Nivolumab + relatlimab (anti-LAG3) combo", "VACCINE_CANDIDATE", "Approved alternative combo (RELATIVITY-047)"),
         ],
-        evidence=["mutations", "tils_present", "pdl1_estimate"],
+        evidence=["mutations", "tils_present", "pdl1_estimate", "tumor_mutational_burden", "lag3_ihc_percent"],
     ),
     _node(
         "VACCINE_CANDIDATE",

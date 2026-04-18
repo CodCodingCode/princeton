@@ -1,7 +1,9 @@
-"""Post-run chat agent helpers + sidebar chat rendering.
+"""Post-run chat agent dispatch.
 
-All chat events flow through the same queue bridge as the orchestrator — see
-``bridge.ingest_event`` for the CHAT_* routing.
+The chat history rendering moved to ``ui/rail.py`` (the right-rail surface).
+This module only owns the worker-thread spawn that streams a chat turn through
+the existing event queue. ``bridge.ingest_event`` handles routing the resulting
+``CHAT_*`` events into session_state.
 """
 
 from __future__ import annotations
@@ -13,15 +15,6 @@ import threading
 import streamlit as st
 
 from neoantigen.agent import EventKind
-
-from .citations import render_citations
-
-
-def _short_args(args) -> str:
-    if not args:
-        return ""
-    s = ", ".join(f"{k}={v!r}" for k, v in (args.items() if isinstance(args, dict) else []))
-    return s if len(s) < 60 else s[:57] + "…"
 
 
 def send_case_chat(user_msg: str) -> None:
@@ -49,7 +42,7 @@ def send_case_chat(user_msg: str) -> None:
         chat = CaseChatAgent(case=case_obj)
         if not chat.available:
             st.warning(
-                "K2_API_KEY not set in backend/.env — post-run chat disabled."
+                "KIMI_API_KEY not set in backend/.env — post-run chat disabled."
             )
             return
         st.session_state.case_chat = chat
@@ -85,49 +78,16 @@ def send_case_chat(user_msg: str) -> None:
         try:
             asyncio.run(_bridge())
         except Exception as e:
+            import sys
+            import traceback
+            # Print the full traceback to the Streamlit log so we can debug
+            # silent chat failures (the UI only surfaces the str(e)).
+            print(f"[chat worker] {type(e).__name__}: {e}", file=sys.stderr)
+            traceback.print_exc(file=sys.stderr)
             from neoantigen.agent import AgentEvent
-            q.put(AgentEvent(kind=EventKind.TOOL_ERROR, label=f"Chat fatal: {e}"))
+            q.put(AgentEvent(kind=EventKind.TOOL_ERROR, label=f"Chat fatal: {type(e).__name__}: {e}"))
             q.put(AgentEvent(kind=EventKind.CHAT_DONE, label="done"))
 
     t = threading.Thread(target=_runner, daemon=True)
     t.start()
     st.session_state.case_chat_thread = t
-
-
-def render_history() -> None:
-    """Render interrupt-mode chat + the post-run case-chat history inline in the sidebar."""
-    for msg in st.session_state.chat_messages:
-        role_icon = "🧑‍⚕️" if msg["role"] == "user" else "🤖"
-        st.markdown(f"{role_icon} {msg['content']}")
-
-    for msg in st.session_state.case_chat_history:
-        if msg["role"] == "user":
-            st.markdown(f"🧑‍⚕️ {msg['content']}")
-        else:
-            with st.container(border=True):
-                if msg.get("thinking"):
-                    with st.expander("💭 reasoning", expanded=False):
-                        st.markdown(
-                            f"<div style='font-family: ui-monospace,monospace; font-size:0.78em; "
-                            f"color:#475569; white-space:pre-wrap;'>{msg['thinking']}</div>",
-                            unsafe_allow_html=True,
-                        )
-                if msg.get("tool_calls"):
-                    for tc in msg["tool_calls"]:
-                        st.caption(f"🔧 {tc.get('name')}({_short_args(tc.get('arguments'))})")
-                st.markdown(f"🤖 {msg['content']}")
-                render_citations(msg.get("citations") or [], heading="📚 Sources")
-
-    if st.session_state.case_chat_streaming:
-        with st.container(border=True):
-            if st.session_state.case_chat_buf_thinking:
-                st.markdown(
-                    f"<div style='font-family: ui-monospace,monospace; font-size:0.78em; "
-                    f"color:#94a3b8; white-space:pre-wrap; max-height:140px; overflow-y:auto;'>"
-                    f"💭 {st.session_state.case_chat_buf_thinking}</div>",
-                    unsafe_allow_html=True,
-                )
-            if st.session_state.case_chat_buf_answer:
-                st.markdown(f"🤖 {st.session_state.case_chat_buf_answer}")
-            else:
-                st.caption("…")

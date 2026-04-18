@@ -186,6 +186,13 @@ def parse_mafs_to_parquet(maf_paths: list[Path], out_path: Path) -> None:
                         "case_id",
                         "t_alt_count",
                         "t_ref_count",
+                        # Genomic coordinates — needed for UV mutational-signature inference
+                        # (C→T at dipyrimidine context). Previously discarded at the parquet
+                        # step; downstream enrichment.signatures now requires them.
+                        "Chromosome",
+                        "Start_Position",
+                        "Reference_Allele",
+                        "Tumor_Seq_Allele2",
                     ],
                 )
         except Exception as e:
@@ -198,8 +205,18 @@ def parse_mafs_to_parquet(maf_paths: list[Path], out_path: Path) -> None:
     df = df[df["Variant_Classification"] == "Missense_Mutation"].copy()
     df["vaf"] = df["t_alt_count"] / (df["t_alt_count"] + df["t_ref_count"]).replace(0, 1)
     df["submitter_id"] = df["Tumor_Sample_Barcode"].str.slice(0, 12)
-    out = df[["submitter_id", "case_id", "Hugo_Symbol", "HGVSp_Short", "vaf"]].rename(
-        columns={"Hugo_Symbol": "gene", "HGVSp_Short": "hgvs_p"}
+    out = df[[
+        "submitter_id", "case_id", "Hugo_Symbol", "HGVSp_Short", "vaf",
+        "Chromosome", "Start_Position", "Reference_Allele", "Tumor_Seq_Allele2",
+    ]].rename(
+        columns={
+            "Hugo_Symbol": "gene",
+            "HGVSp_Short": "hgvs_p",
+            "Chromosome": "chromosome",
+            "Start_Position": "start_position",
+            "Reference_Allele": "ref_allele",
+            "Tumor_Seq_Allele2": "alt_allele",
+        }
     )
     out.to_parquet(out_path, index=False)
     print(f"  wrote {out_path} ({len(out)} missense mutations across "
@@ -209,6 +226,13 @@ def parse_mafs_to_parquet(maf_paths: list[Path], out_path: Path) -> None:
 def pick_braf_v600e_demo_patient(parquet_path: Path) -> str:
     import pandas as pd
 
+    # Prefer the curated demo Patient A if it's in this MAF parse — keeps
+    # `Run TCGA demo` landing on a submitter id that has hand-authored
+    # ClinicianIntake in the DEMO_INTAKE registry, so trial matching lights
+    # up cleanly. Falls back to the top-mutation-count BRAF V600E patient if
+    # the curated id isn't present (e.g. after a future TCGA re-fetch).
+    from neoantigen.cohort.demo_intake import DEMO_INTAKE
+
     df = pd.read_parquet(parquet_path)
     # GDC's MuTect2 output annotates BRAF against a longer transcript that
     # numbers residues +40 vs. the canonical UniProt P15056 — V600E appears
@@ -217,6 +241,11 @@ def pick_braf_v600e_demo_patient(parquet_path: Path) -> str:
     braf = df[(df.gene == "BRAF") & (hgvs.str.contains("V640E") | hgvs.str.contains("V600E"))]
     if braf.empty:
         raise SystemExit("No BRAF V600E patients found in MAF — unexpected.")
+    curated_braf = [sid for sid in DEMO_INTAKE if sid in set(braf.submitter_id)]
+    if curated_braf:
+        chosen = curated_braf[0]
+        print(f"→ demo patient: {chosen} (curated demo intake)")
+        return chosen
     candidates = braf.submitter_id.value_counts().head(20).index.tolist()
     chosen = candidates[0]
     print(f"→ demo patient: {chosen} (had {(df.submitter_id == chosen).sum()} missense mutations)")

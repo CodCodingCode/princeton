@@ -27,12 +27,17 @@ from ..cohort import (
     find_twins,
     kaplan_meier,
 )
+from ..cohort import demo_intake
 from ..cohort.tcga import TCGAPatient
 from ..cohort.twins import QueryPatient
+from ..enrichment import enrich as enrich_biomarkers
 from ..external.regeneron_rules import REGENERON_TRIALS, evaluate as evaluate_regeneron
 from ..external.trials import CTGovStudy, fetch_melanoma_trials
 from ..models import (
+    BiomarkerChip,
+    ClinicianIntake,
     CohortSnapshot,
+    EnrichedBiomarkers,
     MelanomaCase,
     Mutation,
     PathologyFindings,
@@ -61,6 +66,7 @@ class MelanomaOrchestrator:
     bus: EventBus = field(default_factory=EventBus)
     hla_allele: str = DEFAULT_HLA
     tcga_patient_id: str | None = None
+    intake: ClinicianIntake | None = None
 
     async def run(self) -> MelanomaCase:
         set_current_bus(self.bus)
@@ -94,8 +100,56 @@ class MelanomaOrchestrator:
                 EventKind.CASE_UPDATE, "mutations", {"mutations": [m.model_dump() for m in mutations]}
             )
 
-            # 3. NCCN walker
-            tmb = _estimate_tmb(mutations)
+            # 2b. Enrichment (TMB + UV signature + cBioPortal prior therapy)
+            await self.bus.emit(EventKind.TOOL_START, "🧪 Enriching biomarkers")
+            try:
+                enrichment = await enrich_biomarkers(
+                    mutations=mutations,
+                    vcf_path=self.vcf_path if self.vcf_path and self.vcf_path.exists() else None,
+                    tcga_submitter_id=self.tcga_patient_id,
+                )
+            except Exception as e:
+                await self.bus.emit(EventKind.LOG, f"Enrichment partial: {e}")
+                enrichment = EnrichedBiomarkers()
+            case.enrichment = enrichment
+            # Fall back to the curated demo registry when no clinician-entered
+            # intake came through (CLI path, blank Streamlit form). Only fires
+            # for the handful of submitter ids in DEMO_INTAKE — every other
+            # patient still lands in needs_more_data as a real clinician would
+            # expect. The identity of this object is later used by
+            # _build_biomarker_chips to tag chips as curated.
+            intake = self.intake or demo_intake.get(self.tcga_patient_id)
+            if intake is not None:
+                case.intake = intake
+                # LAG-3 IHC: intake is the only source — copy onto pathology so
+                # the NCCN walker's evidence_for() hasattr lookup and the
+                # molecular panel both read one canonical location.
+                if intake.lag3_ihc_percent is not None:
+                    case.pathology.lag3_ihc_percent = intake.lag3_ihc_percent
+            case.biomarker_chips = _build_biomarker_chips(case.pathology, enrichment, case.intake)
+            await self.bus.emit(
+                EventKind.ENRICHMENT_READY,
+                _enrichment_label(enrichment),
+                {
+                    "enrichment": enrichment.model_dump(),
+                    "biomarker_chips": [c.model_dump() for c in case.biomarker_chips],
+                },
+            )
+            await self.bus.emit(
+                EventKind.CASE_UPDATE,
+                "enrichment",
+                {
+                    "enrichment": enrichment.model_dump(),
+                    "biomarker_chips": [c.model_dump() for c in case.biomarker_chips],
+                    "pathology": case.pathology.model_dump(),
+                    "intake": case.intake.model_dump() if case.intake else None,
+                },
+            )
+
+            # 3. NCCN walker — TMB from enrichment (exome denom) replaces the
+            # naive missense-count heuristic so downstream IO-vs-chemo branches
+            # route off a real mut/Mb value.
+            tmb = enrichment.tmb_mut_per_mb if enrichment.tmb_mut_per_mb is not None else _estimate_tmb(mutations)
             state = PatientState(pathology=pathology, mutations=mutations, tumor_mutational_burden=tmb)
             walker = NCCNWalker(state=state)
             async for step in walker.walk():
@@ -110,8 +164,11 @@ class MelanomaOrchestrator:
             )
 
             # 4. Molecular landscape (Panel 2) and 5. Vaccine pipeline (Panel 3) in parallel
-            wants_vaccine = any(s.node_id == "VACCINE_CANDIDATE" and "Yes" in s.chosen_option for s in case.nccn_path) \
-                or any(s.node_id == "FINAL" for s in case.nccn_path)
+            # Panel 3 fires whenever we have mutations — the candidate peptides are
+            # always informative even when the NCCN walk terminates early (e.g.
+            # REBIOPSY when the slide is too faded for the VLM to confirm melanoma).
+            # The walker's clinical recommendation is shown independently.
+            wants_vaccine = bool(mutations)
 
             molecular_task = asyncio.create_task(build_landscape(mutations))
             trials_task = asyncio.create_task(self._match_trials(case))
@@ -372,6 +429,98 @@ def _estimate_tmb(mutations: list[Mutation]) -> float:
     """Crude proxy: missense count / 1 Mb. Real TMB needs full-exome context;
     this is enough for the demo to drive 'high TMB' branches when relevant."""
     return float(len(mutations))
+
+
+def _enrichment_label(enrichment: EnrichedBiomarkers) -> str:
+    parts: list[str] = []
+    if enrichment.tmb_mut_per_mb is not None:
+        parts.append(f"TMB {enrichment.tmb_mut_per_mb:.1f} mut/Mb")
+    if enrichment.uv_signature_fraction is not None:
+        parts.append(f"UV {enrichment.uv_signature_fraction:.0%}")
+    if enrichment.prior_systemic_therapies:
+        parts.append(f"{len(enrichment.prior_systemic_therapies)} prior Rx")
+    return "🧪 " + " · ".join(parts) if parts else "🧪 Enrichment: no signals"
+
+
+def _build_biomarker_chips(
+    pathology: PathologyFindings,
+    enrichment: EnrichedBiomarkers,
+    intake: ClinicianIntake | None,
+) -> list[BiomarkerChip]:
+    """Normalize VLM + TCGA/VCF + intake datapoints into a single chip list.
+
+    The provenance tag lets the UI colour each chip by source so clinicians
+    can tell what came from the slide vs. the molecular pipeline vs. their
+    own form entry."""
+    chips: list[BiomarkerChip] = []
+
+    # VLM-derived (from pathology slide)
+    if pathology.pdl1_estimate != "unknown":
+        chips.append(BiomarkerChip(
+            label="PD-L1",
+            value=pathology.pdl1_estimate,
+            source="vlm",
+            tooltip="Estimated from H&E slide by the VLM",
+        ))
+    if pathology.tils_present != "unknown":
+        chips.append(BiomarkerChip(
+            label="TILs",
+            value=pathology.tils_present.replace("_", " "),
+            source="vlm",
+            tooltip="Tumour-infiltrating lymphocytes — slide read",
+        ))
+
+    # VCF/computed
+    if enrichment.tmb_mut_per_mb is not None:
+        chips.append(BiomarkerChip(
+            label="TMB",
+            value=f"{enrichment.tmb_mut_per_mb:.1f} mut/Mb",
+            source="vcf",
+            tooltip="Tumour mutational burden — missense count / 30 Mb exome",
+        ))
+    if enrichment.uv_signature_fraction is not None:
+        chips.append(BiomarkerChip(
+            label="UV signature",
+            value=f"{enrichment.uv_signature_fraction:.0%}",
+            source="vcf",
+            tooltip=f"Fraction of SNVs matching SBS7 (n={enrichment.total_snvs_scored})",
+        ))
+
+    # cBioPortal
+    if enrichment.prior_anti_pd1 is not None:
+        chips.append(BiomarkerChip(
+            label="Prior anti-PD-1",
+            value="yes" if enrichment.prior_anti_pd1 else "no",
+            source="cbioportal",
+            tooltip="Derived from cBioPortal skcm_tcga clinical record",
+        ))
+
+    # Clinician intake. Curated demo patients flow through the same block but
+    # get a distinct "curated_demo" source so the UI can render a dashed/muted
+    # badge and nothing looks like real patient data.
+    if intake is not None:
+        src = "curated_demo" if demo_intake.is_curated(intake) else "intake"
+        src_tip = (
+            "Hand-curated demo data — not from a patient record"
+            if src == "curated_demo"
+            else "Clinician intake (LAG-3 IHC not extractable from H&E)"
+        )
+        if intake.lag3_ihc_percent is not None:
+            chips.append(BiomarkerChip(
+                label="LAG-3 IHC",
+                value=f"{intake.lag3_ihc_percent:.0f}%",
+                source=src,
+                tooltip=src_tip,
+            ))
+        if intake.ecog is not None:
+            chips.append(BiomarkerChip(
+                label="ECOG",
+                value=str(intake.ecog),
+                source=src,
+                tooltip=src_tip if src == "curated_demo" else None,
+            ))
+
+    return chips
 
 
 def _median_survival(curve) -> int | None:

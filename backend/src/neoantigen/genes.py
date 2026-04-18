@@ -31,6 +31,14 @@ GENE_TO_UNIPROT: dict[str, str] = {
     "NOTCH1": "P46531",
     "JAK2": "O60674",
     "FLT3": "P36888",
+    # BNT111 shared-antigen set (NCT04526899, Regeneron + BioNTech partnership).
+    # Kept here so a patient with an actual mutation in one of these antigens
+    # doesn't `KeyError` the pipeline — and so the vaccine panel can tag the
+    # overlap without a separate lookup table.
+    "TYR": "P14679",       # Tyrosinase — melanocyte differentiation antigen
+    "MAGEA3": "P43357",    # MAGE-A3 — cancer-testis antigen
+    "CTAG1B": "P78358",    # NY-ESO-1 — cancer-testis antigen
+    "TPTE": "P56180",      # TPTE — melanoma-associated testis antigen
 }
 
 

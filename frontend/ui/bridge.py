@@ -23,6 +23,7 @@ def run_agent_in_background(
     event_q: queue.Queue,
     bus_holder: dict,
     tcga_patient_id: str | None = None,
+    intake: "ClinicianIntake | None" = None,  # type: ignore[name-defined]
 ) -> None:
     async def _bridge():
         bus = EventBus()
@@ -32,6 +33,7 @@ def run_agent_in_background(
             vcf_path=vcf_path,
             bus=bus,
             tcga_patient_id=tcga_patient_id,
+            intake=intake,
         )
 
         async def _drain():
@@ -72,9 +74,28 @@ def drain_queue() -> bool:
     return done
 
 
+# Map event kind → human label for the right-rail "current step" indicator.
+# Only steps that meaningfully advance the agent's state appear here.
+_STEP_LABELS: dict[EventKind, str] = {
+    EventKind.VLM_FINDING: "Pathology read",
+    EventKind.NCCN_NODE_VISITED: "NCCN walker",
+    EventKind.NCCN_PATH_COMPLETE: "NCCN walk complete",
+    EventKind.MOLECULE_READY: "Molecular landscape",
+    EventKind.DRUG_COMPLEX_READY: "Drug co-crystals",
+    EventKind.PIPELINE_RESULT: "Vaccine pipeline",
+    EventKind.STRUCTURE_READY: "HLA docking",
+    EventKind.COHORT_TWINS_READY: "Twin matching",
+    EventKind.SURVIVAL_CURVE_READY: "Survival analysis",
+    EventKind.TRIAL_MATCHES_READY: "Clinical trials",
+    EventKind.RAG_CITATIONS: "Literature lookup",
+}
+
+
 def ingest_event(ev: AgentEvent) -> None:
     """Route event into the right pieces of session state for live rendering."""
     p = ev.payload
+    if ev.kind in _STEP_LABELS:
+        st.session_state.live_step_label = _STEP_LABELS[ev.kind]
     if ev.kind == EventKind.THINKING_DELTA:
         node = p.get("node_id")
         if node != st.session_state.live_thinking_node:
@@ -87,6 +108,9 @@ def ingest_event(ev: AgentEvent) -> None:
         st.session_state.live_thinking_node = None
     elif ev.kind == EventKind.VLM_FINDING:
         st.session_state.pathology = p.get("findings")
+        st.session_state.pathology_slide_path = p.get("slide_path")
+        st.session_state.pathology_thinking = p.get("thinking", "")
+        st.session_state.pathology_raw = p.get("raw_response", "")
     elif ev.kind == EventKind.MOLECULE_READY:
         st.session_state.molecules.append(p.get("view"))
     elif ev.kind == EventKind.PIPELINE_RESULT:
@@ -95,6 +119,10 @@ def ingest_event(ev: AgentEvent) -> None:
         st.session_state.poses.append(p.get("pose"))
     elif ev.kind == EventKind.CASE_UPDATE and "mutations" in p:
         st.session_state.mutations = p.get("mutations", [])
+    elif ev.kind == EventKind.CASE_UPDATE and p.get("biomarker_chips") is not None:
+        st.session_state.biomarker_chips = p.get("biomarker_chips", [])
+        if p.get("pathology") is not None:
+            st.session_state.pathology = p.get("pathology")
     elif ev.kind == EventKind.RAG_CITATIONS:
         nid = p.get("node_id")
         if nid:
@@ -113,9 +141,21 @@ def ingest_event(ev: AgentEvent) -> None:
         st.session_state.cohort = cohort
     elif ev.kind == EventKind.TRIAL_MATCHES_READY:
         st.session_state.trials = p.get("trials", [])
+    elif ev.kind == EventKind.ENRICHMENT_READY:
+        st.session_state.enrichment = p.get("enrichment")
+        st.session_state.biomarker_chips = p.get("biomarker_chips", [])
     elif ev.kind == EventKind.DONE:
         if "case" in p:
             st.session_state.final_case = p["case"]
+    elif ev.kind == EventKind.TOOL_ERROR:
+        # Surface chat-thread failures into the assistant bubble so the user
+        # sees what went wrong instead of a silently-empty response.
+        if st.session_state.case_chat_streaming:
+            st.session_state.case_chat_buf_answer += (
+                f"\n\n⚠ **Chat error:** {ev.label}\n\n"
+                "Check `K2_API_KEY` in `backend/.env` and the Streamlit log "
+                "for the full traceback."
+            )
     elif ev.kind == EventKind.CHAT_THINKING_DELTA:
         st.session_state.case_chat_buf_thinking += p.get("delta", "")
     elif ev.kind == EventKind.CHAT_ANSWER_DELTA:
@@ -128,6 +168,8 @@ def ingest_event(ev: AgentEvent) -> None:
     elif ev.kind == EventKind.CHAT_UI_FOCUS:
         focus = p.get("focus") or ""
         panel = p.get("panel")
+        st.session_state.focus_panel = panel
+        st.session_state.focus_target = focus
         if panel == 1 and focus:
             st.session_state.selected_node = focus
     elif ev.kind == EventKind.CHAT_DONE:

@@ -182,3 +182,270 @@ pdl1_estimate
 2026-04-18 02:31:47,868 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
 2026-04-18 02:31:47,871 [INFO] neoantigen.llm: call schema=PathologyFindings images=1 user_len=216
 2026-04-18 02:31:50,548 [INFO] neoantigen.llm: call response schema=PathologyFindings len=1758
+2026-04-18 02:33:50,476 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+2026-04-18 02:33:50,670 [INFO] neoantigen.llm: stream_with_thinking start user_len=557 images=0
+2026-04-18 02:33:53,787 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 02:33:53,787 [INFO] neoantigen.llm: stream_with_thinking start user_len=470 images=0
+2026-04-18 02:33:56,781 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 02:33:56,781 [INFO] neoantigen.llm: stream_with_thinking start user_len=742 images=0
+2026-04-18 02:33:59,777 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 02:33:59,777 [INFO] neoantigen.llm: stream_with_thinking start user_len=414 images=0
+2026-04-18 02:34:02,776 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 02:34:02,776 [INFO] neoantigen.llm: stream_with_thinking start user_len=4111 images=0
+2026-04-18 02:34:04,095 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 02:34:04,096 [INFO] neoantigen.llm: stream_with_thinking start user_len=4336 images=0
+2026-04-18 02:34:07,187 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 02:34:07,188 [INFO] neoantigen.llm: stream_with_thinking start user_len=4276 images=0
+2026-04-18 02:34:10,279 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 02:45:46,547 [INFO] neoantigen.llm: stream_with_thinking start user_len=557 images=0
+2026-04-18 02:45:49,583 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 02:46:10,900 [INFO] neoantigen.llm: stream_with_thinking start user_len=557 images=0
+2026-04-18 02:46:13,881 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 02:46:13,882 [INFO] neoantigen.llm: stream_with_thinking start user_len=470 images=0
+2026-04-18 02:46:16,878 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 02:46:16,878 [INFO] neoantigen.llm: stream_with_thinking start user_len=742 images=0
+2026-04-18 02:46:19,877 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 02:46:19,877 [INFO] neoantigen.llm: stream_with_thinking start user_len=461 images=0
+2026-04-18 02:46:21,955 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 02:46:21,956 [INFO] neoantigen.llm: stream_with_thinking start user_len=4111 images=0
+2026-04-18 02:46:24,151 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 02:46:24,151 [INFO] neoantigen.llm: stream_with_thinking start user_len=4336 images=0
+2026-04-18 02:46:27,238 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 02:46:27,239 [INFO] neoantigen.llm: stream_with_thinking start user_len=4276 images=0
+2026-04-18 02:46:30,323 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 02:49:49,699 [INFO] neoantigen.llm: call schema=PathologyFindings images=1 user_len=216
+2026-04-18 02:49:53,892 [INFO] neoantigen.llm: call response schema=PathologyFindings len=3125
+2026-04-18 02:49:53,925 [INFO] neoantigen.llm: stream_with_thinking start user_len=529 images=0
+2026-04-18 02:49:55,479 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 02:53:33,723 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+2026-04-18 02:53:33,725 [INFO] neoantigen.llm: call schema=PathologyFindings images=1 user_len=216
+2026-04-18 02:53:40,614 [INFO] neoantigen.llm: call response schema=PathologyFindings len=5130
+2026-04-18 02:53:43,988 [INFO] neoantigen.llm: stream_with_thinking start user_len=455 images=0
+2026-04-18 02:53:46,237 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 02:57:58,208 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+2026-04-18 02:57:58,210 [INFO] neoantigen.llm: call schema=PathologyFindings images=1 user_len=216
+2026-04-18 02:58:06,889 [INFO] neoantigen.llm: call response schema=PathologyFindings len=6464
+2026-04-18 02:58:07,160 [INFO] neoantigen.llm: stream_with_thinking start user_len=455 images=0
+2026-04-18 02:58:10,148 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 02:59:06,791 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+2026-04-18 02:59:06,795 [INFO] neoantigen.llm: call schema=PathologyFindings images=1 user_len=216
+2026-04-18 02:59:11,720 [INFO] neoantigen.llm: call response schema=PathologyFindings len=3736
+2026-04-18 02:59:38,620 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+2026-04-18 02:59:38,826 [INFO] neoantigen.llm: stream_with_thinking start user_len=469 images=0
+2026-04-18 02:59:41,915 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 02:59:41,915 [INFO] neoantigen.llm: stream_with_thinking start user_len=471 images=0
+2026-04-18 02:59:44,921 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 02:59:44,922 [INFO] neoantigen.llm: stream_with_thinking start user_len=726 images=0
+2026-04-18 02:59:47,923 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 02:59:47,924 [INFO] neoantigen.llm: stream_with_thinking start user_len=515 images=0
+2026-04-18 02:59:51,005 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 02:59:51,005 [INFO] neoantigen.llm: stream_with_thinking start user_len=406 images=0
+2026-04-18 02:59:51,955 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 02:59:51,955 [INFO] neoantigen.llm: stream_with_thinking start user_len=650 images=0
+2026-04-18 02:59:54,965 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 02:59:54,966 [INFO] neoantigen.llm: stream_with_thinking start user_len=562 images=0
+2026-04-18 02:59:57,914 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 03:01:30,435 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+2026-04-18 03:01:30,438 [INFO] neoantigen.llm: call schema=PathologyFindings images=1 user_len=216
+2026-04-18 03:01:36,612 [INFO] neoantigen.llm: call response schema=PathologyFindings len=4351
+2026-04-18 03:01:36,960 [INFO] neoantigen.llm: stream_with_thinking start user_len=455 images=0
+2026-04-18 03:01:39,952 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 03:01:43,506 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+2026-04-18 03:01:43,510 [INFO] neoantigen.llm: call schema=PathologyFindings images=1 user_len=216
+2026-04-18 03:01:48,196 [INFO] neoantigen.llm: call response schema=PathologyFindings len=3327
+2026-04-18 03:01:48,697 [INFO] neoantigen.llm: stream_with_thinking start user_len=455 images=0
+2026-04-18 03:01:50,825 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 03:01:56,761 [INFO] neoantigen.llm: call schema=PathologyFindings images=1 user_len=216
+2026-04-18 03:02:03,272 [INFO] neoantigen.llm: call response schema=PathologyFindings len=4649
+2026-04-18 03:02:03,463 [INFO] neoantigen.llm: stream_with_thinking start user_len=455 images=0
+2026-04-18 03:02:05,588 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 03:02:09,737 [INFO] neoantigen.llm: call schema=PathologyFindings images=1 user_len=216
+2026-04-18 03:02:19,399 [INFO] neoantigen.llm: call response schema=PathologyFindings len=6981
+2026-04-18 03:02:19,580 [INFO] neoantigen.llm: stream_with_thinking start user_len=470 images=0
+2026-04-18 03:02:22,570 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 03:02:22,571 [INFO] neoantigen.llm: stream_with_thinking start user_len=471 images=0
+2026-04-18 03:02:24,075 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 03:02:24,076 [INFO] neoantigen.llm: stream_with_thinking start user_len=706 images=0
+2026-04-18 03:02:27,082 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 03:02:27,083 [INFO] neoantigen.llm: stream_with_thinking start user_len=415 images=0
+2026-04-18 03:02:30,078 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 03:02:30,080 [INFO] neoantigen.llm: stream_with_thinking start user_len=12387 images=0
+2026-04-18 03:02:30,135 [ERROR] neoantigen.llm: stream HTTP error: BadRequestError: Error code: 400 - {'error': {'message': "This model's maximum context length is 8192 tokens. However, you requested 600 output tokens and your prompt contains at least 7593 input tokens, for a total of at least 8193 tokens. Please reduce the length of the input prompt or the number of requested output tokens. (parameter=input_tokens, value=7593)", 'type': 'BadRequestError', 'param': 'input_tokens', 'code': 400}}
+2026-04-18 03:02:30,137 [INFO] neoantigen.llm: stream_with_thinking start user_len=12633 images=0
+2026-04-18 03:02:30,648 [ERROR] neoantigen.llm: stream HTTP error: BadRequestError: Error code: 400 - {'error': {'message': "This model's maximum context length is 8192 tokens. However, you requested 600 output tokens and your prompt contains at least 7593 input tokens, for a total of at least 8193 tokens. Please reduce the length of the input prompt or the number of requested output tokens. (parameter=input_tokens, value=7593)", 'type': 'BadRequestError', 'param': 'input_tokens', 'code': 400}}
+2026-04-18 03:02:30,650 [INFO] neoantigen.llm: stream_with_thinking start user_len=12547 images=0
+2026-04-18 03:02:31,111 [ERROR] neoantigen.llm: stream HTTP error: BadRequestError: Error code: 400 - {'error': {'message': "This model's maximum context length is 8192 tokens. However, you requested 600 output tokens and your prompt contains at least 7593 input tokens, for a total of at least 8193 tokens. Please reduce the length of the input prompt or the number of requested output tokens. (parameter=input_tokens, value=7593)", 'type': 'BadRequestError', 'param': 'input_tokens', 'code': 400}}
+2026-04-18 03:02:33,087 [INFO] neoantigen.llm: call schema=PathologyFindings images=1 user_len=216
+2026-04-18 03:02:41,334 [INFO] neoantigen.llm: call response schema=PathologyFindings len=6231
+2026-04-18 03:02:41,678 [INFO] neoantigen.llm: stream_with_thinking start user_len=456 images=0
+2026-04-18 03:02:44,688 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 03:02:44,688 [INFO] neoantigen.llm: stream_with_thinking start user_len=471 images=0
+2026-04-18 03:02:47,579 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 03:02:47,580 [INFO] neoantigen.llm: stream_with_thinking start user_len=765 images=0
+2026-04-18 03:02:50,600 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 03:02:50,601 [INFO] neoantigen.llm: stream_with_thinking start user_len=415 images=0
+2026-04-18 03:02:53,595 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 03:02:53,596 [INFO] neoantigen.llm: stream_with_thinking start user_len=8489 images=0
+2026-04-18 03:02:56,050 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 03:02:56,051 [INFO] neoantigen.llm: stream_with_thinking start user_len=8735 images=0
+2026-04-18 03:02:59,391 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 03:02:59,394 [INFO] neoantigen.llm: stream_with_thinking start user_len=8649 images=0
+2026-04-18 03:03:02,735 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 03:03:08,298 [INFO] neoantigen.llm: call schema=PathologyFindings images=1 user_len=216
+2026-04-18 03:03:15,027 [INFO] neoantigen.llm: call response schema=PathologyFindings len=4851
+2026-04-18 03:03:15,206 [INFO] neoantigen.llm: stream_with_thinking start user_len=469 images=0
+2026-04-18 03:03:18,193 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 03:03:18,193 [INFO] neoantigen.llm: stream_with_thinking start user_len=471 images=0
+2026-04-18 03:03:21,180 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 03:03:21,181 [INFO] neoantigen.llm: stream_with_thinking start user_len=703 images=0
+2026-04-18 03:03:24,183 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 03:03:24,184 [INFO] neoantigen.llm: stream_with_thinking start user_len=415 images=0
+2026-04-18 03:03:27,098 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 03:03:30,010 [INFO] neoantigen.llm: call schema=PathologyFindings images=1 user_len=216
+2026-04-18 03:03:38,097 [INFO] neoantigen.llm: call response schema=PathologyFindings len=6036
+2026-04-18 03:03:38,255 [INFO] neoantigen.llm: stream_with_thinking start user_len=455 images=0
+2026-04-18 03:03:39,642 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 03:03:51,696 [INFO] neoantigen.llm: call schema=PathologyFindings images=1 user_len=216
+2026-04-18 03:03:58,341 [INFO] neoantigen.llm: call response schema=PathologyFindings len=4927
+2026-04-18 03:03:58,516 [INFO] neoantigen.llm: stream_with_thinking start user_len=455 images=0
+2026-04-18 03:04:00,002 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 03:04:15,805 [INFO] neoantigen.llm: call schema=PathologyFindings images=1 user_len=216
+2026-04-18 03:04:22,995 [INFO] neoantigen.llm: call response schema=PathologyFindings len=4750
+2026-04-18 03:04:23,181 [INFO] neoantigen.llm: stream_with_thinking start user_len=456 images=0
+2026-04-18 03:04:26,168 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 03:04:26,169 [INFO] neoantigen.llm: stream_with_thinking start user_len=471 images=0
+2026-04-18 03:04:29,160 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 03:04:29,160 [INFO] neoantigen.llm: stream_with_thinking start user_len=723 images=0
+2026-04-18 03:04:32,164 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 03:04:32,164 [INFO] neoantigen.llm: stream_with_thinking start user_len=441 images=0
+2026-04-18 03:04:35,168 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 03:04:35,169 [INFO] neoantigen.llm: stream_with_thinking start user_len=14303 images=0
+2026-04-18 03:04:35,237 [ERROR] neoantigen.llm: stream HTTP error: BadRequestError: Error code: 400 - {'error': {'message': "This model's maximum context length is 8192 tokens. However, you requested 600 output tokens and your prompt contains at least 7593 input tokens, for a total of at least 8193 tokens. Please reduce the length of the input prompt or the number of requested output tokens. (parameter=input_tokens, value=7593)", 'type': 'BadRequestError', 'param': 'input_tokens', 'code': 400}}
+2026-04-18 03:04:35,238 [INFO] neoantigen.llm: stream_with_thinking start user_len=14553 images=0
+2026-04-18 03:04:35,757 [ERROR] neoantigen.llm: stream HTTP error: BadRequestError: Error code: 400 - {'error': {'message': "This model's maximum context length is 8192 tokens. However, you requested 600 output tokens and your prompt contains at least 7593 input tokens, for a total of at least 8193 tokens. Please reduce the length of the input prompt or the number of requested output tokens. (parameter=input_tokens, value=7593)", 'type': 'BadRequestError', 'param': 'input_tokens', 'code': 400}}
+2026-04-18 03:04:35,760 [INFO] neoantigen.llm: stream_with_thinking start user_len=14463 images=0
+2026-04-18 03:04:36,312 [ERROR] neoantigen.llm: stream HTTP error: BadRequestError: Error code: 400 - {'error': {'message': "This model's maximum context length is 8192 tokens. However, you requested 600 output tokens and your prompt contains at least 7593 input tokens, for a total of at least 8193 tokens. Please reduce the length of the input prompt or the number of requested output tokens. (parameter=input_tokens, value=7593)", 'type': 'BadRequestError', 'param': 'input_tokens', 'code': 400}}
+2026-04-18 03:05:14,061 [INFO] neoantigen.llm: call schema=PathologyFindings images=1 user_len=216
+2026-04-18 03:05:21,291 [INFO] neoantigen.llm: call response schema=PathologyFindings len=5542
+2026-04-18 03:05:21,473 [INFO] neoantigen.llm: stream_with_thinking start user_len=455 images=0
+2026-04-18 03:05:24,481 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 03:05:24,481 [INFO] neoantigen.llm: stream_with_thinking start user_len=476 images=0
+2026-04-18 03:05:27,479 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 03:05:27,479 [INFO] neoantigen.llm: stream_with_thinking start user_len=888 images=0
+2026-04-18 03:05:30,484 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 03:05:30,485 [INFO] neoantigen.llm: stream_with_thinking start user_len=601 images=0
+2026-04-18 03:05:33,492 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 03:05:33,493 [INFO] neoantigen.llm: stream_with_thinking start user_len=610 images=0
+2026-04-18 03:05:36,498 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 03:05:36,498 [INFO] neoantigen.llm: stream_with_thinking start user_len=9423 images=0
+2026-04-18 03:05:38,263 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 03:05:38,265 [INFO] neoantigen.llm: stream_with_thinking start user_len=9777 images=0
+2026-04-18 03:05:41,541 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 03:05:41,541 [INFO] neoantigen.llm: stream_with_thinking start user_len=9586 images=0
+2026-04-18 03:05:44,819 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 03:05:46,734 [INFO] neoantigen.llm: call schema=PathologyFindings images=1 user_len=216
+2026-04-18 03:05:53,243 [INFO] neoantigen.llm: call response schema=PathologyFindings len=5179
+2026-04-18 03:05:53,529 [INFO] neoantigen.llm: stream_with_thinking start user_len=455 images=0
+2026-04-18 03:05:54,838 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 03:06:05,130 [INFO] neoantigen.llm: call schema=PathologyFindings images=1 user_len=216
+2026-04-18 03:06:15,483 [INFO] neoantigen.llm: call response schema=PathologyFindings len=8255
+2026-04-18 03:06:15,650 [INFO] neoantigen.llm: stream_with_thinking start user_len=469 images=0
+2026-04-18 03:06:17,589 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 03:06:18,976 [INFO] neoantigen.llm: call schema=PathologyFindings images=1 user_len=216
+2026-04-18 03:06:25,068 [INFO] neoantigen.llm: call response schema=PathologyFindings len=4482
+2026-04-18 03:06:25,219 [INFO] neoantigen.llm: stream_with_thinking start user_len=455 images=0
+2026-04-18 03:06:27,275 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 03:06:33,035 [INFO] neoantigen.llm: call schema=PathologyFindings images=1 user_len=216
+2026-04-18 03:06:40,081 [INFO] neoantigen.llm: call response schema=PathologyFindings len=5333
+2026-04-18 03:06:40,290 [INFO] neoantigen.llm: stream_with_thinking start user_len=469 images=0
+2026-04-18 03:06:41,572 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 03:06:41,573 [INFO] neoantigen.llm: stream_with_thinking start user_len=473 images=0
+2026-04-18 03:06:44,571 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 03:06:44,571 [INFO] neoantigen.llm: stream_with_thinking start user_len=1106 images=0
+2026-04-18 03:06:47,574 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 03:06:47,575 [INFO] neoantigen.llm: stream_with_thinking start user_len=417 images=0
+2026-04-18 03:06:50,575 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 03:06:50,577 [INFO] neoantigen.llm: stream_with_thinking start user_len=11533 images=0
+2026-04-18 03:06:50,628 [ERROR] neoantigen.llm: stream HTTP error: BadRequestError: Error code: 400 - {'error': {'message': "This model's maximum context length is 8192 tokens. However, you requested 600 output tokens and your prompt contains at least 7593 input tokens, for a total of at least 8193 tokens. Please reduce the length of the input prompt or the number of requested output tokens. (parameter=input_tokens, value=7593)", 'type': 'BadRequestError', 'param': 'input_tokens', 'code': 400}}
+2026-04-18 03:06:50,630 [INFO] neoantigen.llm: stream_with_thinking start user_len=11783 images=0
+2026-04-18 03:06:51,183 [ERROR] neoantigen.llm: stream HTTP error: BadRequestError: Error code: 400 - {'error': {'message': "This model's maximum context length is 8192 tokens. However, you requested 600 output tokens and your prompt contains at least 7593 input tokens, for a total of at least 8193 tokens. Please reduce the length of the input prompt or the number of requested output tokens. (parameter=input_tokens, value=7593)", 'type': 'BadRequestError', 'param': 'input_tokens', 'code': 400}}
+2026-04-18 03:06:51,185 [INFO] neoantigen.llm: stream_with_thinking start user_len=11693 images=0
+2026-04-18 03:06:51,692 [ERROR] neoantigen.llm: stream HTTP error: BadRequestError: Error code: 400 - {'error': {'message': "This model's maximum context length is 8192 tokens. However, you requested 600 output tokens and your prompt contains at least 7593 input tokens, for a total of at least 8193 tokens. Please reduce the length of the input prompt or the number of requested output tokens. (parameter=input_tokens, value=7593)", 'type': 'BadRequestError', 'param': 'input_tokens', 'code': 400}}
+2026-04-18 03:07:20,208 [INFO] neoantigen.llm: call schema=PathologyFindings images=1 user_len=216
+2026-04-18 03:07:24,604 [INFO] neoantigen.llm: call response schema=PathologyFindings len=3101
+2026-04-18 03:07:24,891 [INFO] neoantigen.llm: stream_with_thinking start user_len=469 images=0
+2026-04-18 03:07:26,439 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 03:07:36,581 [INFO] neoantigen.llm: stream_with_thinking start user_len=469 images=0
+2026-04-18 03:07:38,186 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 03:07:43,187 [INFO] neoantigen.llm: call schema=PathologyFindings images=1 user_len=216
+2026-04-18 03:07:47,889 [INFO] neoantigen.llm: call response schema=PathologyFindings len=4053
+2026-04-18 03:07:48,040 [INFO] neoantigen.llm: stream_with_thinking start user_len=456 images=0
+2026-04-18 03:07:51,025 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 03:07:51,028 [INFO] neoantigen.llm: stream_with_thinking start user_len=471 images=0
+2026-04-18 03:07:54,026 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 03:07:54,026 [INFO] neoantigen.llm: stream_with_thinking start user_len=1128 images=0
+2026-04-18 03:07:57,028 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 03:07:57,029 [INFO] neoantigen.llm: stream_with_thinking start user_len=846 images=0
+2026-04-18 03:07:58,372 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 03:07:58,372 [INFO] neoantigen.llm: stream_with_thinking start user_len=9843 images=0
+2026-04-18 03:07:59,970 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 03:07:59,972 [INFO] neoantigen.llm: stream_with_thinking start user_len=10199 images=0
+2026-04-18 03:08:03,269 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 03:08:03,272 [INFO] neoantigen.llm: stream_with_thinking start user_len=10007 images=0
+2026-04-18 03:08:06,559 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 03:08:40,110 [INFO] neoantigen.llm: call schema=PathologyFindings images=1 user_len=216
+2026-04-18 03:08:46,401 [INFO] neoantigen.llm: call response schema=PathologyFindings len=4792
+2026-04-18 03:08:46,764 [INFO] neoantigen.llm: stream_with_thinking start user_len=455 images=0
+2026-04-18 03:08:48,332 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 03:08:48,332 [INFO] neoantigen.llm: stream_with_thinking start user_len=476 images=0
+2026-04-18 03:08:51,332 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 03:08:51,333 [INFO] neoantigen.llm: stream_with_thinking start user_len=826 images=0
+2026-04-18 03:08:54,338 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 03:08:54,339 [INFO] neoantigen.llm: stream_with_thinking start user_len=539 images=0
+2026-04-18 03:08:56,619 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 03:08:56,620 [INFO] neoantigen.llm: stream_with_thinking start user_len=8295 images=0
+2026-04-18 03:08:58,550 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 03:08:58,551 [INFO] neoantigen.llm: stream_with_thinking start user_len=8543 images=0
+2026-04-18 03:09:01,788 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 03:09:01,788 [INFO] neoantigen.llm: stream_with_thinking start user_len=8454 images=0
+2026-04-18 03:09:05,027 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 03:09:25,145 [INFO] neoantigen.llm: call schema=PathologyFindings images=1 user_len=216
+2026-04-18 03:09:30,579 [INFO] neoantigen.llm: call response schema=PathologyFindings len=3931
+2026-04-18 03:09:30,770 [INFO] neoantigen.llm: stream_with_thinking start user_len=455 images=0
+2026-04-18 03:09:33,757 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 03:09:33,757 [INFO] neoantigen.llm: stream_with_thinking start user_len=473 images=0
+2026-04-18 03:09:36,758 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 03:09:36,759 [INFO] neoantigen.llm: stream_with_thinking start user_len=815 images=0
+2026-04-18 03:09:39,760 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 03:09:39,760 [INFO] neoantigen.llm: stream_with_thinking start user_len=417 images=0
+2026-04-18 03:09:42,760 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 03:09:42,766 [INFO] neoantigen.llm: stream_with_thinking start user_len=49632 images=0
+2026-04-18 03:09:42,865 [ERROR] neoantigen.llm: stream HTTP error: BadRequestError: Error code: 400 - {'error': {'message': "This model's maximum context length is 8192 tokens. However, you requested 600 output tokens and your prompt contains at least 7593 input tokens, for a total of at least 8193 tokens. Please reduce the length of the input prompt or the number of requested output tokens. (parameter=input_tokens, value=7593)", 'type': 'BadRequestError', 'param': 'input_tokens', 'code': 400}}
+2026-04-18 03:09:42,884 [INFO] neoantigen.llm: stream_with_thinking start user_len=49883 images=0
+2026-04-18 03:09:42,991 [ERROR] neoantigen.llm: stream HTTP error: BadRequestError: Error code: 400 - {'error': {'message': "This model's maximum context length is 8192 tokens. However, you requested 600 output tokens and your prompt contains at least 7593 input tokens, for a total of at least 8193 tokens. Please reduce the length of the input prompt or the number of requested output tokens. (parameter=input_tokens, value=7593)", 'type': 'BadRequestError', 'param': 'input_tokens', 'code': 400}}
+2026-04-18 03:09:42,996 [INFO] neoantigen.llm: stream_with_thinking start user_len=49793 images=0
+2026-04-18 03:09:43,506 [ERROR] neoantigen.llm: stream HTTP error: BadRequestError: Error code: 400 - {'error': {'message': "This model's maximum context length is 8192 tokens. However, you requested 600 output tokens and your prompt contains at least 7593 input tokens, for a total of at least 8193 tokens. Please reduce the length of the input prompt or the number of requested output tokens. (parameter=input_tokens, value=7593)", 'type': 'BadRequestError', 'param': 'input_tokens', 'code': 400}}
+2026-04-18 03:10:21,234 [INFO] neoantigen.llm: call schema=PathologyFindings images=1 user_len=216
+2026-04-18 03:10:29,205 [INFO] neoantigen.llm: call response schema=PathologyFindings len=5821
+2026-04-18 03:10:29,416 [INFO] neoantigen.llm: stream_with_thinking start user_len=456 images=0
+2026-04-18 03:10:32,414 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 03:10:32,414 [INFO] neoantigen.llm: stream_with_thinking start user_len=471 images=0
+2026-04-18 03:10:34,545 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 03:10:34,546 [INFO] neoantigen.llm: stream_with_thinking start user_len=809 images=0
+2026-04-18 03:10:37,546 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 03:10:37,547 [INFO] neoantigen.llm: stream_with_thinking start user_len=415 images=0
+2026-04-18 03:10:40,534 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 03:10:40,535 [INFO] neoantigen.llm: stream_with_thinking start user_len=17700 images=0
+2026-04-18 03:10:40,605 [ERROR] neoantigen.llm: stream HTTP error: BadRequestError: Error code: 400 - {'error': {'message': "This model's maximum context length is 8192 tokens. However, you requested 600 output tokens and your prompt contains at least 7593 input tokens, for a total of at least 8193 tokens. Please reduce the length of the input prompt or the number of requested output tokens. (parameter=input_tokens, value=7593)", 'type': 'BadRequestError', 'param': 'input_tokens', 'code': 400}}
+2026-04-18 03:10:40,606 [INFO] neoantigen.llm: stream_with_thinking start user_len=17947 images=0
+2026-04-18 03:10:41,090 [ERROR] neoantigen.llm: stream HTTP error: BadRequestError: Error code: 400 - {'error': {'message': "This model's maximum context length is 8192 tokens. However, you requested 600 output tokens and your prompt contains at least 7593 input tokens, for a total of at least 8193 tokens. Please reduce the length of the input prompt or the number of requested output tokens. (parameter=input_tokens, value=7593)", 'type': 'BadRequestError', 'param': 'input_tokens', 'code': 400}}
+2026-04-18 03:10:41,091 [INFO] neoantigen.llm: stream_with_thinking start user_len=17860 images=0
+2026-04-18 03:10:41,564 [ERROR] neoantigen.llm: stream HTTP error: BadRequestError: Error code: 400 - {'error': {'message': "This model's maximum context length is 8192 tokens. However, you requested 600 output tokens and your prompt contains at least 7593 input tokens, for a total of at least 8193 tokens. Please reduce the length of the input prompt or the number of requested output tokens. (parameter=input_tokens, value=7593)", 'type': 'BadRequestError', 'param': 'input_tokens', 'code': 400}}
+2026-04-18 03:10:54,035 [INFO] neoantigen.llm: call schema=PathologyFindings images=1 user_len=216
+2026-04-18 03:11:00,134 [INFO] neoantigen.llm: call response schema=PathologyFindings len=4185
+2026-04-18 03:11:00,340 [INFO] neoantigen.llm: stream_with_thinking start user_len=470 images=0
+2026-04-18 03:11:03,192 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 03:13:37,546 [INFO] neoantigen.llm: call schema=PathologyFindings images=1 user_len=216
+2026-04-18 03:13:46,879 [INFO] neoantigen.llm: call response schema=PathologyFindings len=6611
+2026-04-18 03:13:47,045 [INFO] neoantigen.llm: stream_with_thinking start user_len=469 images=0
+2026-04-18 03:13:48,845 [INFO] neoantigen.llm: stream_with_thinking done

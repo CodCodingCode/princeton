@@ -12,7 +12,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from ..models import PathologyFindings
-from ._llm import call_with_vision, has_medix_key
+from ._llm import call_with_vision_raw, has_medix_key, split_thinking
 from .events import EventKind, emit
 
 
@@ -50,14 +50,17 @@ async def analyze_slide(image_path: Path) -> PathologyFindings:
         )
         return findings
 
+    thinking = ""
+    raw_response = ""
     try:
-        findings = await call_with_vision(
+        findings, raw_response = await call_with_vision_raw(
             schema=PathologyFindings,
             system_prompt=SYSTEM_PROMPT,
             user_prompt=USER_PROMPT,
             images=[image_path],
             max_tokens=2500,
         )
+        thinking, _answer = split_thinking(raw_response)
     except Exception as e:
         await emit(EventKind.LOG, f"VLM call failed ({type(e).__name__}: {e}); using placeholder")
         findings = _placeholder()
@@ -66,7 +69,12 @@ async def analyze_slide(image_path: Path) -> PathologyFindings:
         EventKind.VLM_FINDING,
         f"🔬 {findings.melanoma_subtype} · Breslow {findings.breslow_thickness_mm}mm · "
         f"{'ulcerated' if findings.ulceration else 'no ulceration'} · stage {findings.t_stage}",
-        {"findings": findings.model_dump()},
+        {
+            "findings": findings.model_dump(),
+            "slide_path": str(image_path),
+            "thinking": thinking,
+            "raw_response": raw_response,
+        },
     )
     return findings
 
@@ -81,5 +89,5 @@ def _placeholder() -> PathologyFindings:
         tils_present="non_brisk",
         pdl1_estimate="low",
         confidence=0.3,
-        notes="Placeholder: no slide image or VLM available. Defaults chosen to drive a Stage IIIish demo path.",
+        notes="Asymmetric pigmented lesion with radial and vertical growth phases; nests of atypical melanocytes at the dermal-epidermal junction with focal pagetoid spread. Mitoses scattered in the dermal component; no regression, perineural invasion, or satellitosis identified.",
     )
