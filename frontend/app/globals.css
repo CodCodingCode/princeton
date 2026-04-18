@@ -40,3 +40,34 @@ body {
     opacity: 1;
   }
 }
+
+/* Indeterminate progress bar — a shimmer sweeping left-to-right, for files
+   actively being extracted where we can't report true percentage. */
+.bar-indeterminate {
+  position: relative;
+  overflow: hidden;
+  background: #e5e5e5;
+}
+.bar-indeterminate::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 40%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    #0a0a0a 50%,
+    transparent 100%
+  );
+  animation: bar-sweep 1.4s ease-in-out infinite;
+}
+@keyframes bar-sweep {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(350%);
+  }
+}

@@ -125,6 +125,16 @@ class PatientOrchestrator:
                         flush=True,
                         file=sys.stderr,
                     )
+                    await self.bus.emit(
+                        EventKind.LOG,
+                        f"Extracting {pdf.filename} ({len(pdf.data)} bytes)",
+                        {
+                            "phase": "extract_file_start",
+                            "stage": "1",
+                            "filename": pdf.filename,
+                            "bytes": len(pdf.data),
+                        },
+                    )
                     doc = await extract_document(pdf.filename, pdf.data)
                     done_counter["n"] += 1
                     print(
@@ -136,13 +146,16 @@ class PatientOrchestrator:
                     )
                     await self.bus.emit(
                         EventKind.LOG,
-                        f"Read {done_counter['n']}/{total_pdfs} records",
+                        f"Extracted {pdf.filename} · {len(doc.text_excerpt)} chars "
+                        f"({done_counter['n']}/{total_pdfs})",
                         {
                             "phase": "extract_progress",
                             "stage": "1",
                             "done": done_counter["n"],
                             "total": total_pdfs,
                             "filename": pdf.filename,
+                            "chars": len(doc.text_excerpt),
+                            "bytes": len(pdf.data),
                         },
                     )
                     return doc

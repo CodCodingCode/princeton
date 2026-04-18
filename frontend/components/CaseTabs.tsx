@@ -19,12 +19,32 @@ const TABS = [
 
 type TabId = (typeof TABS)[number]["id"];
 
+export type ExtractFeedEntry = {
+  kind: "start" | "done";
+  filename: string;
+  bytes?: number;
+  chars?: number;
+  done?: number;
+  total?: number;
+  ts: number;
+};
+
+export type ExtractProgress = {
+  done: number;
+  total: number;
+  latest: string;
+};
+
 export function CaseTabs({
   caseData,
   events,
+  extractProgress,
+  extractFeed,
 }: {
   caseData: PatientCase;
   events: AgentEvent[];
+  extractProgress?: ExtractProgress | null;
+  extractFeed?: ExtractFeedEntry[];
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -63,7 +83,13 @@ export function CaseTabs({
       </div>
 
       <div className="flex-1 overflow-y-auto p-5">
-        {active === "overview" && <OverviewTab caseData={caseData} />}
+        {active === "overview" && (
+          <OverviewTab
+            caseData={caseData}
+            extractProgress={extractProgress ?? null}
+            extractFeed={extractFeed ?? []}
+          />
+        )}
         {active === "plan" && <PlanTab caseData={caseData} />}
         {active === "trials" && <TrialsTab caseData={caseData} />}
         {active === "documents" && <DocumentsTab caseData={caseData} />}
