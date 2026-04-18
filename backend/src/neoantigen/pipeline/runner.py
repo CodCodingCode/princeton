@@ -79,4 +79,6 @@ def run(mutations: list[Mutation], config: RunConfig, *, console: Console | None
         mutations=mutations,
         candidates=candidates,
         vaccine=construct,
+        scorer_name=config.scorer.name,
+        scorer_is_heuristic=getattr(config.scorer, "is_heuristic", False),
     )

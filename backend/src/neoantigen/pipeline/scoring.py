@@ -1,37 +1,50 @@
 """Peptide-MHC binding scorers.
 
-Default: heuristic based on length and HLA-A*02:01 anchor residues.
-Opt-in: MHCflurry via the ``--mhcflurry`` flag.
+Default (production): ``MHCflurryScorer`` — real pretrained ML models.
+Test fixture only: ``HeuristicScorer`` — hand-rolled pseudo-nM math. Not a
+real MHC predictor. Only reachable via an explicit ``name="heuristic"``
+opt-in so no production path silently picks it up.
 """
 
 from __future__ import annotations
 
 import math
+import warnings
 from typing import Protocol
 
 from ..models import Peptide
 
 HYDROPHOBIC = set("AILMFWVC")
 
-# Anchor preferences for HLA-A*02:01 (the most common allele in melanoma demos).
 A0201_P2_ANCHORS = set("LMIV")
 A0201_PC_ANCHORS = set("VLIM")
+
+
+HEURISTIC_WARNING = (
+    "⚠ heuristic-only scoring — NOT a real MHC predictor. "
+    "The reported nM values are made-up anchor-residue math. "
+    "Install mhcflurry (already a base dependency) and run "
+    "`mhcflurry-downloads fetch` for real affinity predictions."
+)
 
 
 class Scorer(Protocol):
     name: str
     allele: str
+    is_heuristic: bool
 
     def score(self, peptides: list[Peptide]) -> None: ...
 
 
 class HeuristicScorer:
-    """Pseudo-nM scorer. Lower score = stronger predicted binding."""
+    """Test-fixture scorer. Pseudo-nM math; NOT a real MHC predictor."""
 
     name = "heuristic"
+    is_heuristic = True
 
     def __init__(self, allele: str = "HLA-A*02:01") -> None:
         self.allele = allele
+        warnings.warn(HEURISTIC_WARNING, RuntimeWarning, stacklevel=2)
 
     def _score_one(self, seq: str) -> float:
         length = len(seq)
@@ -69,6 +82,7 @@ class MHCflurryScorer:
     """Real ML scorer using pretrained MHCflurry models."""
 
     name = "mhcflurry"
+    is_heuristic = False
 
     def __init__(self, allele: str = "HLA-A*02:01") -> None:
         self.allele = allele
@@ -76,7 +90,7 @@ class MHCflurryScorer:
             from mhcflurry import Class1AffinityPredictor
         except ImportError as e:
             raise RuntimeError(
-                "mhcflurry not installed. Run: pip install -e '.[ml]' && mhcflurry-downloads fetch"
+                "mhcflurry not installed. Run: pip install -e './backend' && mhcflurry-downloads fetch"
             ) from e
         self._predictor = Class1AffinityPredictor.load()
 
@@ -89,7 +103,14 @@ class MHCflurryScorer:
             peptide.score_nm = float(nm)
 
 
-def build_scorer(name: str, allele: str = "HLA-A*02:01") -> Scorer:
-    if name == "mhcflurry":
-        return MHCflurryScorer(allele=allele)
-    return HeuristicScorer(allele=allele)
+def build_scorer(name: str = "mhcflurry", allele: str = "HLA-A*02:01") -> Scorer:
+    """Build a scorer. Defaults to real MHCflurry.
+
+    Pass ``name="heuristic"`` to opt into the test-fixture scorer; this emits
+    a ``RuntimeWarning`` on construction.
+    """
+    if name == "heuristic":
+        return HeuristicScorer(allele=allele)
+    if name != "mhcflurry":
+        raise ValueError(f"Unknown scorer '{name}'. Use 'mhcflurry' or 'heuristic'.")
+    return MHCflurryScorer(allele=allele)

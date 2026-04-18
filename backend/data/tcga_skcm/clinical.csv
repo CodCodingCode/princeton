@@ -1,0 +1,471 @@
+case_id,submitter_id,sex,vital_status,age_at_diagnosis,stage,days_to_death,days_to_last_follow_up,primary_diagnosis,tumor_grade,biopsy_site
+2d36cea4-73e9-493b-8433-0c2b911c0521,TCGA-D3-A3CC,female,Alive,69,,,2644.0,"Malignant melanoma, NOS",,"Connective, subcutaneous and other soft tissues, NOS"
+b6691e3c-ee3f-49a2-8bd4-2086413e5d8d,TCGA-DA-A3F8,male,Alive,39,,,,"Malignant melanoma, NOS",,Not Reported
+8ab09143-daf6-40a9-85d3-0fe9de7b3e06,TCGA-ER-A193,male,Dead,62,,955,,"Malignant melanoma, NOS",,Not Reported
+b6750b08-c59d-49b9-8c08-a19e17cb366f,TCGA-WE-A8ZO,female,Alive,73,Stage IIIB,,,"Malignant melanoma, NOS",,Not Reported
+b6b51b28-bdee-4fe6-a3f3-7b128e16721c,TCGA-GN-A26D,female,Dead,72,,1460,,"Malignant melanoma, NOS",,Not Reported
+fed23055-1600-4128-8d73-e1aa902a9d1d,TCGA-D9-A148,male,Alive,40,,,4609.0,"Malignant melanoma, NOS",,"Breast, NOS"
+d32a4219-4cca-470f-b6b3-11447d9f5e0b,TCGA-ER-A2NF,male,Dead,53,,877,,Not Reported,,Not Reported
+7ce09a09-074e-4f38-bed7-98ab34347fbe,TCGA-FS-A1ZU,female,Dead,70,,808,,"Malignant melanoma, NOS",,Not Reported
+ba207d79-91c0-45dc-a784-4bcaec580eb4,TCGA-W3-A828,male,Dead,66,,3683,3683.0,"Spindle cell nevus, NOS",,"Lower lobe, lung"
+5359d381-e7f2-4155-a559-7da9cda42ed9,TCGA-RP-A6K9,female,Alive,,,,,"Malignant melanoma, NOS",,Not Reported
+0f1fb775-c4a2-4a1e-8b09-f935233cdaee,TCGA-EE-A3AD,male,Dead,50,Stage III,875,875.0,"Malignant melanoma, NOS",,"Lymph nodes of head, face and neck"
+c061ae6c-7a02-47c3-aecd-a56487c01603,TCGA-EE-A2MI,male,Dead,43,Stage IIB,6225,,"Malignant melanoma, NOS",,Not Reported
+021d32b0-a94a-4dad-95f4-8eb0abd894bf,TCGA-HR-A2OG,female,Alive,59,,,7.0,"Malignant melanoma, NOS",,Skin of upper limb and shoulder
+c127ffb6-2ccf-4e90-b811-0aa40ebfab17,TCGA-EE-A2MQ,female,Dead,70,Stage IIIA,1315,,"Malignant melanoma, NOS",,Not Reported
+40e17bf8-6c19-4e5e-b60d-ad54f504a970,TCGA-DA-A1HY,male,Alive,42,,,,"Malignant melanoma, NOS",,Not Reported
+c3a8881b-70f8-402c-ac75-1cc49fca4e87,TCGA-FS-A1YY,female,Dead,55,Stage IIA,6953,,"Malignant melanoma, NOS",,Not Reported
+57dd4d65-cfad-4533-92b4-90742289603b,TCGA-FS-A1YW,male,Dead,52,,6598,,"Malignant melanoma, NOS",,Not Reported
+c4ed9e22-b5d7-4469-89a8-861a86791c8b,TCGA-D9-A3Z4,male,Dead,54,,519,,"Malignant melanoma, NOS",,Not Reported
+c9dea107-fc12-4559-ad27-2800ae6b42e4,TCGA-EE-A2MM,female,Dead,63,,5107,,"Malignant melanoma, NOS",,Not Reported
+c59a5615-2dd1-4902-a62b-0e312eab5484,TCGA-D3-A1QB,female,Alive,75,,,,"Malignant melanoma, NOS",,Not Reported
+555bbd13-8ad7-43b3-9087-001db30089f1,TCGA-EB-A3XF,male,Alive,57,Stage IIC,,278.0,"Malignant melanoma, NOS",,"Skin, NOS"
+be73fde2-d843-426b-9306-a02d3f2a754b,TCGA-EE-A2GN,male,Dead,67,,3106,,"Malignant melanoma, NOS",,Not Reported
+c787c4da-c564-44f1-89eb-dd9da107acb1,TCGA-EB-A44O,male,Alive,69,Stage IIB,,81.0,"Malignant melanoma, NOS",,Skin of trunk
+ce727e9e-325d-41d8-bfaf-0051418b9bef,TCGA-RP-A694,male,Alive,71,Stage IV,,21.0,"Malignant melanoma, NOS",,Parietal lobe
+c8ba1856-d055-4dc6-a184-72763c76aae4,TCGA-EE-A29H,female,Alive,59,,,,"Malignant melanoma, NOS",,Not Reported
+68f75ab5-9d77-40c5-a8ce-f56016bbe9e4,TCGA-DA-A1I0,male,Dead,63,,620,,"Malignant melanoma, NOS",,Not Reported
+caaf50a4-13b5-4003-b52f-e5f9780f9f94,TCGA-EB-A3XE,female,Alive,77,,,,"Malignant melanoma, NOS",,Not Reported
+511aa521-f38d-4ab7-9611-d8c1fec4c22b,TCGA-FW-A3TU,female,Dead,72,,1691,,"Malignant melanoma, NOS",,Not Reported
+ceb45393-54ee-4801-8c6f-c0aa66e37e60,TCGA-YD-A9TA,male,Alive,75,,,,"Malignant melanoma, NOS",,Not Reported
+cf409c7c-ff82-4529-bda4-554310843bc5,TCGA-WE-AAA3,female,Alive,84,,,,"Malignant melanoma, NOS",,Not Reported
+6a1966c3-7f01-4304-b4a1-c4ef683b179a,TCGA-FS-A1Z0,female,Dead,32,,6164,,"Malignant melanoma, NOS",,Not Reported
+cfe787b3-8297-4318-987c-bfadd743d767,TCGA-D9-A6EA,male,Alive,70,Stage IIIC,,,"Malignant melanoma, NOS",,Not Reported
+d0680568-bbb3-4561-9e4b-08fe2a4832cb,TCGA-D3-A8GO,female,Dead,,,,,"Malignant melanoma, NOS",,Lymph nodes of axilla or arm
+e699a2a7-dbff-4122-8114-87d70a56f59f,TCGA-EE-A17Y,male,Dead,69,Stage IIIB,828,,"Malignant melanoma, NOS",,Not Reported
+d2372037-5eea-4f98-bd72-551218e83779,TCGA-EE-A29W,male,Alive,42,,,5932.0,"Malignant melanoma, NOS",,Lymph nodes of inguinal region or leg
+d241a660-1c84-44fa-a6b3-ec9284333bd2,TCGA-DA-A95X,male,Alive,62,,,,"Malignant melanoma, NOS",,Not Reported
+fe1ec057-f8d0-4155-925a-5b5ea0c11cc4,TCGA-D3-A8GR,female,Dead,54,,3943,,"Malignant melanoma, NOS",,Not Reported
+d56a707b-dbf5-481d-9d93-1e23a854a684,TCGA-EB-A41B,female,Alive,76,Stage IIC,,291.0,Nodular melanoma,,Skin of upper limb and shoulder
+4274d9ab-679f-453c-b086-7535cf798f0a,TCGA-D3-A8GB,male,Dead,48,,938,,"Malignant melanoma, NOS",,Not Reported
+c03152cb-c6e6-47e2-a1cb-2354260a3661,TCGA-D3-A5GS,male,Alive,58,Stage IV,,,"Malignant melanoma, NOS",,Not Reported
+d70e0d27-7f27-4807-a36e-9fb7b00f0a70,TCGA-EE-A2ME,male,Dead,51,,3141,,"Malignant melanoma, NOS",,Not Reported
+bc71a91d-8ad1-4bab-a4fa-89470aa4e4d0,TCGA-EE-A20C,male,Dead,59,,4601,,"Malignant melanoma, NOS",,Not Reported
+d73d1b38-9ab4-409e-a360-e93f8c54715c,TCGA-EE-A29R,female,Alive,48,,,,"Malignant melanoma, NOS",,Not Reported
+05f4058d-3066-4d16-8320-cf92f122945f,TCGA-EB-A57M,male,Dead,56,,472,,"Malignant melanoma, NOS",,Not Reported
+fb620e8b-4be7-4e53-af04-8e9c27b4dcf0,TCGA-EB-A6L9,male,Alive,55,,,,"Malignant melanoma, NOS",,Not Reported
+a4e5a8ba-dbb2-4ee9-8ab3-cc5bab152cc2,TCGA-D9-A4Z5,male,Alive,68,Stage IIB,,218.0,"Malignant melanoma, NOS",,Nasal cavity
+d7f251c3-8312-47d8-a9cc-2917d2284cc3,TCGA-D3-A2JK,male,Dead,24,Stage IIIC,368,,"Malignant melanoma, NOS",,Not Reported
+d84d9c7b-b464-4ea1-8c39-9c929bb34c08,TCGA-EE-A17Z,male,Dead,57,,263,,"Malignant melanoma, NOS",,Not Reported
+d8eac750-9daf-4465-b672-9e31fd369057,TCGA-DA-A3F5,male,Dead,45,,6873,6873.0,"Malignant melanoma, NOS",,"Lymph nodes of head, face and neck"
+db239624-3dba-48bb-9889-f479dc2ba046,TCGA-D3-A2JC,female,Alive,53,Stage III,,2639.0,"Malignant melanoma, NOS",,Lymph nodes of axilla or arm
+dceb4909-cb3e-4aa5-8ff6-23d27b39aca3,TCGA-D3-A2JB,female,Dead,70,,5110,,"Malignant melanoma, NOS",,Not Reported
+2bbf00f4-7798-4dad-9894-96202c9132be,TCGA-ER-A194,male,Dead,77,,1354,1354.0,"Malignant melanoma, NOS",,"Connective, subcutaneous and other soft tissues of upper limb and shoulder"
+df6303cd-ffb5-422f-9865-b09029a6d54f,TCGA-D3-A1Q7,female,Alive,42,,,,"Malignant melanoma, NOS",,Not Reported
+e952fd3d-8e99-4199-bbcd-03c9a3430ee2,TCGA-ER-A19W,female,Dead,48,,4507,,"Malignant melanoma, NOS",,Not Reported
+e11a109d-31cb-40f7-aa17-50797b287a4f,TCGA-ER-A19H,male,Dead,40,,4634,,"Malignant melanoma, NOS",,Not Reported
+d7ade261-b624-4e47-8a82-591bf1a8faa4,TCGA-DA-A95V,female,Alive,83,,,2193.0,"Malignant melanoma, NOS",,"Lymph nodes of head, face and neck"
+6a1818f9-9303-41b0-b3b7-07faf5055c86,TCGA-EE-A29Q,female,Dead,70,,2030,,"Malignant melanoma, NOS",,Not Reported
+e58bed18-503c-4182-bcf3-5af6f20e1b8a,TCGA-EE-A2GB,male,Alive,51,Stage IIIB,,,"Malignant melanoma, NOS",,Not Reported
+132cdde9-70d8-4753-8e99-fc4ce3d371a4,TCGA-D3-A3CF,female,Dead,61,,746,,"Malignant melanoma, NOS",,Not Reported
+e653f888-37cf-41d5-a1cf-45397c90b31d,TCGA-EE-A2MG,male,Dead,23,,3139,,"Malignant melanoma, NOS",,Not Reported
+32e40e0b-e74b-428c-acd3-84ec6a80c024,TCGA-EB-A5SF,female,Dead,78,Stage IIC,369,369.0,Nodular melanoma,,"Skin, NOS"
+c35d97f8-1b70-4fbd-a603-9230b3ba7952,TCGA-GN-A4U5,female,Alive,61,,,,"Malignant melanoma, NOS",,Not Reported
+e9f0f030-d9aa-47c8-9f4d-a9ce58888c41,TCGA-BF-A3DL,female,Alive,84,Stage IIIB,,769.0,"Malignant melanoma, NOS",,"Skin, NOS"
+6e1040d2-dee0-43c9-8462-fc0859d7d2af,TCGA-EE-A3JB,female,Alive,60,,,6138.0,"Malignant melanoma, NOS",,"Connective, subcutaneous and other soft tissues of upper limb and shoulder"
+ec4cc744-04df-4ba9-9159-e4940c702281,TCGA-GF-A4EO,female,Alive,74,Stage IIIC,,591.0,"Malignant melanoma, NOS",,Lymph nodes of axilla or arm
+92116b0b-e614-4a27-a3c2-207e561c788b,TCGA-XV-AAZV,female,Alive,56,Stage II,,412.0,"Malignant melanoma, NOS",,Skin of trunk
+ee08eda6-033e-403b-a26a-747b118ae897,TCGA-EB-A85J,female,Alive,66,,,,"Malignant melanoma, NOS",,Not Reported
+ee143e06-0334-45dd-a2b0-1169527d6b4e,TCGA-EB-A41A,male,Alive,89,,,,"Malignant melanoma, NOS",,Not Reported
+eea5ea8b-6579-44c2-a205-47befe82ee9f,TCGA-EB-A42Z,male,Alive,49,,,,"Malignant melanoma, NOS",,Not Reported
+f18cfe4a-fffd-4e09-9eef-343ba9ffd0d1,TCGA-EE-A2GK,female,Alive,46,Stage I,,,"Malignant melanoma, NOS",,Not Reported
+ef608754-3f87-458e-9bcf-4434c54c8c9e,TCGA-EE-A29D,male,Dead,87,,425,425.0,"Malignant melanoma, NOS",,"Lymph nodes of head, face and neck"
+71115011-ff31-45a1-9949-dd69a51cac2a,TCGA-WE-A8JZ,male,Alive,70,,,,"Malignant melanoma, NOS",,Not Reported
+ef9f1829-0eed-47b3-9d44-06d0a8bb2bfb,TCGA-OD-A75X,male,Dead,49,,9061,,"Malignant melanoma, NOS",,Not Reported
+01ad975d-c2ed-4e4d-bd3b-c9512fc9073c,TCGA-DA-A1I2,male,Dead,45,,5370,5370.0,"Malignant melanoma, NOS",,"Lymph node, NOS"
+f027da44-6adc-4207-93ac-e8bf45a1bf3d,TCGA-FR-A3YN,male,Alive,44,,,,"Malignant melanoma, NOS",,Not Reported
+f3bb6362-6801-4c95-a828-09c0002a8b87,TCGA-FS-A1Z7,male,Dead,19,,237,,"Malignant melanoma, NOS",,Not Reported
+f09f3062-f904-4aff-9cd6-38eed201e652,TCGA-EE-A3AG,male,Dead,25,,1265,,"Chronic myeloid leukemia, NOS",,Not Reported
+f1713c39-26b8-4667-a08b-f8cf6d2b8e13,TCGA-YG-AA3P,female,Alive,63,Stage IIB,,,"Malignant melanoma, NOS",,Not Reported
+f1a69042-8347-45c1-b925-8526a8443b86,TCGA-FR-A2OS,female,Dead,49,,368,,"Malignant melanoma, NOS",,Not Reported
+f311877d-021a-423b-a6f5-e574c9a3ca7c,TCGA-WE-A8ZN,male,Alive,57,,,,"Malignant melanoma, NOS",,Not Reported
+40a4b549-09a4-4621-9715-e44d4b9d1198,TCGA-DA-A95Y,male,Dead,68,,430,430.0,"Malignant melanoma, NOS",,Lymph nodes of axilla or arm
+f505058f-74f2-4476-887f-06590a605980,TCGA-D9-A1JX,female,Dead,80,,216,,"Malignant melanoma, NOS",,Not Reported
+f52ae9f4-8a61-4ff2-9c24-23f4048d3da6,TCGA-FS-A1ZG,female,Dead,60,Stage IIIC,295,,"Malignant melanoma, NOS",,Not Reported
+29bcb876-5a91-4d56-af47-7b4c856c151f,TCGA-FS-A1Z3,female,Dead,72,Stage IV,636,,"Malignant melanoma, NOS",,Not Reported
+f5f42370-9974-4375-b338-5f68bb0c3958,TCGA-EB-A5UL,male,Alive,71,,,,"Malignant melanoma, NOS",,Not Reported
+e3905d75-9d0a-4981-ab42-83ce2c20c4ea,TCGA-FR-A7UA,female,Alive,65,Stage IB,,,"Malignant melanoma, NOS",,Not Reported
+f8e01148-6fc7-4451-b24a-f3510cd24f9d,TCGA-WE-A8ZM,male,Alive,70,,,,"Malignant melanoma, NOS",,Not Reported
+a5f95c6c-e25a-4ad8-bd5d-fcfd8a31933c,TCGA-D3-A2JD,male,Dead,58,,361,,"Malignant melanoma, NOS",,Not Reported
+f9e36bc2-484f-48e8-82ba-99026957277a,TCGA-ER-A19K,female,Dead,79,Stage IIC,469,,"Malignant melanoma, NOS",,Not Reported
+ea3c0988-17c7-4eb0-a1a6-cef1e0865384,TCGA-ER-A42H,male,Dead,76,,426,,Not Reported,,Not Reported
+fbee9fe7-8bed-41a6-bcfe-de9f1bc80d01,TCGA-D3-A1QA,male,Alive,55,,,,"Malignant melanoma, NOS",,Not Reported
+b770ed96-a48c-4e88-8db6-b2d1a1619da2,TCGA-D3-A51N,female,Alive,56,,,,"Malignant melanoma, NOS",,Not Reported
+fc5b5d2f-0d03-45c2-b7a0-ba6ec108fe51,TCGA-EE-A29C,male,Dead,20,,2402,,"Malignant melanoma, NOS",,Not Reported
+95f469b1-e109-4d0e-b9aa-2060207f8a03,TCGA-D3-A8GP,male,Alive,77,,,4638.0,Epithelioid cell melanoma,,"Colon, NOS"
+0e597498-44ad-40ae-bb83-f1b27388ec0a,TCGA-D3-A3MR,male,Alive,42,Stage III,,3151.0,"Malignant melanoma, NOS",,"Connective, subcutaneous and other soft tissues, NOS"
+f11b1e99-c14f-442e-acab-6353a5c77266,TCGA-WE-A8ZX,male,Alive,45,,,1089.0,"Malignant melanoma, NOS",,Lymph nodes of axilla or arm
+dde0b2be-ea43-4de7-8feb-ccdc073c6978,TCGA-EE-A181,female,Dead,82,,1026,,"Malignant melanoma, NOS",,Not Reported
+fdbbdbf8-cf2e-4550-9727-b023aed9b8d9,TCGA-D9-A4Z2,male,Dead,50,Stage IIIC,190,,"Malignant melanoma, NOS",,Not Reported
+3a27966b-2c4c-402f-b71b-df7925c36a7c,TCGA-D3-A2JH,male,Alive,68,,,1280.0,"Malignant melanoma, NOS",,"Connective, subcutaneous and other soft tissues of trunk, NOS"
+b829885f-8681-4b00-b301-8b0e0c2c6684,TCGA-D3-A3CB,male,Alive,39,,,,"Malignant melanoma, NOS",,Not Reported
+015ba831-106b-4b84-9e8c-243a9eeeebf6,TCGA-EE-A3AF,female,Dead,48,Stage IIIC,420,420.0,"Malignant melanoma, NOS",,"Lymph nodes of head, face and neck"
+01cb0004-fc1e-4da5-9d27-f458f8d711ee,TCGA-EE-A29V,male,Dead,85,,787,787.0,"Malignant melanoma, NOS",,Skin of trunk
+021a9431-7fdc-42b8-9ff0-e17ded79ff1d,TCGA-ER-A42L,male,Alive,49,,,,"Malignant melanoma, NOS",,Not Reported
+04c3d01d-a949-4dc7-9829-a8c99180dba0,TCGA-FW-A3TV,female,Alive,57,Stage IIIB,,411.0,"Malignant melanoma, NOS",,Lymph nodes of axilla or arm
+04f7ecc8-4f6b-41ac-a984-9ea604698a21,TCGA-D3-A2JO,female,Alive,50,Stage IIIC,,,"Malignant melanoma, NOS",,Not Reported
+06f09d1c-ba44-4cf9-a518-762d241a30db,TCGA-EE-A2GP,male,Dead,80,,423,423.0,"Malignant melanoma, NOS",,Lymph nodes of axilla or arm
+088c296e-8e13-4dc8-8a99-b27f4b27f95e,TCGA-GN-A4U7,female,Dead,56,,317,317.0,"Malignant melanoma, NOS",,Pelvic lymph nodes
+0a4b780e-8143-4118-ad98-fd2a2a6678c3,TCGA-EE-A2GC,male,Alive,82,Stage IIB,,,"Malignant melanoma, NOS",,Not Reported
+0b1f4f52-12ec-44ab-8283-a502bdf48c3a,TCGA-D9-A149,female,Alive,65,,,,"Melanoma, NOS",,Not Reported
+0bb8c284-412b-4bbc-a508-d0a21db376cd,TCGA-ER-A19F,male,Dead,82,,802,,"Malignant melanoma, NOS",,Not Reported
+0caa706a-251f-43a0-897a-111aec0acc82,TCGA-FS-A4F9,male,Alive,80,,,,"Malignant melanoma, NOS",,Not Reported
+0d68acef-b6a0-4a8b-9088-15b9103e6aaf,TCGA-EE-A3J8,male,Dead,59,,1044,1044.0,"Malignant melanoma, NOS",,"Connective, subcutaneous and other soft tissues of thorax"
+0dcd7af7-ea83-4131-821d-a17943919c1a,TCGA-EE-A2MU,male,Alive,71,Stage IA,,,"Malignant melanoma, NOS",,Not Reported
+0e2af161-5a1e-47e1-a7ef-010e47b8cb40,TCGA-EE-A2MF,female,Dead,39,,8174,,"Malignant melanoma, NOS",,Not Reported
+0eb0b477-1c7a-4416-895a-ea6463dbe847,TCGA-EB-A5KH,male,Dead,55,Stage III,619,,"Malignant melanoma, NOS",,Not Reported
+0f579238-5a11-4adc-9c80-572cbb2ce58f,TCGA-WE-A8K5,male,Dead,65,,1860,1860.0,Lentigo maligna melanoma,,"Connective, subcutaneous and other soft tissues of lower limb and hip"
+0f7ff1fc-95ec-4eb5-a308-6b8f24eec29a,TCGA-EE-A3AB,male,Alive,30,Stage III,,3733.0,"Malignant melanoma, NOS",,Lymph nodes of axilla or arm
+122f855b-f3b8-440b-bf9b-e24e1d3db867,TCGA-WE-AA9Y,male,Alive,37,,,370.0,Superficial spreading melanoma,,Lymph nodes of inguinal region or leg
+1251acee-ceb4-4530-ba5b-4d163fcab8d2,TCGA-ER-A1A1,male,Alive,58,,,,Not Reported,,Not Reported
+1412ed30-82b3-4a89-9d19-f04196dc3a9c,TCGA-BF-A9VF,male,Alive,77,,,,"Malignant melanoma, NOS",,Not Reported
+14407399-b1f0-46bf-9179-8bf11c39d919,TCGA-D3-A8GL,male,Dead,43,,2711,2711.0,"Malignant melanoma, NOS",,"Connective, subcutaneous and other soft tissues of lower limb and hip"
+177b515e-bcb9-4a08-9b38-3ccdec0e293f,TCGA-FS-A1ZA,female,Dead,45,,843,,"Malignant melanoma, NOS",,Not Reported
+187376e0-b4f3-44ed-ab43-88b6eff3e552,TCGA-EB-A4IS,male,Alive,77,,,,"Malignant melanoma, NOS",,Not Reported
+19322032-c144-4962-b886-37606dad33b7,TCGA-D3-A2J7,male,Dead,67,,3136,,"Malignant melanoma, NOS",,Not Reported
+197ac33e-d5df-40de-92f2-6ef7fe2ad6dd,TCGA-BF-A1PX,male,Dead,56,Stage IIIB,282,282.0,"Malignant melanoma, NOS",,"Skin, NOS"
+19e9ba4b-8f8e-4899-b667-b49fdd7ef6f4,TCGA-YG-AA3O,male,Dead,62,,1154,1154.0,"Malignant melanoma, NOS",,Lymph nodes of axilla or arm
+1c052cde-7a70-410b-a273-dbe39dd968f4,TCGA-YG-AA3N,male,Alive,67,Stage IIC,,306.0,Nodular melanoma,,Skin of trunk
+1ca2eb9f-9496-450f-83fe-c7a6cb1a075b,TCGA-BF-A3DM,male,Alive,63,,,,"Malignant melanoma, NOS",,Not Reported
+1cad4b22-ec8b-4e34-bfef-5464d185923a,TCGA-D9-A4Z3,female,Alive,73,,,,Nodular melanoma,,Not Reported
+1e05da2e-7dd7-4c98-9e77-59514e5f2582,TCGA-D3-A1Q6,male,Dead,55,Stage III,2184,,"Malignant melanoma, NOS",,Not Reported
+1e3bc429-50eb-4087-b39a-6d92f03412f7,TCGA-D3-A8GC,male,Dead,48,Stage IIIC,2421,,"Malignant melanoma, NOS",,Not Reported
+1f66a0e1-640a-4caa-85f1-61c6de475cf1,TCGA-D3-A51R,male,Alive,60,,,,"Malignant melanoma, NOS",,Not Reported
+20ae4c90-ea2e-42e8-bc0e-f0e6be0dadeb,TCGA-D3-A2JN,female,Dead,46,Stage III,2022,2022.0,"Malignant melanoma, NOS",,Lymph nodes of axilla or arm
+210726bd-db19-48ae-9a3d-e6ac44480e85,TCGA-DA-A1HV,female,Alive,75,,,,"Malignant melanoma, NOS",,Not Reported
+2316bc62-974a-4dfd-8ee2-9e4a08660a45,TCGA-D3-A51F,male,Alive,51,,,,"Malignant melanoma, NOS",,Not Reported
+236ef9ca-9362-44f3-a36b-2a19509bab9d,TCGA-EB-A4OZ,female,Alive,41,Stage IIIC,,620.0,"Malignant melanoma, NOS",,Skin of trunk
+23809ce7-77b4-432f-bda2-678f822b604a,TCGA-FR-A7U8,male,Alive,50,,,847.0,"Malignant melanoma, NOS",,"Small intestine, NOS"
+238111f9-a08b-49b4-9035-cc43026330e7,TCGA-D3-A1Q5,male,Dead,60,,3424,3424.0,"Malignant melanoma, NOS",,"Lymph node, NOS"
+24faa36a-268d-4a13-b3ae-eacd431a2bcc,TCGA-EE-A2GU,female,Alive,65,,,,"Malignant melanoma, NOS",,Not Reported
+26293554-04d3-4fc9-b12e-6a199278ed11,TCGA-EE-A29X,female,Dead,58,,545,,"Malignant melanoma, NOS",,Not Reported
+27c9e7aa-1760-4cfc-95b0-a091d35d317b,TCGA-EB-A1NK,male,Alive,48,Stage IIC,,1039.0,"Malignant melanoma, NOS",,"Skin, NOS"
+285d8e2c-f183-49d5-bc1c-fd47c6670acc,TCGA-GF-A2C7,male,Alive,48,Stage IIC,,,"Malignant melanoma, NOS",,Not Reported
+2897a728-ec7b-4321-b0fe-3575b7c6ee39,TCGA-FR-A8YD,female,Dead,56,Stage IIC,1103,,"Malignant melanoma, NOS",,Not Reported
+28cf244b-77dc-4b31-a65a-9746f15bb07e,TCGA-D3-A2JL,female,Alive,43,,,,"Malignant melanoma, NOS",,Not Reported
+296f44f9-3ecb-4b40-ae51-c3a06e3fbe00,TCGA-EE-A3JI,male,Dead,48,,4648,,"Melanoma, NOS",,Not Reported
+2c79add1-8093-4e81-8f80-069af7b7c2fa,TCGA-FS-A1ZE,male,Dead,40,,1413,,"Malignant melanoma, NOS",,Not Reported
+2c8d436c-4edb-4083-b23f-9a33307d5bb2,TCGA-HR-A5NC,female,Alive,89,,,0.0,"Malignant melanoma, NOS",,Skin of trunk
+2d8868ab-a7db-4cbd-a9af-cc485b29c177,TCGA-D3-A51J,male,Alive,19,,,4414.0,"Malignant melanoma, NOS",,"Connective, subcutaneous and other soft tissues of pelvis"
+2e0f7da5-9078-4c7f-b074-565246529a83,TCGA-BF-AAOX,male,Alive,83,,,,"Malignant melanoma, NOS",,Not Reported
+2e7cfa51-8965-4c11-8fef-077fd258fbe4,TCGA-EE-A3JH,male,Alive,54,,,,"Malignant melanoma, NOS",,Not Reported
+2ea7ad21-3324-4eda-8c82-fc2ceea2fc73,TCGA-DA-A1IA,female,Dead,32,,2005,,"Malignant melanoma, NOS",,Not Reported
+2f0661e5-5006-481e-9b40-7b1ec96eaa3c,TCGA-FS-A1ZJ,female,Dead,75,,1441,1441.0,"Malignant melanoma, NOS",,"Lymph node, NOS"
+2f5813a8-97a6-4a96-886d-38f29272b16c,TCGA-FS-A4F8,male,Dead,52,,5318,,"Malignant melanoma, NOS",,Not Reported
+2f5d8110-35c7-419f-8b35-bc3040f940f3,TCGA-W3-A825,female,Dead,60,,1917,1917.0,"Malignant melanoma, NOS",,"Lower lobe, lung"
+2ff77467-19f8-45a0-8d42-2f9a69295498,TCGA-D3-A3C1,male,Alive,,,,,"Malignant melanoma, NOS",,Not Reported
+320a2dca-ee07-4d14-a7b8-178636636880,TCGA-D3-A8GQ,male,Dead,66,,884,,"Malignant melanoma, NOS",,Not Reported
+33d7cccb-6349-4337-8c5b-6e3e8b3c7af1,TCGA-D3-A2JA,male,Alive,68,,,,"Malignant melanoma, NOS",,Not Reported
+3409f118-1798-48d6-9556-12a5c77ebefb,TCGA-ER-A19D,female,Dead,46,Stage IB,383,,"Malignant melanoma, NOS",,Not Reported
+3429967f-4f77-4894-bf27-c4a22698ca92,TCGA-GN-A266,male,Dead,45,,308,308.0,"Malignant melanoma, NOS",,Skin of scalp and neck
+3582fb74-f43d-4fcd-8f22-bb1506fcff1c,TCGA-DA-A3F3,male,Dead,52,Stage IIIB,319,,"Malignant melanoma, NOS",,Not Reported
+36f4be75-cbcf-431b-9199-dba295a905a1,TCGA-W3-AA1W,male,Alive,64,Stage II,,,"Malignant melanoma, NOS",,Not Reported
+3791bd88-c61e-46c3-aaa4-942c2169887c,TCGA-EE-A2MC,male,Dead,73,,1871,1871.0,"Malignant melanoma, NOS",,Lymph nodes of axilla or arm
+382fd44f-6011-4427-841e-0f1eda447fe5,TCGA-RP-A695,male,Alive,,,,,"Malignant melanoma, NOS",,Not Reported
+391eab51-b140-4bc2-bc8c-99400fba9066,TCGA-ER-A19Q,female,Dead,37,,1548,,"Malignant melanoma, NOS",,Not Reported
+3a71189d-aabd-475a-997c-b66cbc978e06,TCGA-D3-A8GV,male,Dead,25,,5101,,"Malignant melanoma, NOS",,Not Reported
+3b618072-3bf5-4609-865d-ce3611c729cf,TCGA-RP-A693,male,Alive,77,Stage IV,,10.0,"Malignant melanoma, NOS",,"Brain, NOS"
+3b62e38c-d473-4329-86ab-5d4977f92b09,TCGA-D3-A3C7,female,Alive,57,Stage III,,1429.0,"Malignant melanoma, NOS",,Lymph nodes of inguinal region or leg
+3d0cbbc9-f2ef-4d3e-ad55-b5cae6787c28,TCGA-EE-A2GM,female,Alive,70,,,,"Malignant melanoma, NOS",,Not Reported
+3dd5a206-d7f3-42f1-b9cc-4b31c76d495d,TCGA-BF-A1PU,female,Alive,46,,,,"Malignant melanoma, NOS",,Not Reported
+3df3f0a9-ba52-4c50-910f-828439b0ee14,TCGA-EE-A3J7,male,Alive,43,,,1949.0,"Malignant melanoma, NOS",,"Connective, subcutaneous and other soft tissues of upper limb and shoulder"
+3e39c93e-ccae-48d5-9b27-62dae0e75c07,TCGA-BF-AAP7,female,Alive,76,Stage IIC,,318.0,Epithelioid cell melanoma,,Skin of lower limb and hip
+3ebb2374-4518-4e19-9b65-9c3e66252c4c,TCGA-ER-A197,female,Dead,83,,424,424.0,"Malignant melanoma, NOS",,"Vulva, NOS"
+40005536-5325-4063-929d-0917726607cb,TCGA-EE-A3J4,male,Dead,72,,3869,,"Malignant melanoma, NOS",,Not Reported
+41c4f51a-e908-42f9-9805-5cff5b12708c,TCGA-EE-A3JA,male,Dead,44,,1618,,"Malignant melanoma, NOS",,Not Reported
+41fcb9d3-9fb0-4625-98f4-1f564095ebc2,TCGA-ER-A19A,male,Alive,79,,,,Papillary urothelial carcinoma,,Not Reported
+436a0116-eada-4b8f-aafe-29eb7f3241c4,TCGA-FW-A3I3,female,Alive,59,Stage IV,,531.0,"Malignant melanoma, NOS",,"Vagina, NOS"
+44b5453a-3009-43b9-bc34-71a11a6d5e63,TCGA-D3-A8GM,male,Dead,73,,3259,3259.0,"Malignant melanoma, NOS",,"Lymph nodes of head, face and neck"
+44d176db-2221-45a2-818b-eef6832a51b6,TCGA-D3-A51G,male,Alive,,,,,"Malignant melanoma, NOS",,"Connective, subcutaneous and other soft tissues of lower limb and hip"
+44eb0daa-a3ed-4ab5-a3e8-91911bab0dea,TCGA-EB-A5SG,female,Alive,57,,,2076.0,"Malignant melanoma, NOS",,Lymph nodes of axilla or arm
+4537c0e1-b2bd-425f-a6f4-27f4733dc25a,TCGA-FS-A1YX,female,Dead,39,Stage I,1478,,"Malignant melanoma, NOS",,Not Reported
+455f982c-a067-46ac-bf89-3e535d0ffca0,TCGA-BF-A1PZ,female,Alive,71,,,,"Malignant melanoma, NOS",,Not Reported
+46801be1-f035-421f-aae4-81baf3bb8d40,TCGA-GF-A6C9,male,Alive,78,Stage IIIB,,,"Malignant melanoma, NOS",,Not Reported
+47ffe5ef-7d1f-44eb-9307-104771b39381,TCGA-EE-A2MK,female,Alive,18,,,,"Malignant melanoma, NOS",,Not Reported
+4801c721-166f-4939-8ab7-aa024bec7089,TCGA-EE-A2GE,male,Alive,44,,,,"Basal cell carcinoma, NOS",,Not Reported
+4811d530-ae99-4670-9f99-86996d667676,TCGA-EE-A29A,male,Dead,68,,1927,,"Malignant melanoma, NOS",,Not Reported
+49f961af-1126-431d-93cd-18941c1738f3,TCGA-FR-A726,male,Dead,89,,0,,"Malignant melanoma, NOS",,Not Reported
+4a2135bd-31ff-4564-9e87-1164b3422f61,TCGA-XV-A9VZ,female,Alive,89,,,,"Malignant melanoma, NOS",,Not Reported
+4a4f5ee9-b588-4357-b058-effbfb53e2c3,TCGA-EE-A2MS,male,Alive,72,,,4942.0,"Malignant melanoma, NOS",,Lymph nodes of axilla or arm
+4a9e5dc0-6fc3-47e0-8470-dac16ce16da3,TCGA-W3-AA21,male,Dead,26,,3195,,"Malignant melanoma, NOS",,Not Reported
+4cdb18f5-47bf-475f-b34c-fa4912515268,TCGA-FS-A1ZP,male,Dead,52,,2273,2273.0,"Malignant melanoma, NOS",,"Lymph node, NOS"
+4d22dce6-0f25-44ee-89e7-5b5ee2ee9799,TCGA-FS-A4F2,female,Dead,46,Stage IIC,1525,,"Malignant melanoma, NOS",,Not Reported
+4e9d1a69-1f10-4500-9dda-f8eb1ccc6576,TCGA-EB-A4IQ,female,Dead,42,,636,,"Malignant melanoma, NOS",,Not Reported
+4f7e7a0e-4aa2-4b6a-936f-6429c7d6a2a7,TCGA-D9-A3Z1,male,Dead,66,,468,,"Malignant melanoma, NOS",,Not Reported
+50dc9c63-c491-4afc-ab12-74b40eba58b6,TCGA-EB-A85I,male,Alive,66,Stage IIC,,362.0,"Malignant melanoma, NOS",,Skin of lower limb and hip
+50e4cdbc-b10b-4c6c-9981-68defa1a8fe0,TCGA-D3-A51H,male,Alive,60,,,,"Malignant melanoma, NOS",,Not Reported
+51b4e55c-5307-4a13-9b2a-fbd58575335e,TCGA-ER-A195,male,Dead,46,,1078,,"Malignant melanoma, NOS",,Not Reported
+51f3321b-ed78-4bdd-aa75-7d632ef53df1,TCGA-EB-A97M,male,Alive,66,Stage IIC,,414.0,"Malignant melanoma, NOS",,Skin of trunk
+5226b25f-e326-4884-af79-916e4bbb701f,TCGA-EB-A3XC,male,Alive,74,,,,"Malignant melanoma, NOS",,Not Reported
+536e1779-550b-47f1-a204-50a16870a8e1,TCGA-EB-A82C,female,Alive,70,Stage IIC,,,"Malignant melanoma, NOS",,Not Reported
+53848dbb-87a1-40fa-a5af-c711ea7c8778,TCGA-DA-A95W,male,Alive,52,Stage IIIB,,1136.0,"Malignant melanoma, NOS",,"Lymph nodes of head, face and neck"
+53fbe99c-180c-45e6-8585-796028b3d118,TCGA-W3-AA1R,male,Dead,71,,3379,,"Malignant melanoma, NOS",,Not Reported
+54782bd7-79be-4e3c-bf99-844e7bb0e5d7,TCGA-EE-A2MP,female,Alive,34,,,,"Malignant melanoma, NOS",,Not Reported
+551e071a-c290-4b48-9000-f64c2a44dfb7,TCGA-3N-A9WC,male,Alive,82,Stage IIA,,,"Malignant melanoma, NOS",,Not Reported
+554270fb-1fb3-4aeb-81a1-f78c30b143b4,TCGA-EB-A51B,male,Alive,53,,,,"Malignant melanoma, NOS",,Not Reported
+5564e6a7-2195-4b0d-994e-b0617b58e889,TCGA-3N-A9WB,male,Dead,71,,518,518.0,"Malignant melanoma, NOS",,Skin of trunk
+56d4ca9b-c050-45b4-b636-03fe2251fa1a,TCGA-WE-A8ZR,male,Dead,49,,274,,Nodular melanoma,,Not Reported
+56ee81ed-242a-48ca-92a8-49973469a697,TCGA-D9-A3Z3,female,Alive,39,,,678.0,"Malignant melanoma, NOS",,Lymph nodes of axilla or arm
+585a8d2e-cd09-4a61-b7c9-e8f70ce39e69,TCGA-EE-A2A2,male,Alive,71,,,,"Malignant melanoma, NOS",,Not Reported
+588a48f7-947c-463e-8991-9a4ee82683aa,TCGA-D3-A8GS,male,Dead,52,,3564,,"Malignant melanoma, NOS",,Not Reported
+58f0ae89-e277-4dff-bb73-777cdf602dc7,TCGA-EE-A2M6,male,Alive,61,Stage I,,,"Malignant melanoma, NOS",,Not Reported
+590b5e18-d837-4c0e-becf-80520db57c0f,TCGA-Z2-A8RT,female,Alive,42,Stage IIB,,,"Malignant melanoma, NOS",,Not Reported
+5a4d93c3-8116-4555-b19d-d7acd4b4eeed,TCGA-WE-A8ZT,female,Alive,25,,,,"Malignant melanoma, NOS",,Not Reported
+5b10234b-6189-449f-8886-d0d44a729ced,TCGA-Z2-AA3V,female,Alive,57,,,,"Malignant melanoma, NOS",,Not Reported
+5bc515c8-7727-4d69-98e9-31bbcb748550,TCGA-GN-A26A,female,Dead,63,,988,,"Malignant melanoma, NOS",,Not Reported
+5bdadeb6-a1fb-477d-877b-034bfd52294e,TCGA-EE-A183,male,Dead,48,,818,,"Malignant melanoma, NOS",,Not Reported
+5c091729-7b87-4046-bfa4-41c26c32837a,TCGA-EB-A44R,male,Dead,52,,315,315.0,"Malignant melanoma, NOS",,Lymph nodes of inguinal region or leg
+5c567ee6-bd57-448b-ad17-b74eb695b6f5,TCGA-EE-A2GD,female,Dead,58,,10346,,"Malignant melanoma, NOS",,Not Reported
+5dec1b6a-5d60-463c-9655-fc7ed79ca19d,TCGA-EE-A29S,male,Dead,79,,1864,,"Malignant melanoma, NOS",,Not Reported
+5eda189c-2de3-429a-80d2-fc644623b37f,TCGA-EE-A2M8,female,Dead,54,,601,601.0,"Malignant melanoma, NOS",,Lymph nodes of inguinal region or leg
+5f39db5b-e5c6-4b7c-acbc-a7c73b556829,TCGA-WE-A8ZY,male,Dead,62,,1506,,"Malignant melanoma, NOS",,Not Reported
+5f8cc8d6-8a1c-41d0-bad6-fedd2948f40a,TCGA-EE-A17X,male,Dead,54,Stage IA,907,,"Malignant melanoma, NOS",,Not Reported
+61b777f6-a59a-4500-ad33-107e2c9254c1,TCGA-GN-A265,male,Alive,53,,,,"Malignant melanoma, NOS",,Not Reported
+62393dab-ab41-4785-9a57-aa4c25d223e9,TCGA-BF-A3DJ,female,Alive,36,,,,"Malignant melanoma, NOS",,Not Reported
+633ddc04-c424-42c8-8e54-673968b130a7,TCGA-BF-A1Q0,male,Alive,80,,,,"Malignant melanoma, NOS",,Not Reported
+638eb185-fe03-4632-a969-9655e3339b2e,TCGA-GN-A8LL,female,Dead,68,Stage IIC,650,,"Malignant melanoma, NOS",,Not Reported
+63db0da6-f451-436f-9b1c-211b55947770,TCGA-EB-A551,female,Alive,78,,,,"Malignant melanoma, NOS",,Not Reported
+64690c6f-80cf-4a87-932c-7d7b3d0fbf6f,TCGA-XV-A9W5,male,Alive,51,,,,"Malignant melanoma, NOS",,Not Reported
+64d46463-8039-41d1-9bbb-0ca0504356c2,TCGA-FS-A4FB,female,Dead,46,,813,813.0,"Malignant melanoma, NOS",,"Lymph node, NOS"
+6625ce3f-3a1f-45f9-aa42-ab1931d6daf4,TCGA-DA-A1IC,male,Dead,81,Stage IIIB,2071,,"Malignant melanoma, NOS",,Not Reported
+667d5c5e-abc0-4fb8-b6c4-739f7cb3f0fe,TCGA-EB-A5UM,female,Alive,48,,,,"Malignant melanoma, NOS",,Not Reported
+668701cf-9c73-4caf-8482-3f478235909a,TCGA-DA-A95Z,male,Alive,87,Stage IV,,396.0,"Malignant melanoma, NOS",,"Connective, subcutaneous and other soft tissues of trunk, NOS"
+6783fb7d-f509-47c6-b39f-535a9026f6bc,TCGA-BF-AAP1,male,Alive,86,Stage IIC,,409.0,Epithelioid cell melanoma,,Skin of upper limb and shoulder
+68567581-0be3-48f1-8dcd-487bc0c1e6f6,TCGA-FR-A3R1,male,Alive,69,,,,"Malignant melanoma, NOS",,Not Reported
+6993bc23-cd58-4761-bb77-3a3dcc2f7a1b,TCGA-DA-A1I1,male,Alive,55,,,,"Malignant melanoma, NOS",,Not Reported
+69a17647-493f-46d2-9cf0-6596e56289a0,TCGA-EE-A2MT,male,Alive,45,,,,"Malignant melanoma, NOS",,Not Reported
+6ac4e3df-6c43-4c73-8f4c-f89c3626f2d5,TCGA-D3-A5GU,male,Alive,36,,,,"Malignant melanoma, NOS",,Not Reported
+6b02def4-04ca-4ba0-bc48-262c4d8a294c,TCGA-EB-A44P,female,Alive,58,Stage IIC,,741.0,"Malignant melanoma, NOS",,Skin of trunk
+6e2d8818-b377-45f5-97f4-f905de22c487,TCGA-EB-A4OY,female,Alive,65,Stage IIIB,,,"Malignant melanoma, NOS",,Not Reported
+6ec931e1-7a6f-47a8-8b30-f37271a50881,TCGA-D3-A8GK,male,Alive,45,,,,"Malignant melanoma, NOS",,Not Reported
+6f2ef983-0a22-4a65-9e53-8742ac89a1c4,TCGA-FS-A1ZB,male,Dead,57,,1486,,"Malignant melanoma, NOS",,Not Reported
+6f5157b8-d43a-4fbc-b7da-23629f5b53da,TCGA-D3-A2J6,male,Dead,65,,1321,,"Malignant melanoma, NOS",,Not Reported
+6fe664cc-e66b-4abf-a7d2-08bb4ce8eba3,TCGA-EB-A3XD,female,Alive,53,Stage IIC,,1160.0,"Malignant melanoma, NOS",,"Skin, NOS"
+7038de05-4e26-49af-b78a-5a00ce9a120b,TCGA-D3-A8GN,female,Alive,27,,,,"Malignant melanoma, NOS",,Not Reported
+70f52403-b4d0-4e77-96c5-68ce7265e312,TCGA-EE-A20F,male,Alive,53,,,,"Malignant melanoma, NOS",,Not Reported
+714b4003-959a-47d5-8912-a250b90d7cd4,TCGA-EE-A182,female,Dead,84,,447,,"Malignant melanoma, NOS",,Not Reported
+727a7579-bd82-4141-973f-794424f4d111,TCGA-BF-AAP4,male,Alive,61,Stage IIC,,335.0,Epithelioid cell melanoma,,Skin of trunk
+730f7400-e94a-4f41-b081-5227fa1a9c18,TCGA-D3-A3CE,female,Dead,74,,1832,,"Malignant melanoma, NOS",,Not Reported
+7436a28f-01a3-4148-b38e-63c57b5d86c4,TCGA-XV-AAZW,female,Dead,62,Stage II,393,393.0,"Malignant melanoma, NOS",,Skin of lower limb and hip
+745c699b-8ecf-4653-b41f-6620f11bcf39,TCGA-FS-A4FD,male,Dead,39,,2454,,"Malignant melanoma, NOS",,Not Reported
+74dc56e9-0076-458b-a12c-d50d7f057c47,TCGA-D3-A8GD,female,Alive,63,,,718.0,"Malignant melanoma, NOS",,Lymph nodes of inguinal region or leg
+76cc1d42-acec-46b3-9663-5e4de2550353,TCGA-GN-A264,male,Dead,60,,3587,,"Malignant melanoma, NOS",,Not Reported
+77052f40-374e-4dae-bc17-908b52db0f08,TCGA-WE-A8ZQ,male,Alive,48,,,,"Malignant melanoma, NOS",,Not Reported
+78f3d4db-a1ff-4ea2-aaa0-cbf0278b915e,TCGA-EB-A82B,female,Alive,58,,,,"Malignant melanoma, NOS",,Not Reported
+798074d3-0b84-4dd5-aa88-91feda9ac8c6,TCGA-D3-A1Q9,male,Dead,72,,961,,"Malignant melanoma, NOS",,Not Reported
+7a918706-c697-4cef-9661-346c5a612ff8,TCGA-ER-A19M,male,Dead,36,Stage IB,1857,,"Malignant melanoma, NOS",,Not Reported
+7b4bcf0e-ec55-489b-870f-a4360a6bea2f,TCGA-EE-A2M7,male,Dead,66,,877,877.0,"Malignant melanoma, NOS",,Lymph nodes of axilla or arm
+7b617d72-ae16-4829-a1d9-274d1d30617f,TCGA-YD-A89C,female,Alive,43,,,210.0,"Malignant melanoma, NOS",,Liver
+7c6e2fe9-d1ff-4bf4-bda1-cc3615eb3584,TCGA-BF-AAP2,male,Alive,62,,,,"Malignant melanoma, NOS",,Not Reported
+7f7bc51f-7f75-4796-9ce5-a4735c3c0807,TCGA-GN-A8LN,male,Alive,68,,,,"Malignant melanoma, NOS",,Not Reported
+7fb87427-9b19-4378-86d5-f4f775f97805,TCGA-DA-A1I4,male,Dead,51,,1093,1093.0,"Malignant melanoma, NOS",,"Skin, NOS"
+800d3a17-269f-4d97-94ff-8585f20038d8,TCGA-DA-A1HW,female,Dead,37,,1096,,Not Reported,,Not Reported
+800f3039-97e0-441e-8292-4ccf1bb4797a,TCGA-EB-A6QZ,female,Dead,76,,352,,"Malignant melanoma, NOS",,Not Reported
+807fb56b-bbb9-4df7-9a1e-d1fa627b425a,TCGA-YD-A9TB,female,Alive,,,,,"Malignant melanoma, NOS",,Not Reported
+81807b84-da9c-4847-a303-5a8c7297127c,TCGA-W3-AA1Q,male,Dead,57,,2101,,"Malignant melanoma, NOS",,Not Reported
+81cedb9e-ee43-476b-9ed9-8d0fdb346065,TCGA-EE-A2A0,female,Dead,77,,1424,,"Malignant melanoma, NOS",,Not Reported
+82e85ac9-8e3e-4c2e-ae0b-a32ceeb8115d,TCGA-EB-A6QY,male,Alive,71,,,,"Malignant melanoma, NOS",,Not Reported
+8352cbb0-10e7-40bd-96f0-1e982ab4c07b,TCGA-BF-A5EO,male,Alive,65,,,,"Malignant melanoma, NOS",,Not Reported
+83d05b9a-f409-4169-bef9-e772d2cfbfaf,TCGA-EE-A29E,male,Alive,54,,,1940.0,"Malignant melanoma, NOS",,Lymph nodes of axilla or arm
+8465257b-7212-44a3-bd9f-1f7d017499ad,TCGA-FS-A1Z4,male,Dead,62,Stage I,854,,"Malignant melanoma, NOS",,Not Reported
+8509f10a-c454-45a5-9c22-853fda423b9f,TCGA-EE-A2MJ,male,Dead,60,,2927,,"Malignant melanoma, NOS",,Not Reported
+85400bf1-23e0-4e0f-8df7-f0d108641aee,TCGA-D3-A3MO,male,Dead,47,,284,,"Malignant melanoma, NOS",,Not Reported
+865128c9-2e8e-4683-9232-174282ae984d,TCGA-EE-A2A5,male,Dead,43,,1195,1195.0,"Malignant melanoma, NOS",,"Connective, subcutaneous and other soft tissues of upper limb and shoulder"
+87dc5c05-3121-46bf-adba-061f45cecf27,TCGA-FS-A4F5,female,Dead,77,,874,,"Malignant melanoma, NOS",,Not Reported
+880bb701-f1d3-4bf2-bfc8-143ad8d07b6a,TCGA-EE-A2GS,female,Dead,28,,2470,,Amelanotic melanoma,,Not Reported
+88314f23-3446-4102-a117-b65a8520d8e6,TCGA-ER-A3PL,male,Alive,30,Stage IV,,,"Malignant melanoma, NOS",,Not Reported
+888ef0fc-fc84-4afb-a369-695fee5ae4f6,TCGA-BF-A5EP,female,Alive,75,Stage IIIC,,335.0,"Malignant melanoma, NOS",,Skin of trunk
+889ae822-add8-4a10-abe0-50176c858f80,TCGA-FW-A5DX,male,Alive,71,Stage IIIC,,,"Malignant melanoma, NOS",,Not Reported
+8aad9690-d1ad-424b-9a80-d7980760d093,TCGA-EE-A29N,male,Dead,78,,566,,"Malignant melanoma, NOS",,Not Reported
+8b6b1cbf-dedb-4c99-8f75-eafbe5c43592,TCGA-XV-A9W2,male,Alive,81,,,,"Malignant melanoma, NOS",,Not Reported
+8b93bdb4-b64b-4940-a814-f5b3f5ae56cc,TCGA-EB-A3Y6,female,Alive,56,,,,"Malignant melanoma, NOS",,Not Reported
+8c54fcfd-999f-43c5-b31f-26d006f5fff3,TCGA-D3-A1Q1,female,Dead,79,,504,,"Malignant melanoma, NOS",,Not Reported
+8ee500d6-c7b3-46e9-86d0-933695934707,TCGA-EE-A29G,male,Dead,53,Stage IIIA,2192,,"Malignant melanoma, NOS",,Not Reported
+8fc9cc74-f388-49f0-b957-debb62638634,TCGA-DA-A1IB,female,Dead,69,,1235,1235.0,"Malignant melanoma, NOS",,"Lymph node, NOS"
+90402c32-9548-432e-85b8-a4f80e14401e,TCGA-EB-A299,male,Alive,63,,,,"Malignant melanoma, NOS",,Not Reported
+905ea29f-588a-497b-9f06-2eef3bdc9442,TCGA-EE-A29B,male,Dead,67,,2588,,"Melanoma, NOS",,Not Reported
+909335d0-bb4b-4ea3-869a-93e4d91c2154,TCGA-GN-A4U3,male,Alive,30,,,,"Malignant melanoma, NOS",,Not Reported
+90aa7540-93e7-4ffa-9e77-879198be1e7b,TCGA-ER-A19G,female,Alive,48,,,9188.0,"Malignant melanoma, NOS",,Skin of trunk
+913f21a9-f727-4983-ab3a-61b5b3fc7f5e,TCGA-EE-A2GH,male,Alive,34,,,6699.0,"Malignant melanoma, NOS",,Lymph nodes of axilla or arm
+919dfc28-6b55-452e-884c-48cb86802ac2,TCGA-EE-A2GR,male,Dead,78,,1301,1301.0,"Malignant melanoma, NOS",,"Connective, subcutaneous and other soft tissues of upper limb and shoulder"
+92d79156-9139-487b-8582-ce0e87b4ecd0,TCGA-EE-A3AH,male,Dead,30,,4222,,"Malignant melanoma, NOS",,Not Reported
+931e39cd-b0c4-437f-b6c5-9358d74ea533,TCGA-DA-A960,male,Alive,73,,,804.0,"Malignant melanoma, NOS",,"Connective, subcutaneous and other soft tissues of upper limb and shoulder"
+93a31e9f-6557-4f15-a49f-5dfea2c588b2,TCGA-EE-A3AE,female,Alive,52,,,,"Malignant melanoma, NOS",,Not Reported
+960899ed-b61b-4b20-b16d-e37dffb01aa3,TCGA-EB-A553,male,Alive,62,,,,"Malignant melanoma, NOS",,Not Reported
+963858b8-a8b6-498e-989a-271654713772,TCGA-D3-A51E,female,Alive,39,,,5318.0,"Malignant melanoma, NOS",,"Connective, subcutaneous and other soft tissues of lower limb and hip"
+96fc529a-6ad3-456f-a41a-63238ecbb9c4,TCGA-EB-A431,male,Alive,34,,,,"Malignant melanoma, NOS",,Not Reported
+97d9dfc9-c937-48b4-b453-df081950419f,TCGA-EE-A2GT,male,Alive,77,,,1365.0,"Malignant melanoma, NOS",,Lymph nodes of axilla or arm
+9817ec15-605a-40db-b848-2199e5ccbb7b,TCGA-W3-AA1V,male,Dead,63,,1280,,"Malignant melanoma, NOS",,Not Reported
+9937259a-9d47-483c-8773-b3c60e02a653,TCGA-FS-A1ZM,male,Alive,74,Stage III,,,"Malignant melanoma, NOS",,Not Reported
+99706ad3-5cf4-45f8-815e-51e78f2e9f79,TCGA-WE-AAA4,female,Alive,56,,,,"Malignant melanoma, NOS",,Not Reported
+9a7656cf-75a4-4b1f-a2d2-25e3ec147e63,TCGA-FW-A5DY,female,Alive,48,,,587.0,"Malignant melanoma, NOS",,Lymph nodes of axilla or arm
+9a903fc2-57d7-4a02-94e7-9b9b7ee99276,TCGA-D9-A1JW,male,Alive,82,,,,"Malignant melanoma, NOS",,Not Reported
+9c0240d6-8b75-41ae-8fe8-269831fd1e41,TCGA-EE-A2GL,female,Alive,40,,,,"Malignant melanoma, NOS",,Not Reported
+9c47ab1d-e3bd-4191-bd60-4a2123de534e,TCGA-EB-A4XL,female,Alive,56,,,,"Malignant melanoma, NOS",,Not Reported
+9d86940d-50fb-4d2f-8b1e-539196885f46,TCGA-FS-A1ZN,male,Dead,43,,730,,Not Reported,,Not Reported
+9e5a0b7e-9682-4f29-8e4a-7af968ca93fc,TCGA-EB-A44N,male,Dead,59,Stage IIC,205,205.0,Nodular melanoma,,"Skin, NOS"
+9e5b6bee-0e10-4559-8d0e-2dc9677cc90c,TCGA-D3-A5GL,male,Alive,74,,,,"Malignant melanoma, NOS",,Not Reported
+9ee83669-d7a4-476e-8857-304600b4917a,TCGA-ER-A19N,male,Dead,47,,1341,,"Malignant melanoma, NOS",,Not Reported
+9ef30567-6e19-4cd0-8ec8-69194136418d,TCGA-LH-A9QB,female,Alive,24,,,11217.0,"Malignant melanoma, NOS",,Skin of trunk
+9f4dde50-fa0c-43bf-8d5d-70b76cc35793,TCGA-FS-A1ZR,male,Dead,36,,347,,Not Reported,,Not Reported
+a01a350d-64be-4af3-91c3-7d681c3db11d,TCGA-EE-A185,female,Dead,55,,151,,"Malignant melanoma, NOS",,Not Reported
+a0bb7e56-85e1-4bc7-9515-f4279356e6d1,TCGA-FR-A8YE,male,Alive,41,,,3176.0,"Malignant melanoma, NOS",,Lymph nodes of axilla or arm
+a20aeafc-9a68-4af0-87ea-532ee835ebb2,TCGA-DA-A3F2,male,Dead,55,Stage IIIB,1032,,"Malignant melanoma, NOS",,Not Reported
+a25b293b-e019-4890-b44d-bec4dedf46fb,TCGA-WE-A8K1,male,Alive,74,,,1492.0,Superficial spreading melanoma,,"Connective, subcutaneous and other soft tissues of lower limb and hip"
+a276671a-02dd-4b94-9408-1c47710791fe,TCGA-D9-A4Z6,male,Dead,54,,561,,"Malignant melanoma, NOS",,Not Reported
+a29a20e3-5c2c-4f37-b93e-ae9ebc46ec53,TCGA-3N-A9WD,male,Dead,82,,395,395.0,"Malignant melanoma, NOS",,"Lymph nodes of head, face and neck"
+a5286cd0-403a-421b-ab58-11e250740b00,TCGA-EE-A2GJ,male,Dead,83,,2270,,"Malignant melanoma, NOS",,Not Reported
+a5930bc2-d0e4-454f-b60d-5dd1148d4669,TCGA-IH-A3EA,male,Alive,61,Stage IIC,,,"Malignant melanoma, NOS",,Not Reported
+a6c0bfce-0adb-4dd0-bbe7-3f9e7dcdf7bf,TCGA-EE-A29L,male,Dead,78,,79,,"Basal cell carcinoma, NOS",,Not Reported
+a9255dcb-b236-4777-ac43-555e3a5386c3,TCGA-EB-A3XB,male,Alive,63,,,,"Malignant melanoma, NOS",,Not Reported
+a92e70e1-c57d-45ef-a822-33b361c22291,TCGA-EE-A2A1,male,Alive,46,,,3527.0,"Malignant melanoma, NOS",,Lymph nodes of axilla or arm
+a9eb1022-ffd3-42de-a39d-2126fc7ec0ce,TCGA-ER-A196,female,Alive,64,Stage IIC,,1785.0,"Acral lentiginous melanoma, malignant",,Skin of lower limb and hip
+aa55097f-4fd6-45e7-a394-f4122ceafc51,TCGA-EE-A3AA,male,Alive,47,Stage III,,3781.0,"Malignant melanoma, NOS",,Lymph nodes of axilla or arm
+ab7eb3ec-bd87-4e49-9010-b51b17148f7c,TCGA-GN-A4U9,male,Dead,71,,673,,"Malignant melanoma, NOS",,Not Reported
+acd3deaf-39df-4996-b6ce-2b295b9315a1,TCGA-EE-A3JE,male,Alive,75,,,,"Malignant melanoma, NOS",,Not Reported
+adfa6beb-1aa3-4a2a-afe7-8d036a80b20d,TCGA-WE-AAA0,male,Alive,47,,,,"Malignant melanoma, NOS",,Not Reported
+af852862-f01e-4ddd-82c6-9781c93ef20b,TCGA-GF-A769,male,Dead,39,Stage IIC,1070,1070.0,Nodular melanoma,,Skin of lower limb and hip
+af915978-c5e1-4dd4-ab0e-d2be5ac0ae4f,TCGA-D9-A6EC,male,Alive,56,,,2359.0,"Malignant melanoma, NOS",,Lymph nodes of axilla or arm
+afbc376b-524d-4ecd-b79f-d8be770591a7,TCGA-D3-A5GN,female,Alive,15,,,,"Malignant melanoma, NOS",,Not Reported
+affb02c3-ec15-465e-8296-6a32132d542e,TCGA-D3-A2J8,male,Dead,48,,1992,,"Malignant melanoma, NOS",,Not Reported
+b1739cb5-09bc-414a-8f05-c66d2cb9868d,TCGA-FS-A1ZC,male,Dead,51,,10870,,"Malignant melanoma, NOS",,Not Reported
+b2fbea07-eede-4ab1-994a-da26583a5106,TCGA-XV-AAZY,female,Alive,76,,,,"Malignant melanoma, NOS",,Not Reported
+b34e2ac6-0661-4f7c-97f5-f1f3b54aa0e4,TCGA-EE-A3J3,male,Dead,42,,5237,,Amelanotic melanoma,,Not Reported
+b4079a49-bb11-430a-9a1e-19bd46d87fbe,TCGA-EE-A2GI,male,Alive,39,,,1482.0,"Malignant melanoma, NOS",,Lymph nodes of axilla or arm
+b44cced8-88db-4769-a1b0-b09d28558277,TCGA-BF-A5ER,male,Alive,63,Stage IIC,,327.0,"Malignant melanoma, NOS",,Skin of trunk
+b53cf25c-929c-4f1a-870e-13f260c5cf7d,TCGA-EB-A3HV,male,Alive,37,,,,"Malignant melanoma, NOS",,Not Reported
+b5abfbd1-8f92-4ba3-8f2b-801fb600397a,TCGA-FS-A4FC,female,Dead,75,,1655,1655.0,"Malignant melanoma, NOS",,"Skin, NOS"
+b85b14d7-3b5a-4800-af12-622ec03b9fe5,TCGA-ER-A19T,male,Dead,51,,270,,"Malignant melanoma, NOS",,Not Reported
+29476d6a-0d06-4a18-8910-c0502f6539ff,TCGA-D3-A1Q3,male,Dead,64,,507,,"Malignant melanoma, NOS",,Not Reported
+ec4c4296-6ab4-420c-80a4-e7a34b9bf4a2,TCGA-GN-A9SD,female,Dead,59,,1807,,"Malignant melanoma, NOS",,Not Reported
+0153f141-625e-4623-9f8a-296678002c63,TCGA-D3-A3ML,male,Dead,70,,422,,"Malignant melanoma, NOS",,Not Reported
+49a6f6a6-bf6f-45cf-93dc-b006b4a0637d,TCGA-FS-A1ZW,male,Alive,65,Stage IIIB,,,"Malignant melanoma, NOS",,Not Reported
+ab74d6ed-880e-4470-bfd5-2974a4c3a0d7,TCGA-GN-A267,male,Dead,38,,1960,,"Malignant melanoma, NOS",,Not Reported
+f6ff5e77-60d8-4987-9a92-654fd4db81f1,TCGA-FS-A1ZZ,female,Dead,54,,822,822.0,"Malignant melanoma, NOS",,"Lymph node, NOS"
+62e928c1-df8b-4771-ae46-5da40794daf2,TCGA-FR-A3YO,female,Alive,,,,,"Intraductal carcinoma, noninfiltrating, NOS",,Not Reported
+e0d36cc0-652c-4224-bb10-09d15c7bd8f1,TCGA-FS-A1ZF,female,Dead,78,,470,,Not Reported,,Not Reported
+16182443-12a1-4b0f-a6ab-33c2942e2991,TCGA-D3-A3C8,female,Alive,58,,,,"Malignant melanoma, NOS",,Not Reported
+b9607824-a8d3-4915-ab73-962cdcfd8dc3,TCGA-ER-A2NC,male,Dead,50,,1333,,"Malignant melanoma, NOS",,Not Reported
+1b3f92b7-658a-4bbd-b086-20c1cd976d54,TCGA-ER-A2ND,female,Dead,57,,710,710.0,"Malignant melanoma, NOS",,Skin of trunk
+f788f950-7953-47a6-b833-f9e5daa28fd3,TCGA-ER-A2NG,female,Dead,43,,1490,,"Malignant melanoma, NOS",,Not Reported
+b93f703e-be51-4469-aaac-2d4a87a37639,TCGA-ER-A3ES,male,Dead,25,,7514,7514.0,"Malignant melanoma, NOS",,"Peritoneum, NOS"
+4eb16fb1-0fcf-4c47-80fa-b7acc3a59a12,TCGA-FS-A4F0,female,Alive,67,,,2367.0,"Malignant melanoma, NOS",,"Connective, subcutaneous and other soft tissues, NOS"
+f7368803-c545-4407-9a14-2220560a8f80,TCGA-ER-A19B,male,Dead,42,,2993,,"Malignant melanoma, NOS",,Not Reported
+714f58d6-14bf-4e60-96ac-104d4abd45ed,TCGA-D3-A3MU,male,Alive,53,,,1209.0,"Malignant melanoma, NOS",,Lymph nodes of axilla or arm
+449c9d70-d8aa-41d4-beeb-0bbfc73a23d8,TCGA-EE-A2MR,male,Alive,61,,,,"Basal cell carcinoma, NOS",,Not Reported
+bda2f09a-82c4-40ec-90e8-0bf63916a5c7,TCGA-ER-A2NB,male,Dead,57,,857,,"Malignant melanoma, NOS",,Not Reported
+6c353b35-4f6d-4a36-bc8b-8a21dd0beecb,TCGA-ER-A2NH,male,Alive,49,,,,"Malignant melanoma, NOS",,Not Reported
+e36c9411-773b-4a8e-9b43-895b3cb044c7,TCGA-GN-A262,female,Alive,47,,,,"Malignant melanoma, NOS",,Not Reported
+31e94518-f6dd-4458-94d8-dda3cc7a0831,TCGA-FS-A1ZS,male,Alive,54,,,,"Malignant melanoma, NOS",,Not Reported
+6668acfe-1594-42c0-b839-8a592702675f,TCGA-HR-A2OH,female,Dead,46,Stage IIIB,2004,,"Malignant melanoma, NOS",,Not Reported
+a3df4ba6-538e-4b53-a356-eb1ef743b2ab,TCGA-FS-A1ZY,male,Dead,71,,824,824.0,"Malignant melanoma, NOS",,"Skin, NOS"
+e35be832-6972-4677-b985-02e90d51141a,TCGA-ER-A3EV,male,Dead,55,,1429,,"Malignant melanoma, NOS",,Not Reported
+18e7b73c-4520-42cd-ac9b-23bac1c8ecc6,TCGA-FR-A44A,female,Alive,29,,,5299.0,"Malignant melanoma, NOS",,Lymph nodes of axilla or arm
+7ee2f8d5-6c31-4f5f-a779-b43979e66d0b,TCGA-EE-A180,male,Dead,69,,2889,,"Malignant melanoma, NOS",,Not Reported
+c58638ed-a38c-4494-a41e-6ee5283a7a59,TCGA-D3-A2JF,male,Alive,74,Stage IA,,,"Malignant melanoma, NOS",,Not Reported
+783eb662-7d7a-4637-8500-e2d86d73ec7b,TCGA-EE-A2GO,female,Alive,66,,,3857.0,Amelanotic melanoma,,"Connective, subcutaneous and other soft tissues of lower limb and hip"
+57882f61-4a32-49f1-afd4-61c70b184d8b,TCGA-FS-A1ZT,male,Alive,55,,,1617.0,"Malignant melanoma, NOS",,"Lymph node, NOS"
+b5e37b9b-6264-4cc8-9b44-1d8ac0692d6c,TCGA-EE-A2M5,male,Dead,49,,659,659.0,"Malignant melanoma, NOS",,Lymph nodes of axilla or arm
+3a8cfea5-1dcd-4dbb-bbd9-5bb602c54922,TCGA-EE-A184,male,Dead,72,,2073,,"Malignant melanoma, NOS",,Not Reported
+e5bc45ce-8a14-40b5-b9b5-ce45609fef3a,TCGA-FW-A3R5,male,Alive,68,,,1124.0,"Malignant melanoma, NOS",,"Lymph nodes of head, face and neck"
+47a16bf2-229b-4e9a-8b5e-3dcc61fa9106,TCGA-D3-A2JG,female,Dead,30,,3453,,"Malignant melanoma, NOS",,Not Reported
+b6ee9305-c935-4692-81f3-956956d5b4c4,TCGA-EB-A5VU,male,Dead,56,,321,,"Malignant melanoma, NOS",,Not Reported
+b8a1732f-c1cb-4a02-af4f-61b63d3d52df,TCGA-EE-A3JD,male,Dead,70,Stage III,832,832.0,"Malignant melanoma, NOS",,Lymph nodes of axilla or arm
+b91af125-a024-4ba3-a5e8-99955ff9efc5,TCGA-FS-A1ZQ,male,Dead,31,,4062,4062.0,"Malignant melanoma, NOS",,"Lung, NOS"
+1068ad76-612e-40ee-b2fa-916da14b7916,TCGA-ER-A2NE,male,Dead,39,Stage 0,613,,"Malignant melanoma, NOS",,Not Reported
+ea240769-e51c-45f5-a131-ba123e598622,TCGA-ER-A198,male,Dead,45,,1544,,"Malignant melanoma, NOS",,Not Reported
+bd2345ed-33b8-4010-8479-4d6c67e29561,TCGA-EE-A2MH,male,Dead,66,,516,516.0,"Malignant melanoma, NOS",,Lymph nodes of axilla or arm
+080bb1f8-f20c-4daa-9de3-b5782b69583c,TCGA-EB-A5VV,female,Alive,74,Stage IIIB,,,"Malignant melanoma, NOS",,Not Reported
+beab616a-256e-48f3-a458-028897a6138c,TCGA-D3-A8GI,male,Dead,68,,1780,1780.0,"Malignant melanoma, NOS",,"Lymph nodes of head, face and neck"
+08d2b181-2b6e-4754-bfa9-5a94a1f18526,TCGA-GN-A263,male,Dead,24,,467,,"Malignant melanoma, NOS",,Not Reported
+c0b0255b-74fd-4af7-a2b0-5a82829f680b,TCGA-D3-A3C6,female,Dead,54,,1766,1766.0,"Malignant melanoma, NOS",,Lymph nodes of inguinal region or leg
+74596c13-8b5d-4289-a3c0-446fa968b241,TCGA-FS-A4F4,male,Dead,64,Stage II,2028,,"Malignant melanoma, NOS",,Not Reported
+c2948fe9-5798-43bc-a743-511e94e417f8,TCGA-FS-A1ZD,male,Dead,63,,1628,,"Malignant melanoma, NOS",,Not Reported
+691a5156-281d-4fd6-b44a-299a3e8dc3e3,TCGA-ER-A42K,female,Dead,40,Stage IIIC,394,,"Malignant melanoma, NOS",,Not Reported
+c3d4caa5-eebc-4276-b1e1-ab9494867b10,TCGA-D3-A3BZ,male,Alive,63,Stage IIB,,,"Malignant melanoma, NOS",,Not Reported
+6dc9c5b0-77e6-4c53-a75c-8f01731c54e8,TCGA-GN-A4U4,male,Alive,73,,,,"Malignant melanoma, NOS",,Not Reported
+6250b800-f72e-4c8e-a0e0-206049398ba7,TCGA-D3-A5GT,male,Alive,43,,,,"Malignant melanoma, NOS",,Not Reported
+c5476668-4b3f-47bb-9d67-488cef891243,TCGA-EE-A3AC,male,Alive,47,Stage III,,1948.0,"Malignant melanoma, NOS",,Lymph nodes of axilla or arm
+2f1bbe96-49d9-417b-bc9c-a09992489340,TCGA-EB-A24C,male,Alive,56,,,,"Malignant melanoma, NOS",,Not Reported
+c757c326-6803-4451-a2d3-4368812855a7,TCGA-EB-A550,female,Dead,75,Stage IIC,264,264.0,"Malignant melanoma, NOS",,Skin of trunk
+c77e1eef-ec9a-42ea-96cc-70aa437a00e6,TCGA-D9-A6EG,male,Dead,56,,698,,"Malignant melanoma, NOS",,Not Reported
+791d3824-890f-43f2-b545-c7266506d716,TCGA-D3-A51T,female,Alive,59,,,818.0,"Malignant melanoma, NOS",,Lymph nodes of axilla or arm
+c7ecf63a-a412-43e6-805e-e9f49d7dfe6b,TCGA-RP-A690,female,Alive,66,,,6.0,"Malignant melanoma, NOS",,Spinal cord
+04add7f0-d212-486e-ae70-d41d8112f523,TCGA-XV-AB01,female,Alive,54,,,,"Malignant melanoma, NOS",,Not Reported
+ca9f542c-fdac-4e58-8658-eca78e4fafca,TCGA-EB-A44Q,female,Alive,51,,,422.0,"Malignant melanoma, NOS",,Lymph nodes of inguinal region or leg
+69c0ef46-3117-46f3-b36e-581eb03eb829,TCGA-ER-A19O,male,Dead,56,,,,"Malignant melanoma, NOS",,Not Reported
+a67fd5bb-b6b6-4e00-9acd-68d0a59b5e55,TCGA-EE-A20I,male,Dead,79,,412,412.0,"Malignant melanoma, NOS",,Skin of lower limb and hip
+ccf8809a-cdfd-46f7-b607-001b8b91c1a4,TCGA-FR-A69P,female,Alive,34,,,,"Malignant melanoma, NOS",,Not Reported
+ce28f65d-4ae8-4e63-815f-5b8d4389e092,TCGA-ER-A19J,male,Dead,54,,196,,"Malignant melanoma, NOS",,Not Reported
+d3b77da8-be1d-4955-b1c7-55b7769785e8,TCGA-GN-A4U8,male,Alive,51,,,,"Malignant melanoma, NOS",,Not Reported
+97991c80-c4aa-4ede-9fd9-bbaff9c4a472,TCGA-BF-AAP8,male,Alive,58,Stage IIC,,447.0,Epithelioid cell melanoma,,Skin of upper limb and shoulder
+cf97d5ff-1cb7-434e-9ca8-c396cf960e5a,TCGA-EB-A3Y7,female,Dead,86,Stage IIIB,326,326.0,"Malignant melanoma, NOS",,"Connective, subcutaneous and other soft tissues of head, face, and neck"
+9f5bd948-dc3d-4b17-a114-d2f5c46fe10c,TCGA-FS-A1ZH,female,Dead,71,,996,,"Malignant melanoma, NOS",,Not Reported
+aa597e8b-7813-4837-b778-4dafe3b091bb,TCGA-EB-A5SH,female,Alive,60,,,1643.0,"Malignant melanoma, NOS",,"Lymph node, NOS"
+d0c3a83d-a1bf-4e9a-a610-2fb4370f2891,TCGA-EB-A430,male,Alive,83,Stage IIC,,-2.0,Nodular melanoma,,Skin of trunk
+7b7a49b5-5be8-4966-8f3a-e6e01e694f86,TCGA-D3-A1Q8,male,Dead,33,,854,,"Malignant melanoma, NOS",,Not Reported
+c6be76d4-a1ba-4dd6-84bf-3b30cabe144e,TCGA-GN-A268,female,Dead,83,Stage IIB,1910,,"Malignant melanoma, NOS",,Not Reported
+d28b2d64-2399-4ce1-9c9a-7538dabab862,TCGA-EE-A2MD,male,Dead,52,Stage II,1438,,"Malignant melanoma, NOS",,Not Reported
+01cfbfae-f344-439d-aeab-a9e15d636325,TCGA-EE-A2ML,male,Dead,35,,6590,,"Malignant melanoma, NOS",,Not Reported
+d6276407-52a3-4f0c-8332-1b3477f6d2fc,TCGA-EB-A5UN,male,Alive,49,,,1792.0,"Malignant melanoma, NOS",,"Small intestine, NOS"
+d6283ab0-9019-4ad2-93aa-2e6b39cd9641,TCGA-EE-A3J5,male,Dead,71,,1124,,"Malignant melanoma, NOS",,Not Reported
+0797caaf-18ad-41c6-820a-e96554d14b31,TCGA-EE-A2MN,male,Dead,58,,1446,,"Malignant melanoma, NOS",,Not Reported
+d7207811-3f9a-48ac-ab9b-3e8af1b1d9f2,TCGA-QB-A6FS,male,Alive,49,Stage IIIC,,,"Malignant melanoma, NOS",,Not Reported
+854466bf-b943-4acb-b4f1-6b285cb813e3,TCGA-D3-A5GO,male,Alive,61,,,,"Squamous cell carcinoma, NOS",,Not Reported
+d781260c-f969-456e-bf16-044dc5b181a4,TCGA-FR-A8YC,male,Dead,78,,1059,,"Malignant melanoma, NOS",,Not Reported
+d7e86c99-a716-48b8-b067-e73d68b14dee,TCGA-BF-A3DN,female,Alive,81,Stage IIIC,,717.0,"Malignant melanoma, NOS",,"Skin, NOS"
+d7ee2693-39a8-4e3a-b6f6-e4729800e34e,TCGA-EB-A24D,male,Alive,72,Stage IIIB,,645.0,"Malignant melanoma, NOS",,Skin of upper limb and shoulder
+2ec330f8-96e4-4270-aadc-563bb72f4b2c,TCGA-D3-A2JE,female,Dead,75,,841,,"Malignant melanoma, NOS",,Not Reported
+7b92fcd4-f9be-4b97-94a2-b2e8348aeaba,TCGA-DA-A1I8,female,Dead,63,,1640,,"Malignant melanoma, NOS",,Not Reported
+dcc005ba-f8c9-4845-bf08-0dbabe291c9a,TCGA-D3-A8GE,male,Alive,26,Stage IV,,804.0,"Spindle cell melanoma, NOS",,Skin of upper limb and shoulder
+1af5d168-a3ff-4648-b195-ede2e7a5ca26,TCGA-EE-A29M,female,Alive,33,,,1729.0,"Malignant melanoma, NOS",,Lymph nodes of axilla or arm
+debd7156-8b97-4bdf-9dd9-7e469277d252,TCGA-EB-A4P0,male,Dead,82,,326,,"Malignant melanoma, NOS",,Not Reported
+5f6df69c-4ebf-4811-8b28-ad393dfbe1a3,TCGA-ER-A19L,male,Dead,35,,4000,,"Malignant melanoma, NOS",,Not Reported
+dfe8baa8-1c2c-4c36-92c9-61548cebec19,TCGA-DA-A1I7,male,Alive,62,Stage IIIB,,,"Malignant melanoma, NOS",,Not Reported
+dfe9d2bd-2317-4103-b493-41c5469e08a0,TCGA-BF-AAOU,female,Alive,73,,,,"Malignant melanoma, NOS",,Not Reported
+962ff090-16c0-438b-8213-86b2bd306e4c,TCGA-GN-A8LK,male,Dead,70,Stage IB,1524,,"Malignant melanoma, NOS",,Not Reported
+e218fc54-1139-4944-82e2-742839e5553a,TCGA-ER-A199,female,Dead,86,Stage IIIC,279,,"Malignant melanoma, NOS",,Not Reported
+e2271488-1a7d-4733-a1ea-38bbaeb97b4c,TCGA-DA-A1I5,female,Alive,27,,,,"Malignant melanoma, NOS",,Not Reported
+42fb358c-cc9b-4963-9d16-4a7aa915002a,TCGA-D3-A8GJ,male,Alive,18,,,,"Malignant melanoma, NOS",,Not Reported
+e63a9717-7851-4706-951a-dc0b87c45edf,TCGA-D3-A51K,male,Alive,51,Stage IIIB,,,"Malignant melanoma, NOS",,Not Reported
+f581a9b5-8956-4ac3-9375-370c446cad29,TCGA-D3-A3MV,female,Alive,38,,,1378.0,"Malignant melanoma, NOS",,"Connective, subcutaneous and other soft tissues of lower limb and hip"
+267b98e7-708f-458a-82d1-5faa415b9ee7,TCGA-EE-A20H,male,Dead,56,,5118,,"Malignant melanoma, NOS",,Not Reported
+e85c07ed-51ef-4c91-8431-0dc738d9ccc6,TCGA-D3-A1Q4,female,Alive,53,,,3408.0,"Malignant melanoma, NOS",,"Lymph node, NOS"
+e865b9be-ca10-4805-9634-2f35ad18b63e,TCGA-WE-A8K4,male,Alive,85,Stage IIB,,614.0,Nodular melanoma,,Skin of upper limb and shoulder
+e9a42a85-9513-41b2-a71d-6d62f70b00e4,TCGA-D3-A2JP,male,Alive,37,,,,"Malignant melanoma, NOS",,Not Reported
+e9e615a1-9323-49d3-904c-fcf4887fea61,TCGA-D3-A2J9,male,Dead,75,,723,,"Malignant melanoma, NOS",,Not Reported
+5f07d78a-44a1-4002-a55c-5fe01b35d669,TCGA-BF-AAP0,female,Alive,40,Stage IV,,454.0,"Malignant melanoma, NOS",,Lymph nodes of axilla or arm
+ea6337b3-3b5e-489e-ae2f-2908447f6300,TCGA-FR-A728,female,Alive,54,Stage IIIB,,,"Malignant melanoma, NOS",,Not Reported
+d5f8b18c-8ae7-457a-aa3e-c4bd77b276ab,TCGA-ER-A19C,male,Dead,77,,1487,,"Malignant melanoma, NOS",,Not Reported
+ed471051-41dc-404c-87ec-db4a281ecfb5,TCGA-W3-A824,male,Alive,63,,,6940.0,"Malignant melanoma, NOS",,Lymph nodes of axilla or arm
+a5ab4498-8721-40ea-8ee4-fc1a6d05721d,TCGA-BF-AAP6,male,Alive,55,Stage III,,325.0,Epithelioid cell melanoma,,Skin of lower limb and hip
+1fb5b4fd-8891-4a21-96b6-45d4b848cc66,TCGA-FR-A7U9,female,Alive,63,,,,"Malignant melanoma, NOS",,Not Reported
+2e6f9985-6d13-4b08-8a40-5ea44e9553f0,TCGA-EB-A5FP,female,Dead,65,Stage IV,454,,"Malignant melanoma, NOS",,Not Reported
+ef40fa3d-807b-47c1-9f77-58e9778ce391,TCGA-BF-A5ES,female,Alive,76,Stage IIC,,490.0,"Malignant melanoma, NOS",,Skin of trunk
+11463605-7086-48f4-b9bd-027715071880,TCGA-GF-A6C8,female,Alive,62,Stage IIB,,,"Malignant melanoma, NOS",,Not Reported
+ef7bc188-6aec-467e-801a-ab2109a28104,TCGA-EB-A42Y,female,Dead,73,,721,,"Malignant melanoma, NOS",,Not Reported
+cdcf4d91-98a1-4a65-98dd-c6fc80805a0c,TCGA-EE-A2A6,male,Alive,43,,,2620.0,"Malignant melanoma, NOS",,Lymph nodes of inguinal region or leg
+eff78af6-0f68-49b9-866b-0d511606f2b1,TCGA-BF-A1PV,female,Alive,74,Stage IIC,,14.0,"Malignant melanoma, NOS",,"Skin, NOS"
+db950f20-c869-4e1a-ada2-dbdc82b5865e,TCGA-W3-AA1O,male,Dead,85,Stage III,122,,"Malignant melanoma, NOS",,Not Reported
+f0744fa2-db4a-40de-9fd2-f61863fd98d4,TCGA-D9-A1X3,male,Alive,63,,,551.0,"Malignant melanoma, NOS",,"Skin, NOS"
+71b347ac-6ac6-475d-8e21-754764180948,TCGA-Z2-AA3S,male,Alive,58,,,,"Malignant melanoma, NOS",,Not Reported
+3fea3f02-2db3-44e0-984e-c61130d92c9b,TCGA-ER-A19E,female,Dead,36,,396,,"Malignant melanoma, NOS",,Not Reported
+8d7f8f4d-aef9-4d1b-bfb4-7ed85b0797b3,TCGA-WE-A8K6,male,Alive,79,,,,"Malignant melanoma, NOS",,Not Reported
+f405c603-bcbc-434f-b620-c32eb27b215b,TCGA-ER-A19S,female,Alive,81,,,,"Malignant melanoma, NOS",,Not Reported
+5bf40b29-d722-430a-91bc-cad941ee3694,TCGA-EB-A6R0,female,Dead,58,Stage IIC,608,608.0,"Malignant melanoma, NOS",,"Skin, NOS"
+f55914f3-f19a-4d93-b368-554ec1a9cf40,TCGA-FR-A729,female,Alive,38,,,,"Malignant melanoma, NOS",,Not Reported
+9b99ffee-fe9f-4be5-a00a-ef86627282a4,TCGA-EE-A29T,female,Alive,51,,,,"Malignant melanoma, NOS",,Not Reported
+f632effd-be12-41ab-8e4f-2a5f38af8bae,TCGA-EE-A20B,female,Alive,66,,,,"Malignant melanoma, NOS",,Not Reported
+259b4d49-7cfc-420f-ba5e-65febc328ce4,TCGA-D9-A6E9,female,Alive,75,,,,"Malignant melanoma, NOS",,Not Reported
+f94ae8f2-d555-4c2a-97b0-dbe7d642c566,TCGA-GF-A3OT,female,Alive,58,Stage IIIC,,301.0,"Malignant melanoma, NOS",,Lymph nodes of axilla or arm
+f9d113e3-9127-491c-9227-33770bf2b23f,TCGA-GN-A269,male,Dead,70,Stage IIIC,170,170.0,Superficial spreading melanoma,,Skin of trunk
+c714c48f-a18c-4110-a82d-3cc95c315afd,TCGA-D3-A5GR,female,Alive,23,,,5424.0,"Malignant melanoma, NOS",,Lymph nodes of inguinal region or leg
+fa099993-ef30-4eff-a8fb-aa41b5ea671a,TCGA-GN-A26C,male,Dead,77,,821,821.0,"Spindle cell melanoma, NOS",,Skin of trunk
+53de8f81-a226-4ab9-bddc-856ffd111817,TCGA-BF-A5EQ,male,Alive,63,Stage IIC,,323.0,"Malignant melanoma, NOS",,Skin of trunk
+fc59cc57-ca7a-4de3-bd13-2e283716a243,TCGA-D3-A3C3,female,Alive,,,,,"Malignant melanoma, NOS",,Not Reported
+2bdb65a5-4b72-4379-822d-69cc41fd663f,TCGA-QB-AA9O,male,Dead,73,Stage IIIC,549,549.0,"Malignant melanoma, NOS",,"Connective, subcutaneous and other soft tissues of upper limb and shoulder"
+4afa82f8-b317-4763-808c-c944ca6661d3,TCGA-ER-A3ET,female,Dead,64,,2829,,"Malignant melanoma, NOS",,Not Reported
+fd1a49f2-fb3b-481d-888e-f4224d59f6d1,TCGA-EE-A29P,female,Alive,73,,,,"Malignant melanoma, NOS",,Not Reported
+fda160c9-efdc-4263-98f1-e38b00571b4d,TCGA-EB-A5SE,male,Dead,73,,401,,"Malignant melanoma, NOS",,Not Reported
+1404791b-86bf-4dfd-85b4-c8ff356f109c,TCGA-FS-A1ZK,male,Dead,68,Stage II,728,,"Malignant melanoma, NOS",,Not Reported
+fecff768-2cf4-487f-8ea4-c24a947330b7,TCGA-ER-A19P,female,Dead,47,,4930,4930.0,"Malignant melanoma, NOS",,"Connective, subcutaneous and other soft tissues of pelvis"

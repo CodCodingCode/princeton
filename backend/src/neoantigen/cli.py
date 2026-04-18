@@ -90,6 +90,19 @@ def _render_construct(result: PipelineResult) -> Panel | None:
     return Panel(summary, title="mRNA vaccine construct", border_style="green")
 
 
+def _heuristic_warning_panel() -> Panel:
+    return Panel(
+        Text(
+            "⚠ heuristic-only scoring — NOT a real MHC predictor.\n"
+            "Reported nM values are hand-rolled anchor-residue math, not ML predictions.\n"
+            "Install the default scorer: `mhcflurry-downloads fetch` (mhcflurry is a base dependency).",
+            style="bold yellow",
+        ),
+        title="⚠ unsafe scorer",
+        border_style="yellow",
+    )
+
+
 @app.command("run")
 def run_command(
     input_path: Annotated[Path, typer.Argument(help="VCF (SnpEff-annotated) or gene/mutation TSV")],
@@ -98,7 +111,7 @@ def run_command(
     top: Annotated[int, typer.Option("--top", help="Number of top peptides to include in construct")] = 15,
     max_nm: Annotated[float, typer.Option("--max-nm", help="Affinity cutoff in nM")] = 500.0,
     allele: Annotated[str, typer.Option("--allele", help="MHC allele")] = "HLA-A*02:01",
-    mhcflurry: Annotated[bool, typer.Option("--mhcflurry", help="Use MHCflurry ML model (requires install)")] = False,
+    scorer: Annotated[str, typer.Option("--scorer", help="Scorer: 'mhcflurry' (default, real ML) or 'heuristic' (test fixture, unsafe)")] = "mhcflurry",
 ) -> None:
     """Run the vaccine pipeline on a VCF or TSV mutation file."""
     if not input_path.exists():
@@ -110,15 +123,19 @@ def run_command(
         console.print("[red]No mutations parsed from input.[/red]")
         raise typer.Exit(code=1)
 
-    scorer_name = "mhcflurry" if mhcflurry else "heuristic"
+    if scorer == "heuristic":
+        console.print(_heuristic_warning_panel())
+
     config = RunConfig(
-        scorer=build_scorer(scorer_name, allele),
+        scorer=build_scorer(scorer, allele),
         top_n=top,
         max_nm=max_nm,
     )
 
     result = run(mutations, config, console=console)
     console.print(_render_mutations(result))
+    if result.scorer_is_heuristic:
+        console.print(_heuristic_warning_panel())
     console.print(_render_candidates(result))
     panel = _render_construct(result)
     if panel:
@@ -139,7 +156,7 @@ def run_command(
 
 @app.command("demo")
 def demo_command(
-    mhcflurry: Annotated[bool, typer.Option("--mhcflurry", help="Use MHCflurry ML model")] = False,
+    scorer: Annotated[str, typer.Option("--scorer", help="Scorer: 'mhcflurry' (default) or 'heuristic' (test fixture, unsafe)")] = "mhcflurry",
 ) -> None:
     """Run the bundled BRAF V600E demo input."""
     if not SAMPLE_BRAF.exists():
@@ -152,7 +169,7 @@ def demo_command(
         top=15,
         max_nm=500.0,
         allele="HLA-A*02:01",
-        mhcflurry=mhcflurry,
+        scorer=scorer,
     )
 
 

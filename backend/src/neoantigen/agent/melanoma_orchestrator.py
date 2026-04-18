@@ -184,6 +184,68 @@ class MelanomaOrchestrator:
             await self.bus.emit(EventKind.TOOL_ERROR, f"Pipeline failed: {e}")
             return None
 
+    async def _match_trials(self, case: MelanomaCase) -> list[TrialMatch]:
+        """Fetch recruiting melanoma trials from CT.gov and evaluate Regeneron rules.
+
+        Non-Regeneron trials are returned with status='unscored' (surfaced in UI
+        but not structurally matched). Sort order: Regeneron-eligible first,
+        then Regeneron needs_more_data, then other trials, then ineligible.
+        """
+        await self.bus.emit(EventKind.TOOL_START, "🧪 Matching clinical trials")
+        try:
+            studies: list[CTGovStudy] = await fetch_melanoma_trials()
+        except Exception as e:
+            await self.bus.emit(EventKind.TOOL_ERROR, f"CT.gov fetch failed: {e}")
+            return []
+
+        matches: list[TrialMatch] = []
+        seen_ids: set[str] = set()
+        for study in studies:
+            seen_ids.add(study.nct_id)
+            if study.nct_id in REGENERON_TRIALS:
+                m = evaluate_regeneron(case, REGENERON_TRIALS[study.nct_id])
+                m.title = study.brief_title or m.title
+                m.sponsor = study.sponsor or m.sponsor
+                m.phase = study.phase or m.phase
+                m.overall_status = study.overall_status
+                m.site_contacts = study.site_contacts
+                m.url = study.url
+            else:
+                m = TrialMatch(
+                    nct_id=study.nct_id,
+                    title=study.brief_title,
+                    sponsor=study.sponsor,
+                    phase=study.phase,
+                    status="unscored",
+                    is_regeneron=False,
+                    site_contacts=study.site_contacts,
+                    overall_status=study.overall_status,
+                    url=study.url,
+                )
+            matches.append(m)
+
+        # If any Regeneron trial is in our registry but CT.gov didn't return it
+        # (e.g. status changed to completed/closed), still evaluate so the UI
+        # can show the historical match.
+        for nct_id, rule in REGENERON_TRIALS.items():
+            if nct_id in seen_ids:
+                continue
+            m = evaluate_regeneron(case, rule)
+            m.overall_status = "NOT_RECRUITING"
+            matches.append(m)
+
+        def _rank(t: TrialMatch) -> tuple[int, str]:
+            if t.is_regeneron and t.status == "eligible":
+                return (0, t.nct_id)
+            if t.is_regeneron and t.status == "needs_more_data":
+                return (1, t.nct_id)
+            if not t.is_regeneron:
+                return (2, t.nct_id)
+            return (3, t.nct_id)  # regeneron ineligible last
+
+        matches.sort(key=_rank)
+        return matches
+
     async def _dock_top_peptides(self, pipeline: PipelineResult):
         poses = []
         for cand in pipeline.candidates[:3]:

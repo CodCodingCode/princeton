@@ -62,6 +62,8 @@ class PipelineResult(BaseModel):
     mutations: list[Mutation]
     candidates: list[Candidate]
     vaccine: VaccineConstruct | None = None
+    scorer_name: str = ""
+    scorer_is_heuristic: bool = False
 
 
 # ─────────────────────────────────────────────────────────────
