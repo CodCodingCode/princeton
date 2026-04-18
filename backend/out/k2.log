@@ -449,3 +449,11 @@ pdl1_estimate
 2026-04-18 03:13:46,879 [INFO] neoantigen.llm: call response schema=PathologyFindings len=6611
 2026-04-18 03:13:47,045 [INFO] neoantigen.llm: stream_with_thinking start user_len=469 images=0
 2026-04-18 03:13:48,845 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 03:15:38,113 [INFO] neoantigen.llm: call schema=PathologyFindings images=1 user_len=216
+2026-04-18 03:15:45,275 [INFO] neoantigen.llm: call response schema=PathologyFindings len=5150
+2026-04-18 03:15:45,304 [INFO] neoantigen.llm: stream_with_thinking start user_len=455 images=0
+2026-04-18 03:15:46,316 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 03:17:58,469 [INFO] neoantigen.llm: call schema=PathologyFindings images=1 user_len=216
+2026-04-18 03:18:01,968 [INFO] neoantigen.llm: call response schema=PathologyFindings len=2303
+2026-04-18 03:18:02,010 [INFO] neoantigen.llm: stream_with_thinking start user_len=456 images=0
+2026-04-18 03:18:03,699 [INFO] neoantigen.llm: stream_with_thinking done
