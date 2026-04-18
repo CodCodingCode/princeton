@@ -18,7 +18,7 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 from ..models import EmailDraft
-from ._llm import build_model, has_api_key
+from ._llm import call_for_json, has_api_key
 
 
 class EmailContent(BaseModel):
@@ -76,23 +76,20 @@ async def draft_email(
     if not has_api_key():
         return _fallback_draft(recipient_type, recipient_name, recipient_email, context, attachments)
 
+    prompt = (
+        f"Draft an email to {recipient_name}.\n\n"
+        f"Recipient type: {recipient_type}\n"
+        f"Instruction: {instruction}\n\n"
+        f"Case context:\n{context}\n\n"
+        f"Sign the email from 'NeoVax Treatment Coordinator'."
+    )
     try:
-        from pydantic_ai import Agent
-
-        agent = Agent(
-            build_model(),
-            output_type=EmailContent,
+        content = await call_for_json(
+            schema=EmailContent,
             system_prompt=SYSTEM_PROMPT,
+            user_prompt=prompt,
+            max_tokens=4000,
         )
-        prompt = (
-            f"Draft an email to {recipient_name}.\n\n"
-            f"Recipient type: {recipient_type}\n"
-            f"Instruction: {instruction}\n\n"
-            f"Case context:\n{context}\n\n"
-            f"Sign the email from 'NeoVax Treatment Coordinator'."
-        )
-        result = await agent.run(prompt)
-        content = result.output
     except Exception:
         return _fallback_draft(recipient_type, recipient_name, recipient_email, context, attachments)
 

@@ -6,21 +6,7 @@ Falls back to a static template when K2_API_KEY is not set.
 
 from __future__ import annotations
 
-import re
-
-from ._llm import build_model, has_api_key
-
-
-_THINK_RE = re.compile(r"<think>.*?</think>\s*|</think>\s*", re.DOTALL)
-
-
-def _strip_think_block(text: str) -> str:
-    """Remove K2-Think's <think>...</think> reasoning block from free-form output.
-
-    Handles both the full `<think>...</think>` form and the truncated trailing
-    `</think>` that K2 sometimes emits when the open tag is consumed by the server.
-    """
-    return _THINK_RE.sub("", text, count=1)
+from ._llm import build_model, has_api_key, strip_think
 
 
 SYSTEM_PROMPT = """You are a compassionate veterinary treatment coordinator.
@@ -62,7 +48,7 @@ async def explain_case(
             "Write the owner-facing explanation."
         )
         result = await agent.run(prompt)
-        return _strip_think_block(result.output).strip()
+        return strip_think(result.output)
     except Exception:
         return _fallback(patient_name, cancer_type, candidate_count, top_mutation)
 

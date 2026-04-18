@@ -6,6 +6,13 @@ import json
 from pathlib import Path
 from typing import Annotated
 
+try:
+    from dotenv import load_dotenv
+
+    load_dotenv()
+except ImportError:
+    pass
+
 import typer
 from rich.console import Console
 from rich.panel import Panel

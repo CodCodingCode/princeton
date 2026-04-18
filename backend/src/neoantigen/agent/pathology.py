@@ -1,8 +1,8 @@
 """PDF → PathologyReport extraction.
 
-Uses pypdf for text extraction, then a PydanticAI agent (backed by K2 Think V2)
-for structured field extraction. The agent returns a PathologyReport directly —
-PydanticAI handles JSON parsing, validation, and retries on validation failure.
+Uses pypdf for text extraction, then K2 Think V2 (prompted-JSON mode via
+`_llm.call_for_json`) to fill a typed PathologyReport. K2-Think's tool calls
+are unreliable so we prompt for JSON in the response text and post-process.
 Falls back to heuristic regex parsing if K2_API_KEY is not set.
 """
 
@@ -14,7 +14,7 @@ from pathlib import Path
 from pypdf import PdfReader
 
 from ..models import PathologyReport
-from ._llm import build_model, has_api_key
+from ._llm import call_for_json, has_api_key
 
 
 SYSTEM_PROMPT = """You are a veterinary pathology report parser. Extract structured fields from the report text.
@@ -105,16 +105,12 @@ def _heuristic_parse(text: str) -> dict:
 
 
 async def _llm_parse(text: str) -> PathologyReport:
-    """Call K2 Think V2 via PydanticAI to extract a typed PathologyReport."""
-    from pydantic_ai import Agent
-
-    agent = Agent(
-        build_model(),
-        output_type=PathologyReport,
+    """Call K2 Think V2 and parse the response into a typed PathologyReport."""
+    return await call_for_json(
+        schema=PathologyReport,
         system_prompt=SYSTEM_PROMPT,
+        user_prompt=f"Parse this pathology report:\n\n{text}",
     )
-    result = await agent.run(f"Parse this pathology report:\n\n{text}")
-    return result.output
 
 
 async def extract_pathology(pdf_path: Path) -> PathologyReport:
