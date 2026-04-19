@@ -36,29 +36,43 @@ export function formatStage(raw: string | null | undefined): string | null {
   return s;
 }
 
-// Cancer-type display labels. Extend as the corpus grows.
+// Patient-friendly cancer-type labels. Plain English for laypeople - the
+// clinician-side technical name lives on the underlying pathology field.
 const CANCER_TYPE_EN: Record<string, string> = {
-  cutaneous_melanoma: "cutaneous melanoma",
-  lung_adenocarcinoma: "lung adenocarcinoma",
-  lung_squamous: "lung squamous cell carcinoma",
-  breast_ductal_carcinoma: "ductal breast carcinoma",
-  breast_carcinoma: "breast carcinoma",
-  colorectal_adenocarcinoma: "colorectal adenocarcinoma",
-  colorectal_carcinoma: "colorectal carcinoma",
-  gastric_carcinoma: "gastric carcinoma",
-  pancreatic_carcinoma: "pancreatic carcinoma",
-  prostate_carcinoma: "prostate carcinoma",
-  ovarian_carcinoma: "ovarian carcinoma",
-  renal_cell_carcinoma: "renal cell carcinoma",
-  hepatocellular_carcinoma: "hepatocellular carcinoma",
-  bladder_carcinoma: "bladder carcinoma",
-  head_neck_scc: "head & neck squamous cell carcinoma",
-  glioblastoma: "glioblastoma",
-  lymphoma_dlbcl: "diffuse large B-cell lymphoma",
-  multiple_myeloma: "multiple myeloma",
+  cutaneous_melanoma: "melanoma (a skin cancer)",
+  lung_adenocarcinoma: "lung cancer",
+  lung_squamous: "lung cancer",
+  breast_ductal_carcinoma: "breast cancer",
+  breast_carcinoma: "breast cancer",
+  colorectal_adenocarcinoma: "colon or rectal cancer",
+  colorectal_carcinoma: "colon or rectal cancer",
+  gastric_carcinoma: "stomach cancer",
+  pancreatic_carcinoma: "pancreatic cancer",
+  prostate_carcinoma: "prostate cancer",
+  ovarian_carcinoma: "ovarian cancer",
+  renal_cell_carcinoma: "kidney cancer",
+  hepatocellular_carcinoma: "liver cancer",
+  bladder_carcinoma: "bladder cancer",
+  head_neck_scc: "head and neck cancer",
+  glioblastoma: "a type of brain cancer",
+  lymphoma_dlbcl: "lymphoma",
+  multiple_myeloma: "multiple myeloma (a blood cancer)",
   other: "cancer",
-  unknown: "cancer (type pending)",
+  unknown: "cancer (type being confirmed)",
 };
+
+// Turn pathology-report site wording into something a patient can picture.
+// Lobe-based phrasing is the most common jargon we see ("right upper lobe
+// lung"), so we flip it into "upper part of the right lung". Anything we
+// don't recognise falls through unchanged.
+function humanPrimarySite(raw: string): string {
+  const s = raw.toLowerCase().trim();
+  const lobe = s.match(
+    /^(right|left)\s+(upper|middle|lower)\s+lobe(?:\s+(?:of\s+(?:the\s+)?)?lung)?$/,
+  );
+  if (lobe) return `${lobe[2]} part of the ${lobe[1]} lung`;
+  return raw;
+}
 
 const MELANOMA_SUBTYPE_EN: Record<string, string> = {
   superficial_spreading: "superficial-spreading melanoma",
@@ -131,10 +145,11 @@ function diagnosisHeadline(c: PatientCase): string {
 
   const label =
     CANCER_TYPE_EN[cancerType] || cancerType?.replace(/_/g, " ") || "cancer";
-  const site = c.pathology.primary_site ? ` - ${c.pathology.primary_site}` : "";
+  // Deliberately no primary_site in the headline - it duplicates the
+  // "Where it started" row below and makes the heading feel clinical.
   const stageFmt = formatStage(c.intake.ajcc_stage);
   const stage = stageFmt ? ` · Stage ${stageFmt}` : "";
-  return `${capitalize(label)}${site}${stage}`;
+  return `${capitalize(label)}${stage}`;
 }
 
 export function toPatientFriendly(c: PatientCase): PatientFriendly {
@@ -158,16 +173,16 @@ export function toPatientFriendly(c: PatientCase): PatientFriendly {
   const aboutYou: Array<{ label: string; value: string }> = [];
 
   aboutYou.push({
-    label: "What we see",
+    label: "What this is",
     value:
       CANCER_TYPE_EN[cancerType] ??
-      (cancerType?.replace(/_/g, " ") || "cancer (type pending)"),
+      (cancerType?.replace(/_/g, " ") || "cancer (type being confirmed)"),
   });
 
   if (c.pathology.primary_site) {
     aboutYou.push({
-      label: "Primary site",
-      value: c.pathology.primary_site,
+      label: "Where it started",
+      value: humanPrimarySite(c.pathology.primary_site),
     });
   }
 
@@ -198,45 +213,32 @@ export function toPatientFriendly(c: PatientCase): PatientFriendly {
     }
   } else if (egfrMut) {
     aboutYou.push({
-      label: "Driver mutation",
-      value: `EGFR - targeted therapy (EGFR TKIs such as osimertinib) is the standard first-line approach.`,
+      label: "Key genetic finding",
+      value:
+        "A change in a gene called EGFR was found. This is actually helpful news - there are targeted pills designed for this kind of change, and they're usually the first treatment people try.",
     });
   }
 
   const stageDisplay = formatStage(c.intake.ajcc_stage);
   if (stageDisplay && !isMelanoma) {
-    aboutYou.push({ label: "Overall stage", value: stageDisplay });
+    aboutYou.push({ label: "Stage", value: stageDisplay });
   }
   if (c.intake.ecog != null) {
-    aboutYou.push({
-      label: "Performance status",
-      value: `ECOG ${c.intake.ecog} - ${ecogEnglish(c.intake.ecog)}`,
-    });
+    const phrase = ecogEnglish(c.intake.ecog);
+    if (phrase) {
+      aboutYou.push({
+        label: "Day-to-day activity",
+        value: capitalize(phrase),
+      });
+    }
   }
-  if (c.mutations.length) {
-    const top = c.mutations
-      .slice(0, 4)
-      .map((m) => {
-        const isPoint =
-          m.position !== null &&
-          m.position !== undefined &&
-          m.ref_aa &&
-          m.alt_aa;
-        return isPoint
-          ? `${m.gene} ${m.ref_aa}${m.position}${m.alt_aa}`
-          : m.raw_label || m.gene || "variant";
-      })
-      .join(", ");
-    aboutYou.push({ label: "Mutations found", value: top });
-  }
+  // Deliberately omit a raw "Mutations found" row - the HGVS notation
+  // (p.R175H, CDKN2A/B loss, etc.) is exactly the vocabulary this view
+  // promises to strip. The key actionable change is already surfaced above.
 
   return {
     diagnosisHeadline: diagnosisHeadline(c),
-    diagnosisDetails:
-      c.pathology.notes?.slice(0, 220) ||
-      (c.documents.length > 0
-        ? `Based on ${c.documents.length} document${c.documents.length === 1 ? "" : "s"} you uploaded.`
-        : "Extracting your uploaded documents"),
+    diagnosisDetails: patientDiagnosisDetails(c, cancerType),
     recommendedAction,
     recommendedActionDetail: reason,
     ctaLabel: "Book an appointment with a medical oncologist",
@@ -244,6 +246,26 @@ export function toPatientFriendly(c: PatientCase): PatientFriendly {
     nextSteps: nextStepsFromRailway(c.railway?.steps),
     trialsCta: trialsSentence(c.trial_matches),
   };
+}
+
+// Build a plain-English paragraph from structured fields. The pathology
+// notes are full of clinical shorthand (1L / 2L, drug names, mutation
+// notation, ECOG) so we deliberately *don't* use them on the patient side.
+function patientDiagnosisDetails(c: PatientCase, cancerType: string): string {
+  const plainCancer = CANCER_TYPE_EN[cancerType] || "cancer";
+  const sitePhrase = c.pathology.primary_site
+    ? ` that started in the ${humanPrimarySite(c.pathology.primary_site)}`
+    : "";
+  const stage = formatStage(c.intake.ajcc_stage);
+  const parts: string[] = [];
+  parts.push(
+    `Based on your records, this looks like ${plainCancer}${sitePhrase}.`,
+  );
+  if (stage) parts.push(`It's at stage ${stage}.`);
+  parts.push(
+    "The tabs below walk through what this means and what the guidelines suggest as next steps.",
+  );
+  return parts.join(" ");
 }
 
 // Friendly label for a document_kind value emitted by the backend extractor.

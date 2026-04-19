@@ -1,6 +1,6 @@
 "use client";
 
-// Patient-side tab switcher. Mirrors CaseTabs.tsx but the four tabs and the
+// Patient-side tab switcher. Mirrors CaseTabs.tsx but the tabs and the
 // components they render are patient-facing. URL-syncs via ?tab= so the
 // avatar can navigate programmatically in future work.
 
@@ -11,12 +11,14 @@ import { DiagnosisTab } from "./tabs/DiagnosisTab";
 import { PlanTab } from "./tabs/PlanTab";
 import { HealingTab } from "./tabs/HealingTab";
 import { NextStepsTab } from "./tabs/NextStepsTab";
+import { QuestionsTab } from "./tabs/QuestionsTab";
 
 const TABS = [
   { id: "diagnosis", label: "Your diagnosis" },
   { id: "plan", label: "Your plan" },
   { id: "healing", label: "How to heal" },
   { id: "next_steps", label: "Next steps" },
+  { id: "questions", label: "Questions to ask" },
 ] as const;
 
 type TabId = (typeof TABS)[number]["id"];
@@ -63,6 +65,7 @@ export function PatientTabs({ caseData }: { caseData: PatientCase }) {
         {active === "plan" && <PlanTab caseData={caseData} />}
         {active === "healing" && <HealingTab caseData={caseData} />}
         {active === "next_steps" && <NextStepsTab caseData={caseData} />}
+        {active === "questions" && <QuestionsTab caseData={caseData} />}
       </div>
     </aside>
   );

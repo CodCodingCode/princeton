@@ -1,14 +1,11 @@
 "use client";
 
-// "Next steps" - trials the patient may be eligible for + questions to
-// bring to their next oncology visit. Questions come from the same
-// patient-guide endpoint the Healing tab uses, so we re-fetch (the
-// backend caches the result, so this is effectively free after the
-// first call).
+// "Next steps" - trials the patient may be eligible for. The questions-for-
+// doctor list + appointment tip used to live here too; they moved to their
+// own "Questions to ask" tab to keep each tab single-purpose.
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import type { PatientCase, TrialMatch } from "@/lib/types";
-import { fetchPatientGuide, type PatientGuide } from "@/lib/patientApi";
 
 function trialStatusLabel(t: TrialMatch): string {
   switch (t.status) {
@@ -24,23 +21,6 @@ function trialStatusLabel(t: TrialMatch): string {
 }
 
 export function NextStepsTab({ caseData }: { caseData: PatientCase }) {
-  const [guide, setGuide] = useState<PatientGuide | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    fetchPatientGuide(caseData.case_id)
-      .then((g) => {
-        if (!cancelled) setGuide(g);
-      })
-      .catch(() => {
-        // Silent - the Healing tab will also have surfaced the error if there
-        // was one. This tab can still render the trial list without the guide.
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [caseData.case_id]);
-
   const trials = useMemo(() => {
     return (caseData.trial_matches ?? []).filter(
       (t) => t.status === "eligible" || t.status === "needs_more_data",
@@ -106,38 +86,6 @@ export function NextStepsTab({ caseData }: { caseData: PatientCase }) {
             })}
           </div>
         )}
-      </section>
-
-      {guide?.questions_for_doctor?.length ? (
-        <section>
-          <div className="eyebrow mb-3">Bring these to your next visit</div>
-          <ol className="space-y-2 text-sm text-black">
-            {guide.questions_for_doctor.map((q, i) => (
-              <li
-                key={i}
-                className="flex gap-3 rounded-xl border border-neutral-200 bg-white p-3"
-              >
-                <span
-                  aria-hidden
-                  className="font-mono text-[11px] text-neutral-400 shrink-0 pt-1"
-                >
-                  {i + 1}
-                </span>
-                <span className="leading-relaxed">{q}</span>
-              </li>
-            ))}
-          </ol>
-        </section>
-      ) : null}
-
-      <section className="card-muted p-5">
-        <div className="eyebrow mb-2">A small thing that helps a lot</div>
-        <p className="text-sm text-neutral-700 leading-relaxed">
-          Bring someone with you to the appointment where these questions get
-          answered. Two sets of ears catch more than one, and it&apos;s easier
-          to make decisions later when you can talk them through with someone
-          who heard the same words you did.
-        </p>
       </section>
     </div>
   );

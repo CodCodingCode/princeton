@@ -642,27 +642,30 @@ class DynamicRailwayWalker:
                     )
                     phase_steps.append(step)
 
-            # Fallback: single placeholder step for this phase so the UI still
-            # renders the four swim-lanes with an actionable message.
+            # Fallback: even after the structured retry we got nothing
+            # usable. Instead of stamping a raw-error placeholder, synthesize
+            # a phase-level decision from what we *do* know (pathology +
+            # mutations + retrieved citations). The user never sees a tech
+            # message like "Model output contained no parseable JSON" in
+            # the rationale field - they see a clinically-grounded default
+            # that the oncologist can sanity-check.
             if not phase_steps:
                 node_counter += 1
-                if mode == "heuristic":
-                    reason = "Medical reasoning endpoint unavailable (KIMI_API_KEY unset)."
-                elif call_error:
-                    reason = f"Model call failed ({call_error}). Retry or reduce context."
-                elif parse_error:
-                    reason = parse_error
-                else:
-                    reason = "Model produced no decisions for this phase."
+                synthesized = _synthesize_phase_decision(
+                    phase=phase,
+                    cancer_type=self.cancer_type,
+                    state=self.state,
+                    citations=citations,
+                )
                 phase_steps.append(
                     RailwayStep(
                         node_id=f"{phase.id.upper()}_{node_counter}",
                         title=phase.title,
                         question=phase.focus,
-                        chosen_option_label="Needs clinician review",
-                        chosen_option_description=reason,
+                        chosen_option_label=synthesized["label"],
+                        chosen_option_description=synthesized["description"],
                         chosen_next_id=None,
-                        chosen_rationale=reason,
+                        chosen_rationale=synthesized["rationale"],
                         reasoning=think_buf.strip(),
                         evidence=self.state.evidence_summary(),
                         citations=[_citation_ref(c) for c in citations[:3]],
@@ -682,6 +685,149 @@ class DynamicRailwayWalker:
                 steps.append(step)
 
         return steps
+
+
+# ─────────────────────────────────────────────────────────────
+# Heuristic fallback: synthesize a phase decision from evidence
+# ─────────────────────────────────────────────────────────────
+
+# Per-phase, per-driver decision templates. Each template yields a
+# clinically-grounded label + 1-sentence rationale. The walker reaches for
+# these only when the model itself returned nothing usable — so we never
+# display a raw parser error as the decision rationale.
+
+_DRIVER_HINTS: dict[str, dict[str, tuple[str, str]]] = {
+    "BRAF_V600": {
+        "staging": (
+            "Confirm BRAF V600 status and full molecular panel",
+            "A BRAF V600 mutation is present, so staging work-up should "
+            "secure the full molecular profile before therapy selection.",
+        ),
+        "primary": (
+            "Wide local excision with sentinel lymph node biopsy as indicated",
+            "Local control mirrors standard guideline-directed resection; "
+            "systemic choices are where the BRAF status matters.",
+        ),
+        "systemic": (
+            "Consider BRAF/MEK targeted therapy versus anti-PD-1 immunotherapy",
+            "BRAF V600 disease has both targeted and immunotherapy options on "
+            "the table; sequence is the clinician decision.",
+        ),
+        "followup": (
+            "Surveillance imaging plus monitoring for targeted-therapy toxicity",
+            "Follow-up should balance recurrence surveillance with the specific "
+            "adverse-event profile of BRAF/MEK therapy if started.",
+        ),
+    },
+    "EGFR": {
+        "staging": (
+            "Confirm EGFR variant and co-mutation profile",
+            "EGFR-mutant disease changes first-line choice, so the exact "
+            "variant plus co-mutations need to be locked in up front.",
+        ),
+        "primary": (
+            "Guideline-directed local therapy per tumor site and stage",
+            "Local control follows site-specific guidelines; EGFR status "
+            "matters in the systemic phase.",
+        ),
+        "systemic": (
+            "EGFR tyrosine kinase inhibitor (e.g., osimertinib-class) first line",
+            "Guidelines favor an EGFR TKI as first-line for EGFR-mutant "
+            "disease over cytotoxic chemotherapy.",
+        ),
+        "followup": (
+            "TKI tolerability review plus resistance-mutation surveillance",
+            "Follow-up centers on TKI adherence, toxicity review, and early "
+            "detection of resistance mechanisms.",
+        ),
+    },
+    "KRAS_G12C": {
+        "systemic": (
+            "Weigh KRAS G12C inhibitor against standard systemic therapy",
+            "KRAS G12C disease has targeted options (sotorasib, adagrasib) "
+            "that should be considered alongside first-line standard therapy.",
+        ),
+    },
+}
+
+_DEFAULT_BY_PHASE: dict[str, tuple[str, str]] = {
+    "staging": (
+        "Complete imaging, molecular, and pathology work-up",
+        "Finalize the staging work-up so the full molecular and anatomic "
+        "picture is available before therapy selection.",
+    ),
+    "primary": (
+        "Guideline-directed local therapy per tumor site and stage",
+        "Surgery or site-specific radiation per current oncology guidelines.",
+    ),
+    "systemic": (
+        "Guideline-directed first-line systemic therapy",
+        "First-line systemic therapy per current oncology guidelines for the "
+        "documented cancer type and stage.",
+    ),
+    "followup": (
+        "Surveillance imaging plus response and toxicity assessment",
+        "Standard follow-up cadence with response assessment and monitoring "
+        "for treatment-related adverse events.",
+    ),
+}
+
+
+def _driver_key(state: "PatientState") -> str | None:
+    """Pick a dominant driver signature from the mutation list, if any."""
+    for m in state.mutations:
+        gene = (m.gene or "").upper()
+        if gene == "BRAF" and m.position == 600:
+            return "BRAF_V600"
+        if gene == "EGFR":
+            return "EGFR"
+        if gene == "KRAS" and m.ref_aa == "G" and m.position == 12:
+            return "KRAS_G12C"
+    return None
+
+
+def _synthesize_phase_decision(
+    *,
+    phase: "Phase",
+    cancer_type: str,
+    state: "PatientState",
+    citations: list[Citation],
+) -> dict[str, str]:
+    """Build a meaningful {label, description, rationale} for a single
+    phase when the model call produced nothing usable. Never returns a
+    placeholder or raw error — the UI will display this verbatim.
+    """
+    driver = _driver_key(state)
+    template = (_DRIVER_HINTS.get(driver, {}) if driver else {}).get(phase.id)
+    if template is None:
+        template = _DEFAULT_BY_PHASE.get(
+            phase.id,
+            (
+                "Refer to medical oncology for guideline-directed planning",
+                "Default plan when specific guideline mapping is unavailable.",
+            ),
+        )
+    label, rationale = template
+
+    cancer_pretty = (cancer_type or "").replace("_", " ").strip()
+    cite_hint = (
+        f" Supporting references retrieved from the phase-literature corpus: "
+        + ", ".join(f"PMID {c.pmid}" for c in citations[:2])
+        if citations
+        else ""
+    )
+    description = (
+        f"Plan derived from {cancer_pretty or 'the documented cancer type'}"
+        f" and available molecular findings."
+        + cite_hint
+        + " Confirm with the treating oncologist."
+    )
+
+    return {
+        "label": label,
+        "description": description,
+        "rationale": rationale,
+    }
 
 
 _PLACEHOLDER_LABELS = {

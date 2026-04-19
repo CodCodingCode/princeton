@@ -33,7 +33,35 @@ MAX_TOOL_LOOPS = 3
 Audience = Literal["oncologist", "patient"]
 
 
-ONCOLOGIST_SYSTEM_PROMPT = """You are speaking with the patient's treating
+ONCOLOGIST_SYSTEM_PROMPT = """HARD RULES (violating these breaks the product):
+- Do NOT think aloud. Do NOT narrate what the user is asking. Do NOT say "the
+  user wants" or "according to the system". Do NOT write a preamble. Do NOT
+  restate the question. Do NOT explain what you're about to do.
+- Give the answer directly, in one or two short spoken sentences. No more.
+- Your output is fed STRAIGHT into a text-to-speech avatar. Every word you
+  write will be spoken. Treat the first token as the first word the patient
+  hears.
+
+DATA ALREADY IN YOUR CONTEXT (do not call a tool to retrieve any of this):
+- The patient's pathology, intake, mutations, AJCC stage, and ECOG.
+- The full NCCN railway with each decision node, chosen option, rationale,
+  and sibling alternatives.
+- Matched clinical trials: NCT IDs, titles, status, and failing/unknown
+  eligibility criteria.
+- Trial sites (counts by NCT).
+All of that sits under "CASE SUMMARY:" below. ANSWER FROM IT DIRECTLY.
+
+WHEN TO CALL A TOOL:
+- highlight_section / show_trial: ONLY as a follow-up to pivot the UI —
+  never as a substitute for answering. Answer first, then optionally call.
+- pubmed_search: ONLY when the user specifically asks for literature,
+  recent papers, or evidence beyond what's in the case summary.
+- explain_node / explain_branch: ONLY if the user asks "why was node X
+  chosen?" or "why not branch Y?" AND the inline railway rationale is
+  insufficient. Usually the inline rationale is enough — prefer it.
+If you can answer from the case summary, DO NOT call any tool.
+
+You are speaking with the patient's treating
 oncologist. Use the full clinical register: TNM staging, HR/CI, mechanism of
 action, prior-line terminology, standard abbreviations. Do not soften or
 translate. Pitch it at resident-to-attending level.
@@ -198,7 +226,22 @@ oncologist is the right person to make that call.
 """
 
 
-PATIENT_SYSTEM_PROMPT = """You are a warm, calm oncology concierge speaking
+PATIENT_SYSTEM_PROMPT = """HARD RULES (violating these breaks the product):
+- Do NOT think aloud. Do NOT narrate what the user is asking. Do NOT say "the
+  user wants" or "according to the system". Do NOT write a preamble. Do NOT
+  restate the question. Do NOT explain what you're about to do.
+- Give the answer directly, in one or two short spoken sentences. No more.
+- Your output is fed STRAIGHT into a text-to-speech avatar. Every word you
+  write will be spoken. Treat the first token as the first word the patient
+  hears.
+
+WHAT'S IN YOUR CONTEXT (do not call tools to re-fetch any of this):
+- The patient's diagnosis, stage, key genes, and the plain-language plan.
+- How many trials may be a fit (the oncology team has the details).
+Answer from that directly. Don't call tools unless the patient asks you to
+show something on screen.
+
+You are a warm, calm oncology concierge speaking
 directly to the PATIENT. Your words are SPOKEN ALOUD by a video avatar, so
 you are writing spoken English, not a chart note. Write the way a trusted
 friend who happens to have worked in oncology would talk at the kitchen
@@ -426,9 +469,17 @@ def _slim_case_patient(case: PatientCase) -> str:
 
 
 def _needs_rag(question: str) -> bool:
+    # Pre-fetch literature if the question smells like one that would benefit
+    # from evidence beyond what's already in the slimmed case context. Cast a
+    # wider net than before so phrases like "what does the data say about X"
+    # or "is there a trial proving Y works" auto-retrieve PubMed hits and the
+    # model doesn't have to text-call pubmed_search to get them.
     triggers = [
-        "paper", "literature", "evidence", "study", "cite", "pmid",
-        "publish", "recent", "review", "data",
+        "paper", "literature", "evidence", "study", "studies", "cite", "pmid",
+        "publish", "recent", "review", "data", "trial showed", "efficacy",
+        "response rate", "hazard ratio", "survival", "outcome", "prove",
+        "proven", "clinical trial", "phase 2", "phase 3", "meta-analysis",
+        "cohort", "biomarker", "mechanism",
     ]
     q = question.lower()
     return any(t in q for t in triggers)
@@ -486,7 +537,10 @@ async def _node_k2_respond(state: ChatState) -> ChatState:
     bus = state.get("bus")  # type: ignore[assignment]
     try:
         async for kind, payload in k2_stream_with_thinking(
-            messages, tools=TOOL_SCHEMAS, max_tokens=1200,
+            # Small budget — two short spoken sentences fit in ~120 tokens.
+            # Keeping this tight forces the model to skip preamble and keeps
+            # time-to-first-word low.
+            messages, tools=TOOL_SCHEMAS, max_tokens=350,
         ):
             if kind == "thinking":
                 thinking_buf += payload  # type: ignore[operator]
@@ -568,9 +622,14 @@ def _route_after_respond(state: ChatState) -> str:
 
 
 def _build_graph():
+    # LangGraph 1.x only channels fields that it knows about. Passing `dict`
+    # as the schema leaves it blind to our TypedDict keys — node outputs get
+    # merged into an empty dict and the initial state (messages, bus, etc.)
+    # never reaches the first node. Using ChatState registers every key as a
+    # channel with last-write-wins semantics.
     from langgraph.graph import StateGraph, END
 
-    g: StateGraph = StateGraph(dict)
+    g: StateGraph = StateGraph(ChatState)
     g.add_node("rag_retrieve", _node_rag_retrieve)
     g.add_node("k2_respond", _node_k2_respond)
     g.add_node("tool_dispatch", _node_tool_dispatch)
@@ -618,6 +677,7 @@ class CaseChatAgent:
         return has_kimi_key()
 
     async def send(self, user_msg: str) -> ChatMessage:
+        from .k2_client import logger as _chat_logger
         if not self.available:
             await self.bus.emit(
                 EventKind.CHAT_ANSWER_DELTA,
@@ -647,6 +707,11 @@ class CaseChatAgent:
         set_current_bus(self.bus)
         try:
             await self._graph.ainvoke(state)
+        except Exception as _exc:
+            # Surface the full traceback — silent LangGraph failures otherwise
+            # look like "empty chat response" on the frontend.
+            _chat_logger.exception("chat graph crashed: %s", _exc)
+            raise
         finally:
             last = self.messages[-1] if self.messages else None
             citations = (

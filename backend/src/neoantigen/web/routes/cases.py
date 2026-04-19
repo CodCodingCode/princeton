@@ -221,7 +221,8 @@ async def get_report_pdf(case_id: str):
     rec = store().get(case_id)
     if rec is None:
         raise HTTPException(status_code=404, detail="Case not found.")
-    chat_messages = list(rec.chat_agent.messages) if rec.chat_agent is not None else []
+    onc_agent = rec.chat_agents.get("oncologist")
+    chat_messages = list(onc_agent.messages) if onc_agent is not None else []
     pdf = build_report_pdf(
         rec.case,
         chat_messages=chat_messages,

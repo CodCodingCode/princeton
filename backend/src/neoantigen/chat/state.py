@@ -57,3 +57,9 @@ class ChatState(TypedDict, total=False):
     last_assistant_text: str
     last_assistant_thinking: str
     iteration: int                  # tool-call loop guard
+    # Out-of-band plumbing — LangGraph 1.x only forwards fields declared in
+    # the TypedDict, so these have to be listed here even though they're not
+    # "data" in the usual sense. bus is the EventBus the chat stream writes
+    # to; case_dict is a pre-computed model_dump() for the tool layer.
+    bus: Any
+    case_dict: dict[str, Any]

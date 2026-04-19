@@ -29,8 +29,18 @@ import {
   type AvatarStageHandle,
   type AvatarStatus,
 } from "@/components/AvatarStage";
+import { hasSpoken, markSpoken } from "@/lib/avatar-session";
 import { PatientSidebar } from "@/components/patient/PatientSidebar";
 import { Button, buttonClasses } from "@/components/ui/Button";
+import { ChatDock } from "@/components/ChatDock";
+
+const PATIENT_SECTION_TO_TAB: Record<string, string> = {
+  pathology: "diagnosis",
+  railway: "plan",
+  trials: "next_steps",
+  map: "next_steps",
+  report: "next_steps",
+};
 
 export default function Page() {
   return (
@@ -122,10 +132,15 @@ function PatientExperience() {
         });
       } else if (ev.kind === "done" || ev.kind === "stream_end") {
         // Fire the patient-tone "I've read through your records" narration
-        // once per session, after the pipeline wraps.
+        // once per session. The guard here uses the shared "results:<case>"
+        // key, which is the same key the clinician page marks when IT
+        // speaks its results summary — so toggling between /patient and /
+        // never re-speaks the summary in either voice.
+        const key = `results:${caseId}`;
         setCaseData((prev) => {
-          if (prev && !finalNarratedRef.current) {
+          if (prev && !finalNarratedRef.current && !hasSpoken(key)) {
             finalNarratedRef.current = true;
+            markSpoken(key);
             stageRef.current
               ?.speak(buildPatientResultsNarration(prev))
               .catch(() => {});
@@ -141,8 +156,34 @@ function PatientExperience() {
     if (greetedRef.current) return;
     greetedRef.current = true;
     await stageRef.current?.start();
-    stageRef.current?.speak(PATIENT_GREETING).catch(() => {});
-  }, []);
+    // Skip the greeting if the shared singleton says we've already greeted
+    // on this case — covers the case where a prior visit on /  (or a prior
+    // mount of /patient) already spoke something.
+    const key = `greeting:patient:${caseId}`;
+    if (!hasSpoken(key)) {
+      markSpoken(key);
+      stageRef.current?.speak(PATIENT_GREETING).catch(() => {});
+    }
+  }, [caseId]);
+
+  // Route chat tool-call focus hints into the patient's 4-tab layout.
+  // Patient tabs: diagnosis | plan | healing | next_steps. The backend
+  // emits section ∈ pathology|railway|trials|map|report — we re-map to the
+  // patient vocabulary.
+  const onChatUiFocus = useCallback(
+    (payload: Record<string, unknown>) => {
+      if (!caseId) return;
+      const section =
+        typeof payload.section === "string" ? payload.section : "";
+      const tab = PATIENT_SECTION_TO_TAB[section];
+      if (!tab) return;
+      const next = new URLSearchParams(searchParams);
+      next.set("case", caseId);
+      next.set("tab", tab);
+      router.replace(`/patient?${next.toString()}`, { scroll: false });
+    },
+    [caseId, router, searchParams],
+  );
 
   const effectiveCase = caseData ?? (caseId ? emptyCase(caseId) : null);
   if (!caseId || !effectiveCase) return null;
@@ -152,7 +193,7 @@ function PatientExperience() {
       <AvatarStage
         ref={stageRef}
         onStatusChange={setAvatarStatus}
-        compact={false}
+        compact={!sidebarCollapsed}
       >
         {avatarStatus === "idle" && (
           <div className="absolute inset-0 flex items-end justify-start p-10 pointer-events-none">
@@ -173,6 +214,16 @@ function PatientExperience() {
 
       <PatientSidebar caseData={effectiveCase} open={!sidebarCollapsed} />
 
+      {avatarStatus !== "idle" && (
+        <ChatDock
+          caseId={caseId}
+          audience="patient"
+          stageRef={stageRef}
+          onUiFocus={onChatUiFocus}
+          compact={!sidebarCollapsed}
+        />
+      )}
+
       <button
         type="button"
         onClick={() => setSidebarCollapsed((c) => !c)}
@@ -182,7 +233,7 @@ function PatientExperience() {
         className={buttonClasses(
           "secondary",
           "icon",
-          "fixed top-[14px] right-6 z-40",
+          "fixed top-1 right-6 z-40",
         )}
       >
         <svg

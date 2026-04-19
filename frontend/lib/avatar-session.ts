@@ -49,6 +49,13 @@ interface AvatarGlobal {
   // Reconnect bookkeeping. We back off on rapid failure loops.
   reconnectAttempts: number;
   reconnectTimerId: ReturnType<typeof setTimeout> | null;
+  // Narration-dedup set. Each page calls markSpoken(key) after firing a
+  // scripted line, and hasSpoken(key) before firing one. Survives
+  // unmount/remount so that toggling between / and /patient does NOT
+  // re-greet, re-speak the results summary, or replay milestone lines
+  // when the SSE stream rebroadcasts past events. Callers typically
+  // namespace keys with the caseId so distinct cases narrate fresh.
+  spokenKeys: Set<string>;
 }
 
 // Tunables.
@@ -72,6 +79,7 @@ if (!G.__onkosAvatar) {
     keepaliveId: null,
     reconnectAttempts: 0,
     reconnectTimerId: null,
+    spokenKeys: new Set(),
   };
 }
 const state: AvatarGlobal = G.__onkosAvatar;
@@ -94,6 +102,23 @@ export function subscribe(l: AvatarSubscriber): () => void {
   return () => {
     state.listeners.delete(l);
   };
+}
+
+// ── Narration-dedup helpers ─────────────────────────────────────────────
+// Callers should use a stable key per line+case, e.g.
+//   hasSpoken(`results:${caseId}`)  /  markSpoken(`results:${caseId}`)
+// clearSpokenKeys() resets the set (wired to stop() + new-case upload).
+
+export function hasSpoken(key: string): boolean {
+  return state.spokenKeys.has(key);
+}
+
+export function markSpoken(key: string): void {
+  state.spokenKeys.add(key);
+}
+
+export function clearSpokenKeys(): void {
+  state.spokenKeys.clear();
 }
 
 export function attachVideo(el: HTMLVideoElement | null) {
@@ -264,6 +289,10 @@ export async function stop() {
   state.speaking = false;
   state.caption = "";
   state.reconnectAttempts = 0;
+  // Reset narration dedup so the next session can greet / re-narrate from
+  // scratch. Without this, clicking End session → Begin would keep the
+  // avatar silent because the last session's keys would still be in the set.
+  state.spokenKeys.clear();
   if (state.videoEl) state.videoEl.srcObject = null;
   notify();
   try {

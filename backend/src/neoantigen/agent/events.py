@@ -102,16 +102,23 @@ class EventBus:
             yield event
 
 
-_CURRENT_BUS: EventBus | None = None
+# Per-task context var so concurrent coroutines (e.g. the orchestrator running
+# in the background while the chat agent handles a user turn) don't stomp on
+# each other's bus. A plain module-level global used to let chat's
+# ``set_current_bus`` redirect the orchestrator's in-flight emissions into the
+# chat stream — visible to end users as railway ``answer_delta`` tokens
+# leaking into a chat response.
+from contextvars import ContextVar
+
+_CURRENT_BUS: ContextVar[EventBus | None] = ContextVar("_CURRENT_BUS", default=None)
 
 
 def set_current_bus(bus: EventBus | None) -> None:
-    global _CURRENT_BUS
-    _CURRENT_BUS = bus
+    _CURRENT_BUS.set(bus)
 
 
 def current_bus() -> EventBus | None:
-    return _CURRENT_BUS
+    return _CURRENT_BUS.get()
 
 
 async def emit(kind: EventKind, label: str, payload: dict[str, Any] | None = None) -> None:

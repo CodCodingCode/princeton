@@ -89,16 +89,21 @@ export function subscribeCaseEvents(
   return close;
 }
 
+export type ChatAudience = "oncologist" | "patient";
+
 /**
- * POST a chat turn and stream the response events. Returns an async generator
- * yielding typed events, plus a cancel function.
+ * POST a chat turn and stream the response events. The backend keeps a
+ * separate conversation thread per audience — the doctor view talks to an
+ * oncologist-tuned agent, the patient view to a plain-language one.
  */
 export async function streamChatTurn(
   caseId: string,
   message: string,
   onEvent: (ev: AgentEvent) => void,
+  opts: { audience?: ChatAudience } = {},
 ): Promise<void> {
-  const resp = await fetch(`/api/cases/${caseId}/chat`, {
+  const audience = opts.audience ?? "oncologist";
+  const resp = await fetch(`/api/cases/${caseId}/chat?audience=${audience}`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -113,19 +118,26 @@ export async function streamChatTurn(
   const reader = resp.body.getReader();
   const decoder = new TextDecoder();
   let buf = "";
+  // SSE spec allows either LF or CRLF line endings. sse-starlette emits
+  // CRLF, so we must accept \r?\n line separators AND \r?\n\r?\n record
+  // separators — splitting on "\n\n" alone buffers events forever when the
+  // server uses CRLF.
+  const recordSep = /\r?\n\r?\n/;
+  const lineSep = /\r?\n/;
   while (true) {
     const { value, done } = await reader.read();
     if (done) break;
     buf += decoder.decode(value, { stream: true });
-    // SSE records are separated by a blank line
-    let idx: number;
-    while ((idx = buf.indexOf("\n\n")) !== -1) {
-      const raw = buf.slice(0, idx);
-      buf = buf.slice(idx + 2);
-      const lines = raw.split("\n");
+    while (true) {
+      const m = recordSep.exec(buf);
+      if (!m) break;
+      const raw = buf.slice(0, m.index);
+      buf = buf.slice(m.index + m[0].length);
+      const lines = raw.split(lineSep);
       let eventName = "message";
       const dataLines: string[] = [];
       for (const line of lines) {
+        if (line.startsWith(":")) continue; // SSE comment (keepalive)
         if (line.startsWith("event:")) eventName = line.slice(6).trim();
         else if (line.startsWith("data:")) dataLines.push(line.slice(5).trim());
       }

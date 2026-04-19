@@ -11,11 +11,13 @@ import asyncio
 import json
 from typing import AsyncIterator
 
-from fastapi import APIRouter, HTTPException, status
+from typing import Literal
+
+from fastapi import APIRouter, HTTPException, Query, status
 from pydantic import BaseModel
 
 from ...agent.events import AgentEvent, EventBus
-from ...chat.agent import CaseChatAgent
+from ...chat.agent import Audience, CaseChatAgent
 from ...chat.k2_client import has_kimi_key
 from ..storage import store
 
@@ -32,22 +34,25 @@ class ChatTurn(BaseModel):
     message: str
 
 
-# Chat agent lifecycle lives on CaseRecord.chat_agent. Keeping the registry
-# off this module means routes/cases.py can read the transcript at PDF-build
-# time without importing this module (breaks the route ↔ route cycle).
+# Chat agent lifecycle lives on CaseRecord.chat_agents (keyed by audience).
+# Keeping the registry off this module means routes/cases.py can read the
+# transcript at PDF-build time without importing this module.
 
 
-def _agent_for(case_id: str) -> CaseChatAgent | None:
+def _agent_for(case_id: str, audience: Audience) -> CaseChatAgent | None:
     rec = store().get(case_id)
     if rec is None:
         return None
-    if rec.chat_agent is None:
+    agent = rec.chat_agents.get(audience)
+    if agent is None:
         # Fresh EventBus per agent - NOT the orchestrator's bus.
-        rec.chat_agent = CaseChatAgent(case=rec.case, bus=EventBus())
+        agent = CaseChatAgent(case=rec.case, bus=EventBus(), audience=audience)
+        rec.chat_agents[audience] = agent
     else:
         # Refresh case reference in case orchestrator ran again
-        rec.chat_agent.case = rec.case
-    return rec.chat_agent
+        agent.case = rec.case
+        agent._refresh_case_summary()
+    return agent
 
 
 def _format_sse(event: AgentEvent) -> dict[str, str]:
@@ -63,7 +68,11 @@ def _format_sse(event: AgentEvent) -> dict[str, str]:
 
 
 @router.post("/{case_id}/chat")
-async def chat(case_id: str, turn: ChatTurn):
+async def chat(
+    case_id: str,
+    turn: ChatTurn,
+    audience: Literal["oncologist", "patient"] = Query("oncologist"),
+):
     rec = store().get(case_id)
     if rec is None:
         raise HTTPException(status_code=404, detail="Case not found.")
@@ -75,7 +84,7 @@ async def chat(case_id: str, turn: ChatTurn):
     if EventSourceResponse is None:
         raise HTTPException(status_code=500, detail="sse-starlette not installed.")
 
-    agent = _agent_for(case_id)
+    agent = _agent_for(case_id, audience)
     if agent is None:
         raise HTTPException(status_code=404, detail="Case not found.")
 

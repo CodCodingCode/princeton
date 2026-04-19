@@ -4262,3 +4262,180 @@ life_expectancy_months.source_filename
 2026-04-18 20:46:14,351 [INFO] neoantigen.llm: call response schema=_Paragraphs len=4932
 2026-04-18 20:46:14,352 [INFO] neoantigen.llm: call schema=_Paragraphs images=0 user_len=4362
 2026-04-18 20:46:18,954 [INFO] neoantigen.llm: call response schema=_Paragraphs len=3981
+2026-04-18 21:16:51,312 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+2026-04-18 21:17:06,912 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=https://api.k2think.ai/v1)
+2026-04-18 21:17:14,560 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+2026-04-18 21:19:00,579 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+2026-04-18 21:19:00,581 [INFO] neoantigen.llm: chat client base=https://api.k2think.ai/v1 model=MBZUAI-IFM/K2-Think-v2 key_idx=0 pool=3
+2026-04-18 21:19:02,073 [INFO] neoantigen.llm: chat stream done chunks=106 text_chars=2454 tool_calls=0 state=answer
+2026-04-18 21:21:37,861 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+2026-04-18 21:22:54,962 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=3360
+2026-04-18 21:22:55,236 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=1990
+2026-04-18 21:22:55,258 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=3126
+2026-04-18 21:22:55,276 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=1809
+2026-04-18 21:23:03,024 [INFO] neoantigen.llm: call response schema=_VisionPayload len=3556
+2026-04-18 21:23:03,084 [INFO] neoantigen.llm: call response schema=_VisionPayload len=3870
+2026-04-18 21:23:04,433 [INFO] neoantigen.llm: call response schema=_VisionPayload len=4378
+2026-04-18 21:23:07,978 [INFO] neoantigen.llm: call response schema=_VisionPayload len=7350
+2026-04-18 21:23:07,980 [INFO] neoantigen.llm: call schema=_AggPayload images=0 user_len=1917
+2026-04-18 21:23:15,603 [INFO] neoantigen.llm: call response schema=_AggPayload len=5483
+2026-04-18 21:23:15,710 [INFO] neoantigen.llm: stream_with_thinking start user_len=2461 images=0 prefill_len=15
+2026-04-18 21:23:43,602 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 21:23:43,607 [INFO] neoantigen.llm: call schema=_PhaseResponse images=0 user_len=2461
+2026-04-18 21:23:56,786 [INFO] neoantigen.llm: call response schema=_PhaseResponse len=11898
+2026-04-18 21:23:56,808 [INFO] neoantigen.llm: stream_with_thinking start user_len=2422 images=0 prefill_len=15
+2026-04-18 21:24:23,036 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 21:24:23,048 [INFO] neoantigen.llm: stream_with_thinking start user_len=2580 images=0 prefill_len=15
+2026-04-18 21:24:50,838 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 21:24:50,842 [INFO] neoantigen.llm: call schema=_PhaseResponse images=0 user_len=2580
+2026-04-18 21:25:05,945 [INFO] neoantigen.llm: call response schema=_PhaseResponse len=11979
+2026-04-18 21:25:05,946 [ERROR] neoantigen.llm: JSON parse failed schema=_PhaseResponse raw="Okay, let's start by analyzing the user's query. The user is an oncologist looking at a lung adenocarcinoma patient with specific mutations. The phase is systemic therapy, first-line and subsequent regimens. The primary cancer type is lung adenocarcinoma, and the patient has EGFR exon 19 del mutation, TP53, and CDKN2A/B loss. Tumor mutational burden is low at 0.1 mut/Mb.\n\nFirst, I need to check what the retrieved literature says. There are three papers. Let's look at each.\n\nPMID 40974872 is a phase 3 study about chemotherapy during EGFR TKI treatment. The title mentions combining chemo with EG"
+2026-04-18 21:25:05,946 [WARNING] neoantigen.llm: retrying schema=_PhaseResponse after first-attempt failure:
+  - ValueError: model did not return valid JSON: "Okay, let's start by analyzing the user's query. The user is an oncologist looking at a lung adenocarcinoma patient with specific mutations. The phase is systemic therapy, first-line and subsequent regimens. The primary cancer type is lung adenocarcinoma, and the patient has EGFR exon 19 del mutatio"
+2026-04-18 21:25:21,006 [INFO] neoantigen.llm: call response schema=_PhaseResponse len=12512
+2026-04-18 21:25:21,007 [ERROR] neoantigen.llm: JSON parse failed schema=_PhaseResponse raw="Okay, let's tackle this problem. The user is an oncologist needing a treatment plan for a patient with lung adenocarcinoma. The primary cancer type is lung adenocarcinoma, and the patient has specific mutations: EGFR exon 19 deletion, TP53 missense, and CDKN2A/B loss. Tumor mutational burden is low (0.1 mut/Mb).\n\nFirst, the phase is systemic therapy, focusing on first-line and subsequent regimens. The retrieved literature includes three phase 2+ trials. Let's check each one.\n\nPMID 40974872: Phase 3, looks at chemo during EGFR TKI. But the user is asking for first-line therapy for EGFR-mutated "
+2026-04-18 21:25:21,007 [ERROR] neoantigen.llm: retry failed schema=_PhaseResponse err=model did not return valid JSON: "Okay, let's tackle this problem. The user is an oncologist needing a treatment plan for a patient with lung adenocarcinoma. The primary cancer type is lung adenocarcinoma, and the patient has specific mutations: EGFR exon 19 deletion, TP53 missense, and CDKN2A/B loss. Tumor mutational burden is low "
+2026-04-18 21:25:21,017 [INFO] neoantigen.llm: stream_with_thinking start user_len=2420 images=0 prefill_len=15
+2026-04-18 21:25:37,253 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 21:26:52,978 [INFO] neoantigen.llm: call schema=PatientGuide images=0 user_len=6279
+2026-04-18 21:26:52,979 [INFO] neoantigen.llm: call schema=PatientGuide images=0 user_len=6279
+2026-04-18 21:27:02,895 [INFO] neoantigen.llm: call response schema=PatientGuide len=7206
+2026-04-18 21:27:03,564 [INFO] neoantigen.llm: call response schema=PatientGuide len=7746
+2026-04-18 21:28:51,192 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+2026-04-18 21:28:51,192 [INFO] neoantigen.llm: CHAT MODULE LOADED v2 - split base_url from orchestrator
+2026-04-18 21:29:16,397 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+2026-04-18 21:29:16,397 [INFO] neoantigen.llm: CHAT MODULE LOADED v2 - split base_url from orchestrator
+2026-04-18 21:29:34,423 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+2026-04-18 21:29:34,423 [INFO] neoantigen.llm: CHAT MODULE LOADED v2 - split base_url from orchestrator
+2026-04-18 21:29:54,471 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=3360
+2026-04-18 21:29:54,725 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=1990
+2026-04-18 21:29:57,347 [INFO] neoantigen.llm: call response schema=_VisionPayload len=789
+2026-04-18 21:29:57,533 [INFO] neoantigen.llm: call response schema=_VisionPayload len=1049
+2026-04-18 21:29:57,535 [INFO] neoantigen.llm: call schema=_AggPayload images=0 user_len=1525
+2026-04-18 21:30:01,470 [INFO] neoantigen.llm: call response schema=_AggPayload len=2325
+2026-04-18 21:30:01,570 [INFO] neoantigen.llm: stream_with_thinking start user_len=2488 images=0 prefill_len=15
+2026-04-18 21:30:09,512 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+2026-04-18 21:30:09,512 [INFO] neoantigen.llm: CHAT MODULE LOADED v2 - split base_url from orchestrator
+2026-04-18 21:30:51,105 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=3360
+2026-04-18 21:30:51,290 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=1990
+2026-04-18 21:30:52,794 [INFO] neoantigen.llm: call response schema=_VisionPayload len=726
+2026-04-18 21:30:53,129 [INFO] neoantigen.llm: call response schema=_VisionPayload len=775
+2026-04-18 21:30:53,131 [INFO] neoantigen.llm: call schema=_AggPayload images=0 user_len=1272
+2026-04-18 21:30:56,654 [INFO] neoantigen.llm: call response schema=_AggPayload len=1995
+2026-04-18 21:30:56,723 [INFO] neoantigen.llm: stream_with_thinking start user_len=2461 images=0 prefill_len=15
+2026-04-18 21:31:12,281 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 21:31:12,294 [INFO] neoantigen.llm: stream_with_thinking start user_len=2422 images=0 prefill_len=15
+2026-04-18 21:31:27,742 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 21:31:27,757 [INFO] neoantigen.llm: stream_with_thinking start user_len=2580 images=0 prefill_len=15
+2026-04-18 21:31:28,848 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+2026-04-18 21:31:28,848 [INFO] neoantigen.llm: CHAT MODULE LOADED v2 - split base_url from orchestrator
+2026-04-18 21:31:50,966 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=3360
+2026-04-18 21:31:52,560 [INFO] neoantigen.llm: call response schema=_VisionPayload len=796
+2026-04-18 21:31:52,563 [INFO] neoantigen.llm: call schema=_AggPayload images=0 user_len=822
+2026-04-18 21:31:55,464 [INFO] neoantigen.llm: call response schema=_AggPayload len=1864
+2026-04-18 21:31:55,561 [INFO] neoantigen.llm: stream_with_thinking start user_len=2360 images=0 prefill_len=15
+2026-04-18 21:32:15,355 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+2026-04-18 21:32:15,355 [INFO] neoantigen.llm: CHAT MODULE LOADED v2 - split base_url from orchestrator
+2026-04-18 21:32:23,453 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+2026-04-18 21:32:23,453 [INFO] neoantigen.llm: CHAT MODULE LOADED v2 - split base_url from orchestrator
+2026-04-18 21:33:09,730 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=3360
+2026-04-18 21:33:11,282 [INFO] neoantigen.llm: call response schema=_VisionPayload len=762
+2026-04-18 21:33:11,284 [INFO] neoantigen.llm: call schema=_AggPayload images=0 user_len=830
+2026-04-18 21:33:12,632 [INFO] neoantigen.llm: CaseChatAgent.send audience=oncologist msg_len=10 available=True
+2026-04-18 21:33:12,763 [INFO] neoantigen.llm: CaseChatAgent.send → ainvoke start
+2026-04-18 21:33:12,764 [ERROR] neoantigen.llm: CaseChatAgent.send graph crashed: 'messages'
+Traceback (most recent call last):
+  File "/Users/owner/Downloads/hackathons/princeton/backend/src/neoantigen/chat/agent.py", line 655, in send
+    await self._graph.ainvoke(state)
+  File "/Users/owner/Downloads/hackathons/princeton/.venv/lib/python3.12/site-packages/langgraph/pregel/main.py", line 3535, in ainvoke
+    async for chunk in self.astream(
+  File "/Users/owner/Downloads/hackathons/princeton/.venv/lib/python3.12/site-packages/langgraph/pregel/main.py", line 3181, in astream
+    async for _ in runner.atick(
+  File "/Users/owner/Downloads/hackathons/princeton/.venv/lib/python3.12/site-packages/langgraph/pregel/_runner.py", line 304, in atick
+    await arun_with_retry(
+  File "/Users/owner/Downloads/hackathons/princeton/.venv/lib/python3.12/site-packages/langgraph/pregel/_retry.py", line 242, in arun_with_retry
+    return await task.proc.ainvoke(task.input, config)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/owner/Downloads/hackathons/princeton/.venv/lib/python3.12/site-packages/langgraph/_internal/_runnable.py", line 705, in ainvoke
+    input = await asyncio.create_task(
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/owner/Downloads/hackathons/princeton/.venv/lib/python3.12/site-packages/langgraph/_internal/_runnable.py", line 473, in ainvoke
+    ret = await self.afunc(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/owner/Downloads/hackathons/princeton/backend/src/neoantigen/chat/agent.py", line 442, in _node_rag_retrieve
+    (m for m in reversed(state["messages"]) if m.role == "user"),
+                         ~~~~~^^^^^^^^^^^^
+KeyError: 'messages'
+During task with name 'rag_retrieve' and id '4d90dcb9-9725-2f60-fec7-f96ec11c7ac6'
+2026-04-18 21:33:14,503 [INFO] neoantigen.llm: call response schema=_AggPayload len=2114
+2026-04-18 21:33:14,574 [INFO] neoantigen.llm: stream_with_thinking start user_len=2360 images=0 prefill_len=15
+2026-04-18 21:33:28,742 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 21:33:28,754 [INFO] neoantigen.llm: stream_with_thinking start user_len=2302 images=0 prefill_len=15
+2026-04-18 21:33:48,722 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 21:33:48,733 [INFO] neoantigen.llm: stream_with_thinking start user_len=2359 images=0 prefill_len=15
+2026-04-18 21:34:00,179 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+2026-04-18 21:34:00,179 [INFO] neoantigen.llm: CHAT MODULE LOADED v2 - split base_url from orchestrator
+2026-04-18 21:34:12,462 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+2026-04-18 21:34:12,462 [INFO] neoantigen.llm: CHAT MODULE LOADED v2 - split base_url from orchestrator
+2026-04-18 21:34:27,431 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=3360
+2026-04-18 21:34:28,991 [INFO] neoantigen.llm: call response schema=_VisionPayload len=850
+2026-04-18 21:34:28,993 [INFO] neoantigen.llm: call schema=_AggPayload images=0 user_len=918
+2026-04-18 21:34:30,335 [INFO] neoantigen.llm: CaseChatAgent.send audience=oncologist msg_len=27 available=True
+2026-04-18 21:34:30,462 [INFO] neoantigen.llm: CaseChatAgent.send → ainvoke start
+2026-04-18 21:34:30,464 [INFO] neoantigen.llm: chat client base=https://api.k2think.ai/v1 model=MBZUAI-IFM/K2-Think-v2 key_idx=0 pool=3
+2026-04-18 21:34:31,948 [INFO] neoantigen.llm: call response schema=_AggPayload len=2021
+2026-04-18 21:34:32,044 [INFO] neoantigen.llm: stream_with_thinking start user_len=2449 images=0 prefill_len=15
+2026-04-18 21:34:41,910 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+2026-04-18 21:34:47,663 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+2026-04-18 21:34:54,525 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+2026-04-18 21:35:27,550 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=3360
+2026-04-18 21:35:29,656 [INFO] neoantigen.llm: call response schema=_VisionPayload len=1115
+2026-04-18 21:35:29,658 [INFO] neoantigen.llm: call schema=_AggPayload images=0 user_len=1125
+2026-04-18 21:35:30,567 [INFO] neoantigen.llm: chat client base=https://api.k2think.ai/v1 model=MBZUAI-IFM/K2-Think-v2 key_idx=0 pool=3
+2026-04-18 21:35:31,500 [INFO] neoantigen.llm: call response schema=_AggPayload len=1145
+2026-04-18 21:35:31,569 [INFO] neoantigen.llm: stream_with_thinking start user_len=2360 images=0 prefill_len=15
+2026-04-18 21:35:32,521 [INFO] neoantigen.llm: chat stream done chunks=240 text_chars=4689 tool_calls=0 state=answer
+2026-04-18 21:35:39,828 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 21:35:39,829 [INFO] neoantigen.llm: call schema=_PhaseResponse images=0 user_len=2360
+2026-04-18 21:35:39,963 [INFO] neoantigen.llm: call response schema=_PhaseResponse len=21
+2026-04-18 21:35:39,973 [INFO] neoantigen.llm: stream_with_thinking start user_len=2302 images=0 prefill_len=15
+2026-04-18 21:35:55,235 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 21:35:55,246 [INFO] neoantigen.llm: stream_with_thinking start user_len=2359 images=0 prefill_len=15
+2026-04-18 21:36:00,739 [INFO] neoantigen.llm: chat client base=https://api.k2think.ai/v1 model=MBZUAI-IFM/K2-Think-v2 key_idx=1 pool=3
+2026-04-18 21:36:13,652 [INFO] neoantigen.llm: chat stream done chunks=170 text_chars=2862 tool_calls=0 state=answer
+2026-04-18 21:36:23,093 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 21:36:23,103 [INFO] neoantigen.llm: stream_with_thinking start user_len=2230 images=0 prefill_len=15
+2026-04-18 21:36:50,224 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 21:37:21,863 [INFO] neoantigen.llm: chat client base=https://api.k2think.ai/v1 model=MBZUAI-IFM/K2-Think-v2 key_idx=2 pool=3
+2026-04-18 21:37:23,472 [INFO] neoantigen.llm: chat stream done chunks=160 text_chars=2938 tool_calls=0 state=answer
+2026-04-18 21:37:51,840 [INFO] neoantigen.llm: chat client base=https://api.k2think.ai/v1 model=MBZUAI-IFM/K2-Think-v2 key_idx=0 pool=3
+2026-04-18 21:37:53,057 [INFO] neoantigen.llm: chat stream done chunks=83 text_chars=1406 tool_calls=0 state=answer
+2026-04-18 21:38:05,551 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+2026-04-18 21:38:19,418 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+2026-04-18 21:38:27,093 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+2026-04-18 21:38:39,691 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+2026-04-18 21:39:18,465 [INFO] neoantigen.llm: chat client base=https://api.k2think.ai/v1 model=MBZUAI-IFM/K2-Think-v2 key_idx=0 pool=3
+2026-04-18 21:39:21,171 [INFO] neoantigen.llm: chat stream done chunks=340 text_chars=9852 tool_calls=0 state=answer
+2026-04-18 21:40:17,385 [INFO] neoantigen.llm: chat client base=https://api.k2think.ai/v1 model=MBZUAI-IFM/K2-Think-v2 key_idx=1 pool=3
+2026-04-18 21:40:19,132 [INFO] neoantigen.llm: chat stream done chunks=197 text_chars=5455 tool_calls=0 state=answer
+2026-04-18 21:40:41,085 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+2026-04-18 21:41:21,357 [INFO] neoantigen.llm: chat client base=https://api.k2think.ai/v1 model=MBZUAI-IFM/K2-Think-v2 key_idx=0 pool=3
+2026-04-18 21:41:23,424 [INFO] neoantigen.llm: chat stream done chunks=210 text_chars=6597 tool_calls=0 state=answer
+2026-04-18 21:41:40,685 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+2026-04-18 21:41:58,675 [INFO] neoantigen.llm: chat client base=https://api.k2think.ai/v1 model=MBZUAI-IFM/K2-Think-v2 key_idx=0 pool=3
+2026-04-18 21:42:00,256 [INFO] neoantigen.llm: chat stream done chunks=96 text_chars=2426 tool_calls=0 state=answer
+2026-04-18 21:42:08,527 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+2026-04-18 21:42:14,093 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+2026-04-18 21:43:20,749 [INFO] neoantigen.llm: chat client base=https://api.k2think.ai/v1 model=MBZUAI-IFM/K2-Think-v2 key_idx=0 pool=3
+2026-04-18 21:43:26,215 [INFO] neoantigen.llm: chat stream done chunks=899 text_chars=29450 tool_calls=0 state=answer
+2026-04-18 21:44:08,301 [INFO] neoantigen.llm: chat client base=https://api.k2think.ai/v1 model=MBZUAI-IFM/K2-Think-v2 key_idx=1 pool=3
+2026-04-18 21:44:09,586 [INFO] neoantigen.llm: chat stream done chunks=62 text_chars=1275 tool_calls=0 state=answer
+2026-04-18 21:48:06,699 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+2026-04-18 21:48:15,685 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+2026-04-18 21:48:23,536 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+2026-04-18 21:48:41,064 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+2026-04-18 21:49:20,334 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+2026-04-18 21:49:28,909 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+2026-04-18 21:49:39,898 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+2026-04-18 21:50:07,222 [INFO] neoantigen.llm: chat client base=https://api.k2think.ai/v1 model=MBZUAI-IFM/K2-Think-v2 key_idx=0 pool=3
+2026-04-18 21:50:09,129 [INFO] neoantigen.llm: chat stream done chunks=140 text_chars=3914 tool_calls=0 state=answer

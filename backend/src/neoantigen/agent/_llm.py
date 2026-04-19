@@ -670,27 +670,58 @@ async def _call_json_impl(
         user_slice=user_prompt[:2000],
     )
     import time as _time
+
     async def _attempt(messages: list[dict]) -> tuple[T, str]:
         # Pick a fresh client from the rotating key pool on each attempt so
         # retries after a validation / 429 failure land on a different key.
         client = _openai_client()
         t0 = _time.time()
+        # Force JSON mode at the decoder. vLLM and OpenAI both honour
+        # `response_format={"type": "json_object"}`; the decoder literally
+        # cannot emit non-JSON, which eliminates "Model output contained no
+        # parseable JSON" for servers that support it. We keep the call
+        # wrapped in try/except so older/incompatible servers that 400 on
+        # the param fall back to a regular call without failing the request.
+        base_kwargs: dict = dict(
+            model=model, max_tokens=max_tokens, messages=messages,
+        )
         try:
             resp = await client.chat.completions.create(
-                model=model,
-                max_tokens=max_tokens,
-                messages=messages,
+                **base_kwargs,
+                response_format={"type": "json_object"},
             )
-        except Exception as e:
-            log.error("call HTTP error schema=%s model=%s err=%s: %s",
-                      schema.__name__, model, type(e).__name__, e)
-            audit(
-                "llm_call", "http_error",
-                schema=schema.__name__, model=model, max_tokens=max_tokens,
-                error_type=type(e).__name__, error=str(e),
-                latency_ms=int((_time.time() - t0) * 1000),
+        except Exception as json_mode_err:
+            lowered = str(json_mode_err).lower()
+            looks_like_unsupported = (
+                "response_format" in lowered
+                or "unsupported" in lowered
+                or "not supported" in lowered
             )
-            raise
+            if not looks_like_unsupported:
+                log.error("call HTTP error schema=%s model=%s err=%s: %s",
+                          schema.__name__, model,
+                          type(json_mode_err).__name__, json_mode_err)
+                audit(
+                    "llm_call", "http_error",
+                    schema=schema.__name__, model=model, max_tokens=max_tokens,
+                    error_type=type(json_mode_err).__name__,
+                    error=str(json_mode_err),
+                    latency_ms=int((_time.time() - t0) * 1000),
+                )
+                raise
+            # Server rejected response_format. Fall back to the plain call.
+            try:
+                resp = await client.chat.completions.create(**base_kwargs)
+            except Exception as e:
+                log.error("call HTTP error schema=%s model=%s err=%s: %s",
+                          schema.__name__, model, type(e).__name__, e)
+                audit(
+                    "llm_call", "http_error",
+                    schema=schema.__name__, model=model, max_tokens=max_tokens,
+                    error_type=type(e).__name__, error=str(e),
+                    latency_ms=int((_time.time() - t0) * 1000),
+                )
+                raise
         raw = resp.choices[0].message.content or ""
         finish_reason = getattr(resp.choices[0], "finish_reason", None)
         log.info("call response schema=%s len=%d", schema.__name__, len(raw))

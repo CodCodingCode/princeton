@@ -112,42 +112,28 @@ export const AvatarStage = forwardRef<AvatarStageHandle, Props>(
           ref={videoRef}
           autoPlay
           playsInline
-          className={`absolute inset-0 w-full h-full object-contain transition-opacity duration-700 ${
+          className={`absolute inset-0 w-full h-full object-contain ${
             status === "live" ? "opacity-100" : "opacity-0"
           }`}
         />
 
-        {status !== "live" && (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="text-center text-neutral-400">
-              <div className="w-28 h-28 mx-auto mb-5 rounded-full bg-neutral-900 border border-neutral-800 flex items-center justify-center">
-                <svg
-                  viewBox="0 0 24 24"
-                  className="w-14 h-14 text-neutral-600"
-                  fill="currentColor"
-                >
-                  <path d="M12 12c2.7 0 5-2.3 5-5s-2.3-5-5-5-5 2.3-5 5 2.3 5 5 5zm0 2c-3.3 0-10 1.7-10 5v3h20v-3c0-3.3-6.7-5-10-5z" />
-                </svg>
-              </div>
-              <div className="text-sm font-medium text-neutral-300">
-                {status === "connecting" ? "Connecting" : "Your concierge"}
-              </div>
-              {status === "error" && error && (
-                <div className="text-xs text-red-400 mt-2 max-w-sm mx-auto px-4">
-                  {error}
-                </div>
-              )}
+        {/* Still-frame poster shown before the LiveAvatar connects. Drop a
+            PNG at frontend/public/doctor-poster.png to replace. Uses a CSS
+            background so a missing file falls back to the parent bg-black
+            rather than a broken-image glyph. */}
+        <div
+          aria-hidden
+          className={`absolute inset-0 bg-[url('/doctor-poster.png')] bg-center bg-contain bg-no-repeat transition-opacity duration-200 ${
+            status === "live" ? "opacity-0" : "opacity-100"
+          }`}
+        />
+
+        {status === "error" && error && (
+          <div className="pointer-events-none absolute inset-x-0 bottom-8 flex justify-center px-6">
+            <div className="max-w-sm bg-black/65 backdrop-blur-md text-red-300 rounded-xl px-4 py-2 text-xs ring-1 ring-white/15 text-center">
+              {error}
             </div>
           </div>
-        )}
-
-        {status === "live" && (
-          <button
-            onClick={stopSession}
-            className="absolute top-14 left-4 text-[11px] font-medium tracking-[0.1em] uppercase text-white/80 hover:text-white bg-black/55 backdrop-blur rounded-full px-3 py-1 ring-1 ring-white/15 shadow-lg shadow-black/30 transition"
-          >
-            End session
-          </button>
         )}
 
         {status === "live" && caption && (
@@ -159,8 +145,10 @@ export const AvatarStage = forwardRef<AvatarStageHandle, Props>(
           // the zone spans the full viewport, so the pill sits in the middle
           // the way it always has.
           <div
-            className={`pointer-events-none absolute bottom-6 flex justify-center px-6 ${
-              compact ? "left-0 right-[calc(36vw+3rem)]" : "left-0 right-0"
+            className={`pointer-events-none absolute bottom-24 flex px-6 ${
+              compact
+                ? "left-0 right-[calc(clamp(420px,34vw,560px)+2rem)] justify-end"
+                : "left-0 right-0 justify-center"
             }`}
           >
             <div className="max-w-[min(80%,680px)] bg-black/65 backdrop-blur-md text-white rounded-xl px-4 py-2 text-sm md:text-base leading-snug text-center ring-1 ring-white/15 shadow-lg shadow-black/30">
