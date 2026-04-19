@@ -1,1 +1,1 @@
-"""FastAPI web layer for NeoVax."""
+"""FastAPI web layer for Onkos."""

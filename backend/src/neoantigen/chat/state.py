@@ -51,6 +51,7 @@ class ChatState(TypedDict, total=False):
 
     messages: list[ChatMessage]    # full conversation incl. system + tool messages
     case_summary: str               # slim case-file context (string-formatted)
+    system_prompt: str              # picked by audience (oncologist vs patient)
     pending_tool_calls: list[ToolCall]
     rag_hits: list[dict[str, Any]]
     last_assistant_text: str

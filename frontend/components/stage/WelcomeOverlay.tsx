@@ -11,7 +11,7 @@ export function WelcomeOverlay({ onBegin, busy }: Props) {
   return (
     <div className="absolute inset-0 flex items-center justify-center p-6 pointer-events-none">
       <div className="pointer-events-auto max-w-lg w-full rounded-2xl bg-white/95 backdrop-blur shadow-2xl p-8 text-center">
-        <div className="eyebrow mb-3">NeoVax</div>
+        <div className="eyebrow mb-3">Onkos</div>
         <h1 className="font-serif text-3xl md:text-4xl text-black leading-tight mb-3">
           Your virtual oncology concierge
         </h1>

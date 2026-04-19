@@ -115,7 +115,7 @@ function StepRow({ step: s }: { step: RailwayStep }) {
         className="w-full text-left flex items-start gap-3 cursor-pointer disabled:cursor-default"
       >
         <span className="text-xs font-mono text-neutral-500 shrink-0 w-32 ">
-          {s.node_id.replace(/_/g, " ")}
+          {(s.node_id ?? "").replace(/_/g, " ")}
         </span>
         <div className="flex-1 min-w-0">
           <div className="text-sm text-black">

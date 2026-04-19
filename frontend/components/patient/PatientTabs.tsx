@@ -38,8 +38,8 @@ export function PatientTabs({ caseData }: { caseData: PatientCase }) {
   }
 
   return (
-    <aside className="flex flex-col h-full bg-transparent min-h-0">
-      <div className="border-b border-neutral-200/70 px-2 flex overflow-x-auto shrink-0">
+    <aside className="flex flex-col h-full bg-white min-h-0">
+      <div className="border-b border-neutral-200 px-2 flex overflow-x-auto shrink-0">
         {TABS.map((tab) => {
           const isActive = active === tab.id;
           return (

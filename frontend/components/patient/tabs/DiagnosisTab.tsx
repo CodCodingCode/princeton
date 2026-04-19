@@ -12,10 +12,10 @@ export function DiagnosisTab({ caseData }: { caseData: PatientCase }) {
   const friendly = useMemo(() => toPatientFriendly(caseData), [caseData]);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-5">
       <section>
         <div className="eyebrow mb-2">What we're seeing</div>
-        <p className="font-serif text-2xl leading-tight text-black mb-3">
+        <p className="text-xl font-semibold tracking-tight leading-tight text-black mb-3">
           {friendly.diagnosisHeadline}
         </p>
         <p className="text-sm text-neutral-700 leading-relaxed">
@@ -26,7 +26,7 @@ export function DiagnosisTab({ caseData }: { caseData: PatientCase }) {
       {friendly.aboutYou.length > 0 && (
         <section>
           <div className="eyebrow mb-3">About your case</div>
-          <dl className="divide-y divide-neutral-200/80 border-t border-b border-neutral-200/80">
+          <dl className="divide-y divide-neutral-100 border-t border-b border-neutral-100">
             {friendly.aboutYou.map((row) => (
               <div
                 key={row.label}
@@ -44,7 +44,7 @@ export function DiagnosisTab({ caseData }: { caseData: PatientCase }) {
         </section>
       )}
 
-      <section className="rounded-xl border border-neutral-200/80 bg-white/60 p-5">
+      <section className="card-muted p-5">
         <div className="eyebrow mb-2">A note on jargon</div>
         <p className="text-sm text-neutral-700 leading-relaxed">
           The clinician view has all the raw pathology terms, mutation notation,

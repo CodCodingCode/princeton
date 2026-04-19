@@ -32,6 +32,7 @@ export function emptyCase(caseId: string): PatientCase {
       ajcc_stage: null,
       age_years: null,
     },
+    demographics: null,
     enrichment: null,
     mutations: [],
     documents: [],

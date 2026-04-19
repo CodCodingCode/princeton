@@ -23,10 +23,11 @@ class CaseRecord:
     bus: EventBus = field(default_factory=EventBus)
     replay: list[AgentEvent] = field(default_factory=list)
     done: bool = False
-    # Chat agent lives on the record so the PDF report builder can read the
-    # transcript without reaching across route modules. Typed Any to avoid a
-    # storage → chat → storage import cycle.
-    chat_agent: Any | None = None
+    # Chat agents live on the record so the PDF report builder can read the
+    # transcript without reaching across route modules. One agent per audience
+    # ("oncologist", "patient") so each view keeps its own conversation thread.
+    # Typed Any to avoid a storage → chat → storage import cycle.
+    chat_agents: dict[str, Any] = field(default_factory=dict)
     # Memoize narrative prose (Assessment / Treatment Plan) generated at
     # PDF-build time so re-downloading the report doesn't re-hit the LLM.
     narrative_cache: dict[str, list[str]] = field(default_factory=dict)

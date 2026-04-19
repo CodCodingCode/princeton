@@ -80,6 +80,16 @@ export const AvatarStage = forwardRef<AvatarStageHandle, Props>(
       };
     }, []);
 
+    // Re-attach every time the status transitions to "live" — covers the case
+    // where we navigate back to the page while a session is in mid-reconnect
+    // (status "connecting" → "live") and the first attach call happened before
+    // the stream was ready.
+    useEffect(() => {
+      if (status === "live" && videoRef.current) {
+        attachVideo(videoRef.current);
+      }
+    }, [status]);
+
     useImperativeHandle(
       ref,
       () => ({
@@ -92,10 +102,10 @@ export const AvatarStage = forwardRef<AvatarStageHandle, Props>(
 
     return (
       <div
-        className={`relative w-full h-full bg-black overflow-hidden rounded-2xl border transition-all duration-300 ${
+        className={`relative w-full h-full bg-black overflow-hidden transition-all duration-300 ${
           status === "live" && speaking
-            ? "border-brand-500/50 shadow-lg shadow-brand-500/20"
-            : "border-neutral-200 shadow-sm"
+            ? "ring-1 ring-brand-500/40 shadow-lg shadow-brand-500/20"
+            : ""
         }`}
       >
         <video
@@ -134,15 +144,28 @@ export const AvatarStage = forwardRef<AvatarStageHandle, Props>(
         {status === "live" && (
           <button
             onClick={stopSession}
-            className="absolute top-32 left-4 text-[11px] font-medium tracking-[0.1em] uppercase text-white/80 hover:text-white bg-black/55 backdrop-blur rounded-full px-3 py-1 ring-1 ring-white/15 shadow-lg shadow-black/30 transition"
+            className="absolute top-14 left-4 text-[11px] font-medium tracking-[0.1em] uppercase text-white/80 hover:text-white bg-black/55 backdrop-blur rounded-full px-3 py-1 ring-1 ring-white/15 shadow-lg shadow-black/30 transition"
           >
             End session
           </button>
         )}
 
         {status === "live" && caption && (
-          <div className="pointer-events-none absolute bottom-10 left-1/2 -translate-x-1/2 max-w-[min(90vw,1100px)] bg-black/65 backdrop-blur-md text-white rounded-2xl px-8 py-5 text-xl md:text-2xl leading-relaxed text-center ring-1 ring-white/15 shadow-2xl shadow-black/40">
-            {caption}
+          // Caption pill. In compact (cockpit) mode, the sidebar occupies the
+          // right ~36vw of the viewport, so the caption has to center inside
+          // the avatar pane rather than the full viewport. We use a bounded
+          // flex row that ends before the sidebar begins and let `justify-
+          // center` center the pill inside that zone. In non-compact phases
+          // the zone spans the full viewport, so the pill sits in the middle
+          // the way it always has.
+          <div
+            className={`pointer-events-none absolute bottom-6 flex justify-center px-6 ${
+              compact ? "left-0 right-[calc(36vw+3rem)]" : "left-0 right-0"
+            }`}
+          >
+            <div className="max-w-[min(80%,680px)] bg-black/65 backdrop-blur-md text-white rounded-xl px-4 py-2 text-sm md:text-base leading-snug text-center ring-1 ring-white/15 shadow-lg shadow-black/30">
+              {caption}
+            </div>
           </div>
         )}
 

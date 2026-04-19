@@ -46,10 +46,7 @@ export function HealingTab({ caseData }: { caseData: PatientCase }) {
         </div>
         <div className="space-y-3">
           {[0, 1, 2].map((i) => (
-            <div
-              key={i}
-              className="rounded-xl border border-neutral-200/80 bg-white/60 p-4 space-y-2"
-            >
+            <div key={i} className="card p-4 space-y-2">
               <div className="h-4 w-1/3 rounded bg-neutral-200/70" />
               <div className="h-3 w-full rounded bg-neutral-200/50" />
               <div className="h-3 w-11/12 rounded bg-neutral-200/50" />
@@ -62,7 +59,7 @@ export function HealingTab({ caseData }: { caseData: PatientCase }) {
 
   if (error && !guide) {
     return (
-      <div className="rounded-xl border border-neutral-200/80 bg-white/60 p-5 text-sm text-neutral-700 leading-relaxed">
+      <div className="card p-5 text-sm text-neutral-700 leading-relaxed">
         We couldn&apos;t load your healing guide right now. Try reloading the
         page, or ask the avatar directly about diet, sleep, and support.
       </div>
@@ -72,10 +69,10 @@ export function HealingTab({ caseData }: { caseData: PatientCase }) {
   if (!guide) return null;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-5">
       <section>
         <div className="eyebrow mb-2">For you, right now</div>
-        <p className="font-serif text-xl leading-snug text-black">
+        <p className="text-xl font-semibold tracking-tight leading-tight text-black">
           {guide.headline}
         </p>
       </section>
@@ -84,11 +81,8 @@ export function HealingTab({ caseData }: { caseData: PatientCase }) {
         <div className="eyebrow mb-3">What you can do</div>
         <div className="space-y-4">
           {guide.healing.map((block, i) => (
-            <article
-              key={`${block.heading}-${i}`}
-              className="rounded-xl border border-neutral-200/80 bg-white/70 p-5"
-            >
-              <h3 className="font-serif text-lg leading-snug text-black mb-2">
+            <article key={`${block.heading}-${i}`} className="card p-5">
+              <h3 className="text-base font-semibold tracking-tight leading-snug text-black mb-2">
                 {block.heading}
               </h3>
               <p className="text-sm text-neutral-700 leading-relaxed whitespace-pre-line mb-3">
@@ -115,7 +109,7 @@ export function HealingTab({ caseData }: { caseData: PatientCase }) {
       </section>
 
       {guide.warning_signs.length > 0 && (
-        <section className="rounded-xl border border-neutral-300/80 bg-white/70 p-5">
+        <section className="card p-5">
           <div className="eyebrow mb-2">When to call your care team</div>
           <ul className="space-y-1.5 text-sm text-black">
             {guide.warning_signs.map((w, i) => (

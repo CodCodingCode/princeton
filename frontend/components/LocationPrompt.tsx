@@ -22,7 +22,7 @@ interface Props {
 }
 
 export function locationStorageKey(caseId: string): string {
-  return `neovax:location:${caseId}`;
+  return `onkos:location:${caseId}`;
 }
 
 export function readStoredLocation(caseId: string): UserLocation | null {

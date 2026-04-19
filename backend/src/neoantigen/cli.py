@@ -1,4 +1,4 @@
-"""Terminal interface for NeoVax - currently just boots the FastAPI server."""
+"""Terminal interface for Onkos - currently just boots the FastAPI server."""
 
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ import typer
 from rich.console import Console
 
 app = typer.Typer(
-    help="NeoVax - pathology PDF → NCCN railway → Kimi chat → oncologist report + trial-site map.",
+    help="Onkos - pathology PDF → NCCN railway → Kimi chat → oncologist report + trial-site map.",
     add_completion=False,
     no_args_is_help=True,
 )
@@ -33,7 +33,7 @@ def serve_command(
     port: Annotated[int, typer.Option(help="Bind port")] = 8000,
     reload: Annotated[bool, typer.Option(help="Enable autoreload for dev")] = False,
 ) -> None:
-    """Boot the NeoVax FastAPI + SSE backend."""
+    """Boot the Onkos FastAPI + SSE backend."""
     import uvicorn
 
     uvicorn.run(

@@ -34,7 +34,7 @@ export const EVENT_NARRATION: Partial<Record<EventKind, string>> = {
 // has been silent for roughly 20 seconds. The order matters: start with the
 // "what is this" framing, then zoom into what the pipeline is doing right now.
 export const PROJECT_EXPLAINERS: string[] = [
-  "While I'm working, let me tell you a bit about what I'm doing. I'm NeoVax. My job is to sit with you and your oncologist and turn a messy pile of medical records into a clear treatment plan.",
+  "While I'm working, let me tell you a bit about what I'm doing. I'm Onkos. My job is to sit with you and your oncologist and turn a messy pile of medical records into a clear treatment plan.",
   "Most cancer cases live across ten or twenty different documents. Pathology reports, imaging, notes, molecular panels. Nobody has time to read them all at once. I do.",
   "Right now I'm reading every page of every file you shared, carefully, from pathology slides and imaging reports to clinician notes.",
   "After reading, I cross-check the files against each other. If one report says stage two and another says stage three, I flag it instead of picking one silently.",

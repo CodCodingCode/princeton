@@ -79,7 +79,8 @@ function tStageEnglish(tStage: string): string {
   return tStage;
 }
 
-function cleanOptionLabel(s: string): string {
+function cleanOptionLabel(s: string | null | undefined): string {
+  if (!s) return "";
   return s
     .replace(/\s*\([^)]*\)/g, "")
     .replace(/→.*/g, "")

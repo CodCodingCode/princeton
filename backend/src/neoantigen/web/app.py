@@ -1,4 +1,4 @@
-"""NeoVax FastAPI app - patient flow + chat SSE."""
+"""Onkos FastAPI app - patient flow + chat SSE."""
 
 from __future__ import annotations
 
@@ -68,7 +68,7 @@ async def _lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="NeoVax",
+    title="Onkos",
     description="Pathology PDF → NCCN railway → Kimi chat → oncologist report + trial sites",
     version="0.2.0",
     lifespan=_lifespan,

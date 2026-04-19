@@ -177,7 +177,7 @@ export function ProcessingOverlay({ state }: { state: ProcessingState }) {
         <div className="flex items-center justify-between px-5 pt-4 pb-3">
           <div className="flex items-center gap-2">
             <span className="inline-flex h-1.5 w-1.5 rounded-full bg-brand-700 animate-breathe" />
-            <span className="eyebrow">NeoVax · Processing</span>
+            <span className="eyebrow">Onkos · Processing</span>
           </div>
           <span className="font-mono text-[10px] tabular-nums text-neutral-500">
             <span className="text-black">

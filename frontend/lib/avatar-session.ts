@@ -58,9 +58,9 @@ const RECONNECT_MAX_DELAY_MS = 15_000;
 const RECONNECT_MAX_ATTEMPTS = 8;
 
 // Survives module reloads.
-const G = globalThis as unknown as { __neovaxAvatar?: AvatarGlobal };
-if (!G.__neovaxAvatar) {
-  G.__neovaxAvatar = {
+const G = globalThis as unknown as { __onkosAvatar?: AvatarGlobal };
+if (!G.__onkosAvatar) {
+  G.__onkosAvatar = {
     session: null,
     status: "idle",
     speaking: false,
@@ -74,7 +74,7 @@ if (!G.__neovaxAvatar) {
     reconnectTimerId: null,
   };
 }
-const state: AvatarGlobal = G.__neovaxAvatar;
+const state: AvatarGlobal = G.__onkosAvatar;
 
 function notify() {
   for (const l of state.listeners) {
@@ -98,7 +98,12 @@ export function subscribe(l: AvatarSubscriber): () => void {
 
 export function attachVideo(el: HTMLVideoElement | null) {
   state.videoEl = el;
-  if (el && state.session && state.status === "live") {
+  // Re-bind the stream whenever there's a session, even if the status is
+  // briefly "connecting" (transparent reconnect) or the previous mount
+  // already had it attached. Without this, navigating away and back leaves
+  // the fresh <video> with a blank srcObject and the "Your concierge"
+  // placeholder stays on screen over a running session.
+  if (el && state.session) {
     try {
       state.session.attach(el);
     } catch (e) {

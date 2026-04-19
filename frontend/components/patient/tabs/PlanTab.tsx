@@ -9,14 +9,15 @@ import { useMemo } from "react";
 import type { PatientCase, RailwayStep } from "@/lib/types";
 import { toPatientFriendly } from "@/lib/plainEnglish";
 
-function cleanOption(s: string): string {
+function cleanOption(s: string | null | undefined): string {
+  if (!s) return "";
   return s
     .replace(/\s*\([^)]*\)/g, "")
     .replace(/→.*/g, "")
     .trim();
 }
 
-function humanPhase(phaseId: string): string {
+function humanPhase(phaseId: string | null | undefined): string {
   switch (phaseId) {
     case "staging":
       return "Making sure we have the full picture";
@@ -27,7 +28,7 @@ function humanPhase(phaseId: string): string {
     case "followup":
       return "What happens after";
     default:
-      return phaseId.replace(/_/g, " ");
+      return phaseId ? phaseId.replace(/_/g, " ") : "";
   }
 }
 
@@ -43,10 +44,10 @@ export function PlanTab({ caseData }: { caseData: PatientCase }) {
   }, [caseData]);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-5">
       <section>
         <div className="eyebrow mb-2">The headline</div>
-        <p className="font-serif text-xl leading-snug text-black mb-2">
+        <p className="text-xl font-semibold tracking-tight leading-tight text-black mb-2">
           {friendly.recommendedAction}
         </p>
         <p className="text-sm text-neutral-700 leading-relaxed">
@@ -59,10 +60,7 @@ export function PlanTab({ caseData }: { caseData: PatientCase }) {
           <div className="eyebrow mb-3">What the guidelines suggest</div>
           <div className="space-y-3">
             {steps.map((step) => (
-              <article
-                key={step.node_id}
-                className="rounded-xl border border-neutral-200/80 bg-white/70 p-4"
-              >
+              <article key={step.node_id} className="card p-4">
                 <div className="text-[10px] uppercase tracking-[0.2em] text-neutral-500 font-semibold mb-1">
                   {humanPhase(step.phase_id)}
                 </div>
@@ -97,7 +95,7 @@ export function PlanTab({ caseData }: { caseData: PatientCase }) {
         </section>
       )}
 
-      <section className="rounded-xl border border-neutral-200/80 bg-[#faf7f3]/60 p-5">
+      <section className="card-muted p-5">
         <div className="eyebrow mb-2">Important</div>
         <p className="text-sm text-neutral-700 leading-relaxed">
           These are guideline-grounded options to bring to your oncologist, not

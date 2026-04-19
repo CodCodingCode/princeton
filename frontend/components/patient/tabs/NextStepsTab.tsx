@@ -56,7 +56,7 @@ export function NextStepsTab({ caseData }: { caseData: PatientCase }) {
   }, [caseData]);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-5">
       <section>
         <div className="eyebrow mb-2">Trials that might be open to you</div>
         {trials.length === 0 ? (
@@ -70,10 +70,7 @@ export function NextStepsTab({ caseData }: { caseData: PatientCase }) {
             {trials.map((t) => {
               const siteCount = sitesByNct.get(t.nct_id) ?? 0;
               return (
-                <article
-                  key={t.nct_id}
-                  className="rounded-xl border border-neutral-200/80 bg-white/70 p-4"
-                >
+                <article key={t.nct_id} className="card p-4">
                   <div className="text-[10px] uppercase tracking-[0.2em] text-neutral-500 font-semibold mb-1">
                     {trialStatusLabel(t)}
                   </div>
@@ -118,7 +115,7 @@ export function NextStepsTab({ caseData }: { caseData: PatientCase }) {
             {guide.questions_for_doctor.map((q, i) => (
               <li
                 key={i}
-                className="flex gap-3 rounded-lg border border-neutral-200/80 bg-white/60 p-3"
+                className="flex gap-3 rounded-xl border border-neutral-200 bg-white p-3"
               >
                 <span
                   aria-hidden
@@ -133,7 +130,7 @@ export function NextStepsTab({ caseData }: { caseData: PatientCase }) {
         </section>
       ) : null}
 
-      <section className="rounded-xl border border-neutral-200/80 bg-[#faf7f3]/60 p-5">
+      <section className="card-muted p-5">
         <div className="eyebrow mb-2">A small thing that helps a lot</div>
         <p className="text-sm text-neutral-700 leading-relaxed">
           Bring someone with you to the appointment where these questions get

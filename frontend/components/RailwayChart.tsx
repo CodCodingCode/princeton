@@ -139,7 +139,7 @@ function PhaseColumn({
           {index + 1}
         </span>
         <span className="text-[10px] uppercase tracking-[0.22em] text-neutral-700 font-semibold">
-          {phase.title || phase.id.replace(/_/g, " ")}
+          {phase.title || (phase.id ?? "").replace(/_/g, " ")}
         </span>
       </div>
 
@@ -174,7 +174,7 @@ function StepCard({ step }: { step: RailwayStep }) {
       {/* Monospace node_id strip - the "chip" that anchors the card */}
       <div className="flex items-center justify-between mb-2">
         <span className="text-[9px] font-mono uppercase tracking-[0.15em] text-neutral-400 ">
-          {step.node_id.replace(/_/g, " ")}
+          {(step.node_id ?? "").replace(/_/g, " ")}
         </span>
         {step.is_terminal && (
           <span className="text-[9px] font-mono uppercase tracking-[0.15em] text-emerald-600 font-semibold">

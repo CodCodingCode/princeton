@@ -232,7 +232,7 @@ async def get_report_pdf(case_id: str):
         io.BytesIO(pdf),
         media_type="application/pdf",
         headers={
-            "Content-Disposition": f'attachment; filename="neovax-case-{case_id}.pdf"',
+            "Content-Disposition": f'attachment; filename="onkos-case-{case_id}.pdf"',
         },
     )
 

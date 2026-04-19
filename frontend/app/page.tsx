@@ -323,7 +323,7 @@ function ExperiencePage() {
   }, [events, firedMilestones, caseData]);
 
   // Filler loop - while the pipeline is chugging, the avatar explains what
-  // NeoVax is and what it's doing right now. Each explainer plays once per
+  // Onkos is and what it's doing right now. Each explainer plays once per
   // case, and only when the avatar has been silent for roughly 18 seconds, so
   // real milestones still get priority.
   useEffect(() => {

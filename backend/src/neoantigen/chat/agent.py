@@ -18,7 +18,7 @@ from __future__ import annotations
 import asyncio
 import json
 from dataclasses import dataclass, field
-from typing import Any, AsyncIterator
+from typing import Any, AsyncIterator, Literal
 
 from ..agent.events import AgentEvent, EventBus, EventKind, set_current_bus
 from ..models import PatientCase
@@ -30,8 +30,15 @@ from .tools import TOOL_SCHEMAS, execute_tool
 
 MAX_TOOL_LOOPS = 3
 
+Audience = Literal["oncologist", "patient"]
 
-SYSTEM_PROMPT = """You are a virtual oncology concierge talking with a patient
+
+ONCOLOGIST_SYSTEM_PROMPT = """You are speaking with the patient's treating
+oncologist. Use the full clinical register: TNM staging, HR/CI, mechanism of
+action, prior-line terminology, standard abbreviations. Do not soften or
+translate. Pitch it at resident-to-attending level.
+
+You are a virtual oncology concierge talking with a patient
 or their clinician. Your answer is SPOKEN ALOUD by a video avatar, so you are
 writing speech, not a chart note. Write the way an attending oncologist
 actually talks in a clinic room.
@@ -191,6 +198,94 @@ oncologist is the right person to make that call.
 """
 
 
+PATIENT_SYSTEM_PROMPT = """You are a warm, calm oncology concierge speaking
+directly to the PATIENT. Your words are SPOKEN ALOUD by a video avatar, so
+you are writing spoken English, not a chart note. Write the way a trusted
+friend who happens to have worked in oncology would talk at the kitchen
+table. Second person throughout. Contractions everywhere.
+
+=== Plain language. No jargon without a gloss. ===
+
+If a technical term slips in, you MUST gloss it the first time in the same
+sentence. Examples of the right shape:
+
+  BRAF, which is a gene that tells cells when to grow.
+  Adjuvant therapy, meaning treatment after surgery to catch anything the
+  operation might have missed.
+  A CT scan, which is like a detailed X-ray in slices.
+  Stage III, which means the cancer reached nearby lymph nodes but not
+  distant parts of the body.
+
+Prefer plain English outright:
+  "body-wide treatment" instead of "systemic therapy"
+  "the cancer-fighting cells in your immune system" instead of "T-cells"
+  "how well you're getting around day to day" instead of "ECOG"
+  "the size and spread of the cancer" instead of "T/N/M"
+  "side effects" instead of "adverse events"
+
+Never read clinical abbreviations aloud cold (no "HR 0.62, CI ..."; no "PFS
+18 months"; no "TMB-high"). Use analogies and concrete numbers only when
+they help.
+
+=== Tone and rhythm ===
+
+Warm, direct, grown-up. Not saccharine, not condescending, not
+clinical-detached. Short sentences. Mix in a very short one every few lines
+to give weight. No em-dashes, no semicolons, no bullet lists, no markdown.
+One spoken paragraph.
+
+Good openers for this voice:
+  Here's what we're seeing.
+  So the short version is...
+  Let me walk you through this.
+  The important thing to know is...
+  What this means for you...
+
+=== What you will and won't do ===
+
+You WILL:
+  - Explain what the diagnosis means in plain language.
+  - Explain what the proposed plan is trying to do and why.
+  - Acknowledge that this is a lot and it's okay to feel that.
+  - Point them toward the Healing tab for lifestyle steps they can take now.
+  - Tell them what questions are worth bringing to their oncology team.
+
+You WILL NOT:
+  - Recommend a specific drug, dose, or trial. That's your oncologist's call.
+  - Give percentages or statistics unless the patient asks.
+  - Read NCT numbers, PMIDs, or trial names aloud. Refer to them as "a
+    clinical trial your team can walk you through".
+  - Promise outcomes. "This will cure you" is forbidden. "Many people with
+    a similar situation do well on this kind of treatment" is fine.
+  - Pretend to be a physician. When asked for a decision, the answer is
+    "that's the call your oncology team should make with you".
+
+=== Avoid ===
+
+Never open with: Great question. Certainly. Of course. Happy to help. I'd
+be happy to. Excellent question.
+
+Skip hedging clichés: it's worth noting, it's important to remember, keep
+in mind that, please be advised.
+
+Skip formal connectors: therefore, furthermore, moreover, consequently.
+Use so, and, plus, or nothing.
+
+=== Tool rules ===
+
+Always reason inside <think>...</think> first, then write the spoken answer.
+
+Call highlight_section or explain_node if it helps the patient follow along
+on screen. Call show_trial only if the patient explicitly asked to see
+trials.
+
+=== Hard limits ===
+
+Be brief. Two to four spoken sentences unless asked for depth. Land the
+answer; don't over-explain.
+"""
+
+
 def _slim_case(case: PatientCase) -> str:
     """Render the case as a token-efficient string (~2K tokens)."""
     p = case.pathology
@@ -264,6 +359,72 @@ def _slim_case(case: PatientCase) -> str:
     return "\n".join(lines)
 
 
+_PATIENT_PHASE_LABELS = {
+    "staging": "Understanding the cancer",
+    "primary": "The first main treatment",
+    "systemic": "Body-wide treatment",
+    "followup": "Watching for any changes",
+}
+
+
+def _slim_case_patient(case: PatientCase) -> str:
+    """Plain-language case summary for the patient audience.
+
+    Strips node IDs, eligibility-gate codes, raw criteria, mutation notation,
+    and trial NCT numbers. Keeps only what a patient benefits from knowing.
+    """
+    p = case.pathology
+    i = case.intake
+    lines = [
+        f"PATIENT CASE (case {case.case_id})",
+        "",
+        "DIAGNOSIS IN PLAIN LANGUAGE",
+        f"  cancer type: {case.primary_cancer_type or 'not yet determined'}",
+    ]
+    if p.primary_site:
+        lines.append(f"  where it started: {p.primary_site}")
+    if i.ajcc_stage:
+        lines.append(f"  stage: {i.ajcc_stage}")
+    if i.age_years:
+        lines.append(f"  age: {i.age_years}")
+
+    if case.mutations:
+        gene_names = sorted({m.gene for m in case.mutations if m.gene})
+        if gene_names:
+            lines.append("")
+            lines.append(
+                "KEY GENES FOUND (explain in plain language if asked): "
+                + ", ".join(gene_names[:8])
+            )
+
+    if case.railway and case.railway.steps:
+        lines.append("")
+        lines.append("PLAN (explain the intent, not the node IDs):")
+        seen_phases: set[str] = set()
+        for s in case.railway.steps:
+            phase = getattr(s, "phase", "") or ""
+            phase_key = phase.lower()
+            label = _PATIENT_PHASE_LABELS.get(phase_key, s.title)
+            if label in seen_phases:
+                continue
+            seen_phases.add(label)
+            lines.append(f"  {label}: {s.chosen_option_label}")
+
+    if case.trial_matches:
+        n_fit = sum(
+            1 for m in case.trial_matches
+            if not m.failing_criteria
+        )
+        lines.append("")
+        lines.append(
+            f"CLINICAL TRIALS: {n_fit} trial(s) may be a fit. "
+            "The patient's oncology team can walk them through details. "
+            "Do NOT read NCT numbers aloud."
+        )
+
+    return "\n".join(lines)
+
+
 def _needs_rag(question: str) -> bool:
     triggers = [
         "paper", "literature", "evidence", "study", "cite", "pmid",
@@ -303,9 +464,10 @@ async def _node_rag_retrieve(state: ChatState) -> ChatState:
 
 
 async def _node_k2_respond(state: ChatState) -> ChatState:
+    prompt = state.get("system_prompt") or ONCOLOGIST_SYSTEM_PROMPT
     sys_msg = {
         "role": "system",
-        "content": SYSTEM_PROMPT + "\n\nCASE SUMMARY:\n" + state.get("case_summary", ""),
+        "content": prompt + "\n\nCASE SUMMARY:\n" + state.get("case_summary", ""),
     }
     if state.get("rag_hits"):
         cite_lines = ["PUBMED HITS (fresh search - cite these inline):"]
@@ -427,14 +589,29 @@ def _build_graph():
 class CaseChatAgent:
     case: PatientCase
     bus: EventBus = field(default_factory=EventBus)
+    audience: Audience = "oncologist"
     messages: list[ChatMessage] = field(default_factory=list)
     _graph: Any = None
     _case_summary: str = ""
     _case_dict: dict = field(default_factory=dict)
 
     def __post_init__(self) -> None:
-        self._case_summary = _slim_case(self.case)
+        self._refresh_case_summary()
         self._case_dict = self.case.model_dump()
+
+    def _refresh_case_summary(self) -> None:
+        if self.audience == "patient":
+            self._case_summary = _slim_case_patient(self.case)
+        else:
+            self._case_summary = _slim_case(self.case)
+
+    @property
+    def system_prompt(self) -> str:
+        return (
+            PATIENT_SYSTEM_PROMPT
+            if self.audience == "patient"
+            else ONCOLOGIST_SYSTEM_PROMPT
+        )
 
     @property
     def available(self) -> bool:
@@ -457,6 +634,7 @@ class CaseChatAgent:
         state: ChatState = {
             "messages": self.messages,
             "case_summary": self._case_summary,
+            "system_prompt": self.system_prompt,
             "pending_tool_calls": [],
             "rag_hits": [],
             "last_assistant_text": "",

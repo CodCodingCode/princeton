@@ -17,7 +17,7 @@ const sans = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "NeoVax - oncologist copilot",
+  title: "Onkos - oncologist copilot",
   description:
     "Upload a patient's oncology records and receive a guideline-grounded treatment plan, matched clinical trials, and a downloadable oncologist report.",
 };
@@ -38,12 +38,12 @@ export default function RootLayout({
         }}
       >
         <header className="fixed top-0 left-0 right-0 z-30 bg-[#faf7f3]/80 backdrop-blur-xl border-b border-neutral-200/60">
-          <div className="px-6 h-16 flex items-center justify-between">
+          <div className="px-6 h-11 flex items-center justify-between">
             <a href="/" className="flex items-baseline gap-3 group">
-              <span className="font-serif text-3xl leading-none tracking-tight text-black">
-                NeoVax
+              <span className="font-serif text-xl leading-none tracking-tight text-black">
+                Onkos
               </span>
-              <span className="hidden sm:inline text-[11px] uppercase tracking-[0.2em] text-neutral-500 font-medium">
+              <span className="hidden sm:inline text-[10px] uppercase tracking-[0.2em] text-neutral-500 font-medium">
                 Oncology Copilot
               </span>
             </a>
