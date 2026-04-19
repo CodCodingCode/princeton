@@ -427,11 +427,14 @@ function ExperiencePage() {
   }, [phase, caseId]);
 
   const handleBegin = useCallback(() => {
-    // Snap the phase immediately so the welcome overlay starts its fade-out
-    // the instant the user clicks Begin — no waiting for the session to
-    // connect before the UI moves. The actual LiveAvatar start() runs in
-    // parallel; speak calls fire once the stream is ready.
+    // t=0: reveal the live avatar video and advance to intake phase.
+    //      Button starts its 500ms fade-out in WelcomeOverlay.
+    // t=2.8s: IntakeOverlay fades in (gated by intakeRevealed effect above).
+    setAvatarRevealed(true);
     setPhase("intake");
+    // The session was preconnected on mount; if for any reason it isn't
+    // live yet, start() is idempotent and will (re)connect. Speak the
+    // greeting as soon as the stream is ready.
     (async () => {
       try {
         await stageRef.current?.start();
@@ -439,8 +442,6 @@ function ExperiencePage() {
         return;
       }
       stageRef.current?.speak(GREETING).catch(() => {});
-      // Small pause so the doctor introduces himself before the PDF prompt
-      // is queued on top.
       setTimeout(() => {
         stageRef.current?.speak(INTAKE_PROMPT).catch(() => {});
       }, 2800);
@@ -502,6 +503,7 @@ function ExperiencePage() {
           ref={stageRef}
           onStatusChange={setAvatarStatus}
           compact={phase === "ready"}
+          revealed={avatarRevealed}
         >
           {(phase === "welcome" || welcomeLinger) && (
             <WelcomeOverlay
@@ -510,7 +512,15 @@ function ExperiencePage() {
               hidden={phase !== "welcome"}
             />
           )}
-          {phase === "intake" && <IntakeOverlay onUploaded={handleUploaded} />}
+          {phase === "intake" && (
+            <div
+              className={`absolute inset-0 transition-opacity duration-500 ease-out ${
+                intakeRevealed ? "opacity-100" : "opacity-0 pointer-events-none"
+              }`}
+            >
+              <IntakeOverlay onUploaded={handleUploaded} />
+            </div>
+          )}
           {phase === "processing" && (
             <ProcessingOverlay state={processingState} />
           )}

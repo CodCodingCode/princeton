@@ -80,8 +80,8 @@ export function EventLog({ events }: { events: AgentEvent[] }) {
       if (!showNoisy && NOISY.has(e.kind)) return false;
       if (!q) return true;
       return (
-        e.kind.toLowerCase().includes(q) ||
-        (e.label || "").toLowerCase().includes(q)
+        (e.kind ?? "").toLowerCase().includes(q) ||
+        (e.label ?? "").toLowerCase().includes(q)
       );
     });
   }, [events, filter, showNoisy]);
@@ -203,9 +203,9 @@ function EventRow({ event }: { event: AgentEvent }) {
           {formatTime(event.timestamp)}
         </span>
         <span className={`shrink-0 w-44 font-semibold ${kindCls}`}>
-          {event.kind.replace(/_/g, " ")}
+          {(event.kind ?? "").replace(/_/g, " ")}
         </span>
-        <span className="flex-1 text-neutral-700">{event.label}</span>
+        <span className="flex-1 text-neutral-700">{event.label ?? ""}</span>
         {expandable && (
           <span className="text-neutral-400 shrink-0 w-4 text-center">
             {open ? "▾" : "▸"}

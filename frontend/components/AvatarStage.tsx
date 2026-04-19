@@ -40,12 +40,17 @@ interface Props {
   onStatusChange?: (s: AvatarStatus) => void;
   onSpeakingChange?: (speaking: boolean) => void;
   compact?: boolean;
+  // Parent controls when the live video is revealed over the still poster.
+  // When false, the stream may already be connected and running silently
+  // behind the poster — flipping this to true snaps the avatar into view
+  // without any connection latency.
+  revealed?: boolean;
   children?: React.ReactNode;
 }
 
 export const AvatarStage = forwardRef<AvatarStageHandle, Props>(
   function AvatarStage(
-    { onStatusChange, onSpeakingChange, compact, children },
+    { onStatusChange, onSpeakingChange, compact, revealed = true, children },
     ref,
   ) {
     const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -113,18 +118,18 @@ export const AvatarStage = forwardRef<AvatarStageHandle, Props>(
           autoPlay
           playsInline
           className={`absolute inset-0 w-full h-full object-contain ${
-            status === "live" ? "opacity-100" : "opacity-0"
+            status === "live" && revealed ? "opacity-100" : "opacity-0"
           }`}
         />
 
-        {/* Still-frame poster shown before the LiveAvatar connects. Drop a
-            PNG at frontend/public/doctor-poster.png to replace. Uses a CSS
-            background so a missing file falls back to the parent bg-black
-            rather than a broken-image glyph. */}
+        {/* Still-frame poster shown before the parent reveals the live
+            video. Drop a PNG at frontend/public/doctor-poster.png to
+            replace. Uses a CSS background so a missing file falls back to
+            the parent bg-black rather than a broken-image glyph. */}
         <div
           aria-hidden
           className={`absolute inset-0 bg-[url('/doctor-poster.png')] bg-center bg-contain bg-no-repeat transition-opacity duration-200 ${
-            status === "live" ? "opacity-0" : "opacity-100"
+            revealed ? "opacity-0" : "opacity-100"
           }`}
         />
 

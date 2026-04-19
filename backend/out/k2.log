@@ -4439,3 +4439,43 @@ During task with name 'rag_retrieve' and id '4d90dcb9-9725-2f60-fec7-f96ec11c7ac
 2026-04-18 21:49:39,898 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
 2026-04-18 21:50:07,222 [INFO] neoantigen.llm: chat client base=https://api.k2think.ai/v1 model=MBZUAI-IFM/K2-Think-v2 key_idx=0 pool=3
 2026-04-18 21:50:09,129 [INFO] neoantigen.llm: chat stream done chunks=140 text_chars=3914 tool_calls=0 state=answer
+2026-04-18 21:52:18,819 [INFO] neoantigen.llm: chat client base=https://api.k2think.ai/v1 model=MBZUAI-IFM/K2-Think-v2 key_idx=1 pool=3
+2026-04-18 21:52:20,215 [INFO] neoantigen.llm: chat stream done chunks=144 text_chars=4449 tool_calls=0 state=answer
+2026-04-18 21:52:39,000 [INFO] neoantigen.llm: chat client base=https://api.k2think.ai/v1 model=MBZUAI-IFM/K2-Think-v2 key_idx=2 pool=3
+2026-04-18 21:52:40,286 [INFO] neoantigen.llm: chat stream done chunks=122 text_chars=2984 tool_calls=0 state=answer
+2026-04-18 21:53:49,398 [INFO] neoantigen.llm: chat client base=https://api.k2think.ai/v1 model=MBZUAI-IFM/K2-Think-v2 key_idx=0 pool=3
+2026-04-18 21:53:50,689 [INFO] neoantigen.llm: chat stream done chunks=62 text_chars=1069 tool_calls=0 state=answer
+2026-04-18 21:54:02,113 [INFO] neoantigen.llm: chat client base=https://api.k2think.ai/v1 model=MBZUAI-IFM/K2-Think-v2 key_idx=1 pool=3
+2026-04-18 21:54:04,047 [INFO] neoantigen.llm: chat stream done chunks=78 text_chars=1207 tool_calls=0 state=answer
+2026-04-18 21:54:49,205 [INFO] neoantigen.llm: chat client base=https://api.k2think.ai/v1 model=MBZUAI-IFM/K2-Think-v2 key_idx=2 pool=3
+2026-04-18 21:54:50,229 [INFO] neoantigen.llm: chat stream done chunks=57 text_chars=1219 tool_calls=0 state=answer
+2026-04-18 21:55:06,414 [INFO] neoantigen.llm: chat client base=https://api.k2think.ai/v1 model=MBZUAI-IFM/K2-Think-v2 key_idx=0 pool=3
+2026-04-18 21:55:07,958 [INFO] neoantigen.llm: chat stream done chunks=71 text_chars=1150 tool_calls=0 state=answer
+2026-04-18 21:55:30,883 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+2026-04-18 21:57:19,019 [INFO] neoantigen.llm: chat client base=https://api.k2think.ai/v1 model=MBZUAI-IFM/K2-Think-v2 key_idx=0 pool=3
+2026-04-18 21:57:21,315 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+2026-04-18 21:58:27,913 [INFO] neoantigen.llm: chat client base=https://api.k2think.ai/v1 model=MBZUAI-IFM/K2-Think-v2 key_idx=0 pool=3
+2026-04-18 21:58:29,319 [INFO] neoantigen.llm: chat stream done chunks=60 text_chars=1469 tool_calls=0 state=answer
+2026-04-18 21:58:29,385 [INFO] neoantigen.llm: chat client base=https://api.k2think.ai/v1 model=MBZUAI-IFM/K2-Think-v2 key_idx=1 pool=3
+2026-04-18 21:58:30,524 [INFO] neoantigen.llm: chat stream done chunks=31 text_chars=663 tool_calls=0 state=answer
+2026-04-18 21:58:30,583 [INFO] neoantigen.llm: chat client base=https://api.k2think.ai/v1 model=MBZUAI-IFM/K2-Think-v2 key_idx=2 pool=3
+2026-04-18 21:58:31,970 [INFO] neoantigen.llm: chat stream done chunks=55 text_chars=1135 tool_calls=0 state=answer
+2026-04-18 21:58:32,030 [INFO] neoantigen.llm: chat client base=https://api.k2think.ai/v1 model=MBZUAI-IFM/K2-Think-v2 key_idx=0 pool=3
+2026-04-18 21:58:33,297 [INFO] neoantigen.llm: chat stream done chunks=58 text_chars=948 tool_calls=0 state=answer
+2026-04-18 21:59:11,026 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+2026-04-18 21:59:49,076 [INFO] neoantigen.llm: chat client base=https://api.k2think.ai/v1 model=MBZUAI-IFM/K2-Think-v2 key_idx=0 pool=3
+2026-04-18 21:59:50,357 [INFO] neoantigen.llm: chat stream done chunks=43 text_chars=875 tool_calls=0 state=answer
+2026-04-18 21:59:50,388 [INFO] neoantigen.llm: chat client base=https://api.k2think.ai/v1 model=MBZUAI-IFM/K2-Think-v2 key_idx=1 pool=3
+2026-04-18 21:59:51,418 [INFO] neoantigen.llm: chat stream done chunks=46 text_chars=845 tool_calls=0 state=answer
+2026-04-18 21:59:51,449 [INFO] neoantigen.llm: chat client base=https://api.k2think.ai/v1 model=MBZUAI-IFM/K2-Think-v2 key_idx=2 pool=3
+2026-04-18 21:59:52,318 [INFO] neoantigen.llm: chat stream done chunks=46 text_chars=755 tool_calls=0 state=answer
+2026-04-18 21:59:52,345 [INFO] neoantigen.llm: chat client base=https://api.k2think.ai/v1 model=MBZUAI-IFM/K2-Think-v2 key_idx=0 pool=3
+2026-04-18 21:59:53,767 [INFO] neoantigen.llm: chat stream done chunks=51 text_chars=1440 tool_calls=0 state=answer
+2026-04-18 22:00:49,327 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+2026-04-18 22:00:56,767 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+2026-04-18 22:03:09,213 [INFO] neoantigen.llm: chat client base=https://api.k2think.ai/v1 model=MBZUAI-IFM/K2-Think-v2 key_idx=0 pool=3
+2026-04-18 22:03:12,337 [INFO] neoantigen.llm: chat stream done chunks=410 text_chars=9598 tool_calls=0 state=answer
+2026-04-18 22:03:34,203 [INFO] neoantigen.llm: chat client base=https://api.k2think.ai/v1 model=MBZUAI-IFM/K2-Think-v2 key_idx=1 pool=3
+2026-04-18 22:03:35,311 [INFO] neoantigen.llm: chat stream done chunks=84 text_chars=1834 tool_calls=0 state=answer
+2026-04-18 22:04:10,643 [INFO] neoantigen.llm: chat client base=https://api.k2think.ai/v1 model=MBZUAI-IFM/K2-Think-v2 key_idx=2 pool=3
+2026-04-18 22:04:11,934 [INFO] neoantigen.llm: chat stream done chunks=89 text_chars=2233 tool_calls=0 state=answer

@@ -35,8 +35,18 @@ from typing import AsyncIterator, Literal
 #   FN_CALL=False     → what follows is the spoken answer
 #   FN_CALL=True      → what follows is a Python-style call expression,
 #                       e.g. highlight_section(section='trials')
-_FN_CALL_LINE_RE = re.compile(r"^\s*FN_CALL\s*=\s*(True|False)\s*(?:\n|$)")
-_OTHER_PROTOCOL_LINE_RE = re.compile(r"^\s*(?:[A-Z_]+=\S+)\s*(?:\n|$)")
+_FN_CALL_LINE_RE = re.compile(
+    r"^[\s\r\n]*FN_CALL\s*=\s*(True|False)[\s\r\n]*", re.IGNORECASE
+)
+_OTHER_PROTOCOL_LINE_RE = re.compile(
+    r"^[\s\r\n]*(?:[A-Z_]+\s*=\s*\S+)[\s\r\n]*"
+)
+# Belt-and-suspenders: if any protocol line slipped through the post-think
+# gate (e.g. the buffer boundary split "FN_CALL=" across chunks), run a
+# second sweep on the first answer chunk we're about to emit.
+_PROTOCOL_ANYWHERE_RE = re.compile(
+    r"\bFN_CALL\s*=\s*(?:True|False)\b[\s\r\n]*", re.IGNORECASE
+)
 
 
 def _parse_k2think_call(expr: str) -> dict | None:
@@ -325,7 +335,14 @@ async def k2_stream_with_thinking(
             if state == "answer":
                 if buffer:
                     emit_text, buffer = buffer, ""
-                    yield ("answer", emit_text)
+                    # Defensive scrub: even if the post-think gate missed a
+                    # protocol marker (chunk-boundary split, unusual
+                    # whitespace, duplicated line), nuke any FN_CALL=<bool>
+                    # substring before it reaches the avatar.
+                    emit_text = _PROTOCOL_ANYWHERE_RE.sub("", emit_text)
+                    emit_text = emit_text.lstrip()
+                    if emit_text:
+                        yield ("answer", emit_text)
                 break
 
     # Stream closed. Flush per-state tails.

@@ -329,76 +329,220 @@ answer; don't over-explain.
 """
 
 
+def _g(obj: Any, attr: str, default: Any = None) -> Any:
+    """Safe attr fetch — the dashboard schema has cancer-specific fields that
+    may not exist on every pydantic model variant."""
+    try:
+        v = getattr(obj, attr, default)
+    except Exception:
+        return default
+    return v if v not in (None, "", "unknown") else default
+
+
 def _slim_case(case: PatientCase) -> str:
-    """Render the case as a token-efficient string (~2K tokens)."""
+    """Render everything the dashboard shows as a single text block for K2.
+
+    Goal: any question the oncologist asks that can be answered from the
+    dashboard should also be answerable from this string. Kept under roughly
+    3–4K tokens so the chat model still has room for conversation history.
+    """
     p = case.pathology
     i = case.intake
-    lines = [
-        f"CASE {case.case_id}",
-        "",
+    enrichment = case.enrichment
+    demo = case.demographics
+
+    lines: list[str] = [f"CASE {case.case_id}", ""]
+
+    if demo:
+        demo_bits = []
+        if _g(demo, "full_name"): demo_bits.append(f"name={demo.full_name}")
+        if _g(demo, "sex"): demo_bits.append(f"sex={demo.sex}")
+        if _g(demo, "date_of_birth"): demo_bits.append(f"DOB={demo.date_of_birth}")
+        if _g(demo, "mrn"): demo_bits.append(f"MRN={demo.mrn}")
+        if _g(demo, "race"): demo_bits.append(f"race={demo.race}")
+        if _g(demo, "preferred_language"):
+            demo_bits.append(f"language={demo.preferred_language}")
+        if demo_bits:
+            lines += ["DEMOGRAPHICS", "  " + ", ".join(demo_bits), ""]
+
+    lines += [
         "DIAGNOSIS",
         f"  primary cancer: {case.primary_cancer_type or 'unknown'}",
-        f"  histology: {p.histology or 'unknown'}",
-        f"  primary site: {p.primary_site or 'unknown'}",
+        f"  histology: {_g(p, 'histology') or 'unknown'}",
+        f"  primary site: {_g(p, 'primary_site') or 'unknown'}",
         "",
-        "PATHOLOGY (melanoma-specific fields - null if not melanoma)",
-        f"  subtype: {p.melanoma_subtype}",
-        f"  Breslow: {p.breslow_thickness_mm} mm" if p.breslow_thickness_mm is not None else "  Breslow: unknown",
-        f"  ulceration: {p.ulceration}",
-        f"  T-stage: {p.t_stage}",
-        f"  TILs: {p.tils_present}, PD-L1: {p.pdl1_estimate}",
-        "",
-        "INTAKE",
-        f"  AJCC stage: {i.ajcc_stage or 'unknown'}",
-        f"  ECOG: {i.ecog if i.ecog is not None else 'unknown'}",
-        f"  Measurable disease (RECIST): {i.measurable_disease_recist}",
-        f"  Prior systemic therapy: {i.prior_systemic_therapy}",
-        f"  Prior anti-PD-1: {i.prior_anti_pd1}",
-        f"  Age: {i.age_years}",
-        "",
-        f"MUTATIONS ({len(case.mutations)}):",
     ]
-    for m in case.mutations[:20]:
-        lines.append(f"  {m.gene} {m.label}")
-    if len(case.mutations) > 20:
-        lines.append(f"  …and {len(case.mutations) - 20} more")
 
-    if case.railway and case.railway.steps:
+    # Pathology dump — include every non-null field so cancer-type-specific
+    # detail (Breslow for melanoma, PD-L1 for lung/HNSCC, HER2 for breast,
+    # grade, margins, etc.) all come through without hardcoding which
+    # cancer we're in.
+    path_fields = []
+    for fname in (
+        "melanoma_subtype", "breslow_thickness_mm", "ulceration", "t_stage",
+        "n_stage", "m_stage", "tils_present", "pdl1_estimate", "pdl1_score",
+        "her2_status", "er_status", "pr_status", "mmr_status", "msi_status",
+        "grade", "differentiation", "margins", "lvi", "pni",
+        "tumor_size_mm", "confidence", "notes",
+    ):
+        v = _g(p, fname)
+        if v is not None:
+            path_fields.append(f"  {fname}: {v}")
+    if path_fields:
+        lines.append("PATHOLOGY")
+        lines += path_fields
         lines.append("")
+
+    # Full intake — every clinician-set field the dashboard shows.
+    intake_fields = []
+    for fname in (
+        "ajcc_stage", "ecog", "age_years", "measurable_disease_recist",
+        "prior_systemic_therapy", "prior_anti_pd1", "life_expectancy_months",
+    ):
+        v = _g(i, fname)
+        if v is not None:
+            intake_fields.append(f"  {fname}: {v}")
+    if intake_fields:
+        lines.append("INTAKE")
+        lines += intake_fields
+        lines.append("")
+
+    # Enrichment biomarkers (TMB, UV signature, derived prior-therapy list).
+    if enrichment:
+        enr_fields = []
+        for fname in (
+            "tmb_mut_per_mb", "uv_signature_fraction", "total_snvs_scored",
+        ):
+            v = _g(enrichment, fname)
+            if v is not None:
+                enr_fields.append(f"  {fname}: {v}")
+        priors = _g(enrichment, "prior_systemic_therapies") or []
+        if priors:
+            enr_fields.append("  prior_therapies: " + "; ".join(priors[:10]))
+        if enr_fields:
+            lines.append("ENRICHMENT")
+            lines += enr_fields
+            lines.append("")
+
+    # Mutations — keep more (was 20, now 40) since driver questions need the
+    # full panel.
+    lines.append(f"MUTATIONS ({len(case.mutations)}):")
+    for m in case.mutations[:40]:
+        label = _g(m, "label") or _g(m, "raw_label") or ""
+        gene = _g(m, "gene") or "?"
+        lines.append(f"  {gene} {label}".rstrip())
+    if len(case.mutations) > 40:
+        lines.append(f"  …and {len(case.mutations) - 40} more")
+    lines.append("")
+
+    # Documents — filenames + kinds so the model can say "you uploaded the
+    # FoundationOne report and the pathology addendum".
+    if case.documents:
+        lines.append(f"DOCUMENTS ({len(case.documents)}):")
+        for d in case.documents[:20]:
+            kind = _g(d, "document_kind") or "unknown"
+            pages = _g(d, "page_count") or 0
+            lines.append(f"  {d.filename} [{kind}, {pages}p]")
+        if len(case.documents) > 20:
+            lines.append(f"  …and {len(case.documents) - 20} more")
+        lines.append("")
+
+    # Conflicts flagged across documents.
+    if case.conflicts:
+        lines.append(f"CONFLICTS ({len(case.conflicts)}):")
+        for c in case.conflicts[:8]:
+            lines.append(f"  - {c[:180]}")
+        lines.append("")
+
+    # Railway — with citations (PubMed IDs that drove each decision) so the
+    # model can answer "what's the evidence for X?" from context.
+    if case.railway and case.railway.steps:
         lines.append("NCCN RAILWAY:")
         for s in case.railway.steps:
-            lines.append(f"  [{s.node_id}] {s.title} → {s.chosen_option_label}")
-            if s.chosen_rationale:
-                lines.append(f"      chosen: {s.chosen_rationale[:160]}")
-            for alt in s.alternatives[:3]:
-                reason = (alt.reason_not_chosen or "")[:120]
-                lines.append(f"      ◦ alt {alt.option_label!r} - {reason}")
-        if case.railway.final_recommendation:
+            phase = _g(s, "phase_title") or _g(s, "phase_id") or ""
+            hdr = f"  [{s.node_id}]"
+            if phase:
+                hdr += f" ({phase})"
+            hdr += f" {s.title} → {s.chosen_option_label}"
+            lines.append(hdr)
+            if _g(s, "chosen_rationale"):
+                lines.append(f"      chosen: {s.chosen_rationale[:220]}")
+            cites = _g(s, "citations") or []
+            if cites:
+                cite_bits = []
+                for c in cites[:3]:
+                    cid = _g(c, "pmid") or "?"
+                    ctitle = (_g(c, "title") or "")[:70]
+                    cy = _g(c, "year") or ""
+                    cite_bits.append(f"[{cid} {cy}] {ctitle}")
+                lines.append("      cites: " + " | ".join(cite_bits))
+            for alt in (_g(s, "alternatives") or [])[:3]:
+                reason = (_g(alt, "reason_not_chosen") or "")[:140]
+                lines.append(f"      ◦ alt {alt.option_label!r} — {reason}")
+        if _g(case.railway, "final_recommendation"):
             lines.append("")
-            lines.append(f"FINAL RECOMMENDATION: {case.railway.final_recommendation}")
-
-    if case.trial_matches:
-        lines.append("")
-        lines.append("TRIAL MATCHES:")
-        for m in case.trial_matches[:6]:
             lines.append(
-                f"  {m.nct_id} [{m.status}] {m.title[:90]}"
+                f"FINAL RECOMMENDATION: {case.railway.final_recommendation[:400]}"
             )
-            if m.failing_criteria:
-                lines.append(f"      fails: {'; '.join(m.failing_criteria[:3])}")
-            if m.unknown_criteria:
-                lines.append(f"      unknown: {'; '.join(m.unknown_criteria[:3])}")
-
-    if case.trial_sites:
-        sites_by_nct: dict[str, int] = {}
-        for s in case.trial_sites:
-            sites_by_nct[s.nct_id] = sites_by_nct.get(s.nct_id, 0) + 1
         lines.append("")
-        lines.append(
-            "TRIAL SITES: "
-            + ", ".join(f"{nct}×{n}" for nct, n in sorted(sites_by_nct.items()))
-        )
 
+    if case.final_recommendation and case.final_recommendation != _g(
+        case.railway, "final_recommendation"
+    ):
+        lines.append(f"CASE-LEVEL RECOMMENDATION: {case.final_recommendation[:400]}")
+        lines.append("")
+
+    # Trials — more than 6 now, full criteria lists (was capped at 3 each).
+    if case.trial_matches:
+        lines.append(f"TRIAL MATCHES ({len(case.trial_matches)}):")
+        for m in case.trial_matches[:10]:
+            hdr = f"  {m.nct_id} [{m.status}]"
+            if _g(m, "phase"):
+                hdr += f" phase {m.phase}"
+            if _g(m, "sponsor"):
+                hdr += f" — {m.sponsor}"
+            lines.append(hdr)
+            lines.append(f"      {m.title[:140]}")
+            if m.passing_criteria:
+                lines.append(
+                    "      passes: " + "; ".join(m.passing_criteria[:5])
+                )
+            if m.failing_criteria:
+                lines.append(
+                    "      fails: " + "; ".join(m.failing_criteria[:5])
+                )
+            if m.unknown_criteria:
+                lines.append(
+                    "      unknown: " + "; ".join(m.unknown_criteria[:5])
+                )
+        if len(case.trial_matches) > 10:
+            lines.append(f"  …and {len(case.trial_matches) - 10} more matches")
+        lines.append("")
+
+    # Trial sites — include city/state for the top NCTs so "where can I go
+    # to enroll?" is answerable without a tool call.
+    if case.trial_sites:
+        by_nct: dict[str, list] = {}
+        for s in case.trial_sites:
+            by_nct.setdefault(s.nct_id, []).append(s)
+        lines.append(f"TRIAL SITES ({len(case.trial_sites)} across "
+                     f"{len(by_nct)} trials):")
+        for nct, sites in list(by_nct.items())[:6]:
+            locs = []
+            for s in sites[:4]:
+                loc = ", ".join(x for x in [s.city, s.state, s.country] if x)
+                locs.append(f"{s.facility[:40]} ({loc})" if loc else s.facility[:40])
+            suffix = "" if len(sites) <= 4 else f" +{len(sites)-4} more"
+            lines.append(f"  {nct}: " + " | ".join(locs) + suffix)
+        lines.append("")
+
+    # Narrative prose the PDF report uses (Assessment / Treatment Plan)
+    # if it's been generated. Lets the chat agent speak in the same voice
+    # the PDF landed in.
+    if _g(case, "narrative_cache") or (
+        hasattr(case, "model_extra") and case.model_extra
+    ):
+        pass  # narrative_cache lives on CaseRecord, not PatientCase — skip
     return "\n".join(lines)
 
 
@@ -414,22 +558,58 @@ def _slim_case_patient(case: PatientCase) -> str:
     """Plain-language case summary for the patient audience.
 
     Strips node IDs, eligibility-gate codes, raw criteria, mutation notation,
-    and trial NCT numbers. Keeps only what a patient benefits from knowing.
+    and trial NCT numbers. Keeps only what a patient benefits from knowing,
+    but covers every dashboard section so "how many trials fit me?" /
+    "what did my scans show?" / "how many records did you look through?"
+    all answer from context.
     """
     p = case.pathology
     i = case.intake
-    lines = [
-        f"PATIENT CASE (case {case.case_id})",
-        "",
-        "DIAGNOSIS IN PLAIN LANGUAGE",
-        f"  cancer type: {case.primary_cancer_type or 'not yet determined'}",
-    ]
-    if p.primary_site:
+    demo = case.demographics
+    lines = [f"PATIENT CASE (case {case.case_id})", ""]
+
+    if demo and _g(demo, "full_name"):
+        lines.append(f"Patient: {demo.full_name}")
+        if _g(demo, "date_of_birth"):
+            lines.append(f"  born {demo.date_of_birth}")
+        lines.append("")
+
+    lines.append("DIAGNOSIS IN PLAIN LANGUAGE")
+    lines.append(
+        f"  cancer type: {case.primary_cancer_type or 'not yet determined'}"
+    )
+    if _g(p, "primary_site"):
         lines.append(f"  where it started: {p.primary_site}")
-    if i.ajcc_stage:
+    if _g(p, "histology"):
+        lines.append(f"  tissue type seen under microscope: {p.histology}")
+    if _g(i, "ajcc_stage"):
         lines.append(f"  stage: {i.ajcc_stage}")
-    if i.age_years:
+    if _g(i, "age_years"):
         lines.append(f"  age: {i.age_years}")
+    if _g(i, "ecog") is not None:
+        lines.append(
+            f"  performance status (how active day-to-day): ECOG {i.ecog}"
+        )
+
+    # Relevant pathology details for the patient — stage, size, grade.
+    extra_path = []
+    for fname, label in (
+        ("tumor_size_mm", "tumor size (mm)"),
+        ("grade", "grade"),
+        ("margins", "surgical margins"),
+        ("her2_status", "HER2 status"),
+        ("er_status", "ER status"),
+        ("pr_status", "PR status"),
+        ("msi_status", "MSI status"),
+        ("pdl1_estimate", "PD-L1"),
+        ("breslow_thickness_mm", "Breslow depth (mm)"),
+        ("ulceration", "ulceration"),
+    ):
+        v = _g(p, fname)
+        if v is not None:
+            extra_path.append(f"  {label}: {v}")
+    if extra_path:
+        lines += extra_path
 
     if case.mutations:
         gene_names = sorted({m.gene for m in case.mutations if m.gene})
@@ -437,15 +617,23 @@ def _slim_case_patient(case: PatientCase) -> str:
             lines.append("")
             lines.append(
                 "KEY GENES FOUND (explain in plain language if asked): "
-                + ", ".join(gene_names[:8])
+                + ", ".join(gene_names[:10])
             )
+
+    if case.documents:
+        lines.append("")
+        lines.append(
+            f"RECORDS REVIEWED: {len(case.documents)} document"
+            + ("s" if len(case.documents) != 1 else "")
+            + " (the oncology team uploaded these)."
+        )
 
     if case.railway and case.railway.steps:
         lines.append("")
         lines.append("PLAN (explain the intent, not the node IDs):")
         seen_phases: set[str] = set()
         for s in case.railway.steps:
-            phase = getattr(s, "phase", "") or ""
+            phase = getattr(s, "phase_id", "") or getattr(s, "phase", "") or ""
             phase_key = phase.lower()
             label = _PATIENT_PHASE_LABELS.get(phase_key, s.title)
             if label in seen_phases:
@@ -454,16 +642,23 @@ def _slim_case_patient(case: PatientCase) -> str:
             lines.append(f"  {label}: {s.chosen_option_label}")
 
     if case.trial_matches:
-        n_fit = sum(
-            1 for m in case.trial_matches
-            if not m.failing_criteria
-        )
+        n_fit = sum(1 for m in case.trial_matches if not m.failing_criteria)
+        n_total = len(case.trial_matches)
         lines.append("")
         lines.append(
-            f"CLINICAL TRIALS: {n_fit} trial(s) may be a fit. "
-            "The patient's oncology team can walk them through details. "
-            "Do NOT read NCT numbers aloud."
+            f"CLINICAL TRIALS: {n_total} trial(s) were screened, "
+            f"{n_fit} may be a fit pending age/ECOG/biomarker confirmation. "
+            "The oncology team has the details — do NOT read NCT numbers aloud."
         )
+        if case.trial_sites:
+            by_nct = {}
+            for s in case.trial_sites:
+                by_nct.setdefault(s.nct_id, 0)
+                by_nct[s.nct_id] += 1
+            lines.append(
+                f"  Those trials have about {sum(by_nct.values())} locations "
+                f"across {len(by_nct)} different studies."
+            )
 
     return "\n".join(lines)
 
