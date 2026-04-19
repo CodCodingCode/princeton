@@ -74,14 +74,49 @@ def get_logger() -> logging.Logger:
     return logger
 
 
+def _k2_api_keys() -> list[str]:
+    """All K2 / Kimi API keys the process has access to.
+
+    Accepts three formats, combined into one round-robin pool:
+      * ``KIMI_API_KEY=keyA,keyB,keyC`` - comma-separated
+      * ``KIMI_API_KEY_1=...``, ``KIMI_API_KEY_2=...`` - numbered
+      * ``K2_API_KEY[_N]=...`` - legacy alias, same shapes
+
+    More keys = more throughput. Each key has its own rate-limit bucket
+    server-side, so 2 keys roughly doubles the concurrent-call ceiling
+    before K2 starts 429-ing. Duplicates are removed while preserving
+    insertion order so rotation is deterministic.
+    """
+    raw: list[str] = []
+    # Base env vars (comma-separated support).
+    for name in ("KIMI_API_KEY", "K2_API_KEY"):
+        v = os.environ.get(name)
+        if v:
+            raw.extend(p.strip() for p in v.split(","))
+    # Numbered extras: KIMI_API_KEY_1, KIMI_API_KEY_2, K2_API_KEY_1, ...
+    for name, val in os.environ.items():
+        if not val:
+            continue
+        if name.startswith("KIMI_API_KEY_") or name.startswith("K2_API_KEY_"):
+            raw.extend(p.strip() for p in val.split(","))
+    # Dedupe, preserve order.
+    seen: set[str] = set()
+    out: list[str] = []
+    for k in raw:
+        if k and k not in seen:
+            seen.add(k)
+            out.append(k)
+    return out
+
+
 def _k2_api_key() -> str | None:
-    # Single source of truth: prefer KIMI_API_KEY, fall back to legacy K2_API_KEY
-    # so existing .env files keep working during the transition.
-    return os.environ.get("KIMI_API_KEY") or os.environ.get("K2_API_KEY")
+    """First configured key (for callers that don't care about the pool)."""
+    keys = _k2_api_keys()
+    return keys[0] if keys else None
 
 
 def has_api_key() -> bool:
-    return bool(_k2_api_key())
+    return bool(_k2_api_keys())
 
 
 def has_medix_key() -> bool:
@@ -107,15 +142,38 @@ K2_TIMEOUT_S = float(os.environ.get("NEOVAX_K2_TIMEOUT_S", "90"))
 MEDIX_TIMEOUT_S = float(os.environ.get("NEOVAX_MEDIX_TIMEOUT_S", "60"))
 
 
-@lru_cache(maxsize=1)
-def _openai_client():
-    """K2 cloud client - used for text reasoning (NCCN walker, JSON tasks)."""
+@lru_cache(maxsize=32)
+def _client_for_key(api_key: str):
+    """One AsyncOpenAI per distinct key (cached to reuse the connection pool)."""
     from openai import AsyncOpenAI
 
-    api_key = _k2_api_key()
-    if not api_key:
-        raise RuntimeError("KIMI_API_KEY not set")
     return AsyncOpenAI(base_url=K2_BASE_URL, api_key=api_key, timeout=K2_TIMEOUT_S)
+
+
+# Monotonic counter for deterministic round-robin across the key pool.
+import itertools as _itertools
+
+_rr_counter = _itertools.count(0)
+
+
+def _openai_client():
+    """Return the next K2 client in the round-robin pool.
+
+    Each call advances the counter, so 100 simultaneous requests distribute
+    evenly across all configured keys. Retries inside ``_call_json_impl``
+    call this function again per attempt, which means a second try lands on
+    a different key - useful for clearing transient 429s.
+    """
+    keys = _k2_api_keys()
+    if not keys:
+        raise RuntimeError("KIMI_API_KEY not set")
+    idx = next(_rr_counter) % len(keys)
+    return _client_for_key(keys[idx])
+
+
+def pool_size() -> int:
+    """How many distinct API keys are in the round-robin pool."""
+    return len(_k2_api_keys())
 
 
 @lru_cache(maxsize=1)
@@ -494,7 +552,6 @@ async def call_for_json(
         user_prompt=user_prompt,
         images=None,
         max_tokens=max_tokens,
-        client=_openai_client(),
         model=_model_name(),
     )
 
@@ -541,7 +598,6 @@ async def call_with_vision_raw(
         user_prompt=user_prompt,
         images=images,
         max_tokens=max_tokens,
-        client=_openai_client(),
         model=_model_name(),
         return_raw=True,
     )
@@ -554,11 +610,14 @@ async def _call_json_impl(
     *,
     images: list[Path | bytes] | None,
     max_tokens: int,
-    client,
     model: str,
     return_raw: bool = False,
 ):
-    """Shared JSON-extracting call. Routed by caller to K2 or MediX.
+    """Shared JSON-extracting call. Routes to K2 via the round-robin key pool.
+
+    Each call to ``_attempt`` picks a fresh client from the pool, so the
+    retry after a validation failure lands on a different key (gives the
+    next try a different rate-limit bucket server-side).
 
     Returns ``T`` by default, or ``(T, raw_text)`` when ``return_raw=True`` so
     callers can surface the model's reasoning alongside the parsed object.
@@ -612,6 +671,9 @@ async def _call_json_impl(
     )
     import time as _time
     async def _attempt(messages: list[dict]) -> tuple[T, str]:
+        # Pick a fresh client from the rotating key pool on each attempt so
+        # retries after a validation / 429 failure land on a different key.
+        client = _openai_client()
         t0 = _time.time()
         try:
             resp = await client.chat.completions.create(
@@ -715,16 +777,26 @@ async def stream_with_thinking(
     *,
     images: list[Path | bytes] | None = None,
     max_tokens: int = 2000,
+    assistant_prefill: str = "",
 ) -> AsyncIterator[tuple[Literal["thinking", "answer"], str]]:
     """Stream the model's response, tagging each chunk as 'thinking' or 'answer'.
 
     The model emits `<think>...</think>` then the answer. We track which region
     we're currently in across chunk boundaries and yield `(region, delta_text)`.
+
+    ``assistant_prefill``: optional text placed as the start of the assistant
+    turn. vLLM continues generation from this prefix, which forces structured
+    output on reasoning models that otherwise spiral into prose. When used, we
+    synthetically emit the prefill as an ``("answer", prefill)`` chunk FIRST
+    so the caller's parser sees the complete JSON string.
     """
     log = get_logger()
     client = _openai_client()
     user_content = _user_content_with_images(user_prompt, images)
-    log.info("stream_with_thinking start user_len=%d images=%d", len(user_prompt), len(images or []))
+    log.info(
+        "stream_with_thinking start user_len=%d images=%d prefill_len=%d",
+        len(user_prompt), len(images or []), len(assistant_prefill),
+    )
     import time as _time
     t0 = _time.time()
     model_name = _model_name()
@@ -732,6 +804,7 @@ async def stream_with_thinking(
         "llm_call", "stream_start",
         model=model_name, max_tokens=max_tokens,
         user_len=len(user_prompt), image_count=len(images or []),
+        prefill_len=len(assistant_prefill),
         user_slice=user_prompt[:2000],
     )
     # Accumulate both buffers for the final audit line so we can see exactly
@@ -742,15 +815,29 @@ async def stream_with_thinking(
     state: Literal["pre", "thinking", "answer"] = "pre"
     buffer = ""
 
+    # If a prefill is supplied, emit it upstream as the first "answer" chunk
+    # and skip directly into answer state: whatever the model generates next
+    # is a direct continuation of that prefix.
+    if assistant_prefill:
+        state = "answer"
+        answer_accum.append(assistant_prefill)
+        yield ("answer", assistant_prefill)
+
+    request_messages: list[dict] = [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": user_content},
+    ]
+    if assistant_prefill:
+        # vLLM with most chat templates treats a trailing assistant message as
+        # a forced response prefix: the model MUST continue from it.
+        request_messages.append({"role": "assistant", "content": assistant_prefill})
+
     try:
         stream = await client.chat.completions.create(
             model=model_name,
             max_tokens=max_tokens,
             stream=True,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_content},
-            ],
+            messages=request_messages,
         )
     except Exception as e:
         log.error("stream HTTP error: %s: %s", type(e).__name__, e)

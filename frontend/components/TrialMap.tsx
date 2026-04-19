@@ -95,7 +95,7 @@ export function TrialMap({
           {sites.slice(0, 12).map((s, i) => (
             <li
               key={`${s.nct_id}-${i}`}
-              className={`truncate ${selected && selected !== s.nct_id ? "opacity-40" : ""}`}
+              className={`${selected && selected !== s.nct_id ? "opacity-40" : ""}`}
             >
               <span className="mono-tag">{s.nct_id}</span> {s.facility} ·{" "}
               {s.city}, {s.state}

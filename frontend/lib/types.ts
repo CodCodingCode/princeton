@@ -3,8 +3,9 @@
 export interface Mutation {
   gene: string;
   ref_aa: string;
-  position: number;
+  position: number | null;
   alt_aa: string;
+  raw_label?: string;
 }
 
 export interface PathologyFindings {
@@ -31,6 +32,24 @@ export interface ClinicianIntake {
   prior_anti_pd1: boolean | null;
   ajcc_stage: string | null;
   age_years: number | null;
+}
+
+export interface PatientDemographics {
+  full_name: string | null;
+  sex: string | null;
+  date_of_birth: string | null;
+  mrn: string | null;
+  race: string | null;
+  ethnicity: string | null;
+  preferred_language: string | null;
+  marital_status: string | null;
+  phone: string | null;
+  email: string | null;
+  address: string | null;
+  insurance: string | null;
+  emergency_contact: string | null;
+  primary_care_provider: string | null;
+  source_filename: string | null;
 }
 
 export interface EnrichedBiomarkers {
@@ -156,6 +175,7 @@ export interface PatientCase {
   pathology: PathologyFindings;
   primary_cancer_type: string;
   intake: ClinicianIntake;
+  demographics: PatientDemographics | null;
   enrichment: EnrichedBiomarkers | null;
   mutations: Mutation[];
   documents: DocumentExtraction[];

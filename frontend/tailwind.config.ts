@@ -41,6 +41,11 @@ export default {
           950: "#ffffff",
         },
       },
+      // Single typeface across the app. `serif` and `mono` intentionally
+      // resolve to the same Inter stack so the ~200 existing font-serif /
+      // font-mono utilities keep working without audit-and-replace, but
+      // every surface now renders in one consistent face. Pair with
+      // `tabular-nums` where numeric alignment matters.
       fontFamily: {
         sans: [
           "var(--font-sans)",
@@ -51,14 +56,21 @@ export default {
           "Roboto",
         ],
         serif: [
-          "var(--font-serif)",
-          "ui-serif",
-          "Georgia",
-          "Cambria",
-          "Times New Roman",
-          "serif",
+          "var(--font-sans)",
+          "ui-sans-serif",
+          "system-ui",
+          "-apple-system",
+          "Segoe UI",
+          "Roboto",
         ],
-        mono: ["ui-monospace", "SFMono-Regular", "Menlo", "monospace"],
+        mono: [
+          "var(--font-sans)",
+          "ui-sans-serif",
+          "system-ui",
+          "-apple-system",
+          "Segoe UI",
+          "Roboto",
+        ],
       },
     },
   },

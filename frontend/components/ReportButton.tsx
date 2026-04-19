@@ -1,6 +1,7 @@
 "use client";
 
 import { reportUrl } from "@/lib/api";
+import { buttonClasses } from "@/components/ui/Button";
 
 export function ReportButton({
   caseId,
@@ -9,16 +10,15 @@ export function ReportButton({
   caseId: string;
   enabled: boolean;
 }) {
+  const extra = enabled
+    ? "shadow-sm"
+    : "pointer-events-none opacity-40 cursor-not-allowed";
   return (
     <a
       href={enabled ? reportUrl(caseId) : undefined}
       target="_blank"
       rel="noreferrer"
-      className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition ${
-        enabled
-          ? "bg-black hover:bg-neutral-800 text-white shadow-sm"
-          : "bg-neutral-100 text-neutral-400 cursor-not-allowed pointer-events-none"
-      }`}
+      className={buttonClasses("primary", "md", extra)}
     >
       <span>Download oncologist report</span>
       <span aria-hidden>↓</span>

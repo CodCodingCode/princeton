@@ -4,8 +4,9 @@ import type {
   Mutation,
   PathologyFindings,
 } from "@/lib/types";
+import { formatStage } from "@/lib/plainEnglish";
 
-// Shared formatters — keep presentation consistent with the PDF report so
+// Shared formatters: keep presentation consistent with the PDF report so
 // the downloaded document and the on-screen clinical tab use the same
 // capitalization and the same human labels.
 const UNKNOWN_TOKENS = new Set(["unknown", "", "none", "n/a", "na"]);
@@ -74,13 +75,12 @@ export function ExtractedFields({
 
   return (
     <div className="card p-5">
-      <h2 className="eyebrow mb-1">Extracted oncology data</h2>
+      <h2 className="eyebrow mb-1">Oncology data summary</h2>
 
       <div className="mt-4">
         <div className="eyebrow mb-1">Diagnosis</div>
         <p className="text-xs text-neutral-500 mb-2">
-          Drives the dynamic railway and RAG retrieval from the phase-2+ trial
-          corpus.
+          Core diagnostic fields that shape the treatment plan.
         </p>
         <div className="grid md:grid-cols-2 gap-x-8">
           <div>
@@ -114,17 +114,32 @@ export function ExtractedFields({
 
         {mutations.length > 0 && (
           <div className="mt-3 flex flex-wrap gap-2">
-            {mutations.map((m, i) => (
-              <span
-                key={`${m.gene}-${m.position}-${i}`}
-                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-neutral-100 text-neutral-700 font-mono text-xs"
-              >
-                <span className="text-black">{m.gene}</span>
-                {m.ref_aa}
-                {m.position}
-                {m.alt_aa}
-              </span>
-            ))}
+            {mutations.map((m, i) => {
+              const isPoint =
+                m.position !== null &&
+                m.position !== undefined &&
+                m.ref_aa &&
+                m.alt_aa;
+              return (
+                <span
+                  key={`${m.gene}-${m.position}-${m.raw_label ?? ""}-${i}`}
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-neutral-100 text-neutral-700 font-mono text-xs"
+                >
+                  {isPoint ? (
+                    <>
+                      <span className="text-black">{m.gene}</span>
+                      {m.ref_aa}
+                      {m.position}
+                      {m.alt_aa}
+                    </>
+                  ) : (
+                    <span className="text-black">
+                      {m.raw_label || m.gene || "(unknown variant)"}
+                    </span>
+                  )}
+                </span>
+              );
+            })}
           </div>
         )}
       </div>
@@ -133,7 +148,7 @@ export function ExtractedFields({
         <div className="mt-6">
           <div className="eyebrow mb-1">Pathology details</div>
           <p className="text-xs text-neutral-500 mb-2">
-            Tumor-specific fields extracted from this case.
+            Tumor-specific findings for this case.
           </p>
           <div className="grid md:grid-cols-2 gap-x-8">
             <div>
@@ -184,12 +199,12 @@ export function ExtractedFields({
       <div className="mt-6">
         <div className="eyebrow mb-1">Trial eligibility</div>
         <p className="text-xs text-neutral-500 mb-2">
-          Inputs the Regeneron trial matcher reads. Separate from the railway -
-          missing values here do not block phase-level recommendations.
+          Factors used to screen this case against open clinical trials. Missing
+          values here do not block the phase-level recommendations.
         </p>
         <div className="grid md:grid-cols-2 gap-x-8">
           <div>
-            <Row label="AJCC stage" value={intake.ajcc_stage} />
+            <Row label="AJCC stage" value={formatStage(intake.ajcc_stage)} />
             <Row label="Age" value={intake.age_years} />
             <Row label="ECOG" value={intake.ecog} />
             <Row

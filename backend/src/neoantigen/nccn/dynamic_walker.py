@@ -22,6 +22,7 @@ placeholder step per phase so the UI never looks broken.
 from __future__ import annotations
 
 import json
+import os
 from dataclasses import dataclass, field
 from typing import Literal
 
@@ -178,10 +179,20 @@ class _DecisionAlt(BaseModel):
 
 
 class _PhaseDecision(BaseModel):
-    title: str = Field(description="Short decision question, e.g. 'Choose first-line systemic therapy'")
+    # Only chosen_option_label is strictly required - that's the answer.
+    # Everything else defaults so a truncated or alias-drifted payload still
+    # validates as a partial-but-useful decision. The walker's placeholder
+    # kicks in only when there's not even a chosen_option_label.
+    title: str = Field(
+        default="",
+        description="Short decision question, e.g. 'Choose first-line systemic therapy'",
+    )
     chosen_option_label: str = Field(description="The recommended action")
     chosen_option_description: str = ""
-    chosen_rationale: str = Field(description="One-sentence rationale tied to patient evidence")
+    chosen_rationale: str = Field(
+        default="",
+        description="One-sentence rationale tied to patient evidence",
+    )
     citation_pmids: list[str] = Field(
         default_factory=list,
         description="PMIDs from the retrieved papers that support this recommendation",
@@ -247,15 +258,100 @@ def _build_phase_prompt(
     )
 
 
+# Key aliases the model sometimes emits instead of our canonical field names.
+# Empirically observed on K2-Think V2 + various Kimi checkpoints. Applied
+# before pydantic validation so a single rename doesn't reject the whole
+# response.
+_TOP_LEVEL_LIST_ALIASES = (
+    "decisions",
+    "recommendations",
+    "steps",
+    "options",
+    "plan",
+    "actions",
+)
+
+_DECISION_FIELD_ALIASES: dict[str, str] = {
+    "recommendation": "chosen_option_label",
+    "recommended_action": "chosen_option_label",
+    "recommended_option": "chosen_option_label",
+    "option": "chosen_option_label",
+    "action": "chosen_option_label",
+    "rationale": "chosen_rationale",
+    "reasoning": "chosen_rationale",
+    "justification": "chosen_rationale",
+    "why": "chosen_rationale",
+    "description": "chosen_option_description",
+    "option_description": "chosen_option_description",
+    "pmids": "citation_pmids",
+    "citations": "citation_pmids",
+    "evidence": "citation_pmids",
+    "references": "citation_pmids",
+    "decision_title": "title",
+    "question": "title",
+    "alts": "alternatives",
+    "other_options": "alternatives",
+}
+
+
+def _normalize_decision(d: object) -> object:
+    """Rename alias keys on a single decision dict to canonical names."""
+    if not isinstance(d, dict):
+        return d
+    out = dict(d)
+    for src, dst in _DECISION_FIELD_ALIASES.items():
+        if src in out and dst not in out:
+            out[dst] = out.pop(src)
+    # If a model emitted only chosen_option_label but no title, reuse it so
+    # the schema's required-title field passes.
+    if "title" not in out and "chosen_option_label" in out:
+        out["title"] = out["chosen_option_label"]
+    # citation_pmids sometimes comes as a comma-separated string.
+    if isinstance(out.get("citation_pmids"), str):
+        out["citation_pmids"] = [
+            s.strip() for s in out["citation_pmids"].split(",") if s.strip()
+        ]
+    return out
+
+
+def _unwrap_decisions(data: object) -> object:
+    """Find the ``decisions`` list inside a potentially-wrapped response.
+
+    Handles shapes like:
+      * ``{"decisions": [...]}`` - canonical
+      * ``{"recommendations": [...]}`` - aliased top-level key
+      * ``[...]`` - bare list at the root
+      * ``{"response": {"decisions": [...]}}`` - nested wrapper
+    Returns a dict with a canonical ``decisions`` key, or the original data
+    if no recognisable shape was found.
+    """
+    if isinstance(data, list):
+        return {"decisions": data}
+    if not isinstance(data, dict):
+        return data
+    # Direct alias at the top level.
+    for key in _TOP_LEVEL_LIST_ALIASES:
+        if key in data and isinstance(data[key], list):
+            return {"decisions": data[key]}
+    # One level down (e.g. {"response": {"decisions": [...]}}).
+    for v in data.values():
+        if isinstance(v, dict):
+            for key in _TOP_LEVEL_LIST_ALIASES:
+                if key in v and isinstance(v[key], list):
+                    return {"decisions": v[key]}
+    return data
+
+
 def _parse_phase_response(answer: str) -> tuple[_PhaseResponse, str]:
     """Parse the walker's post-``</think>`` JSON into ``_PhaseResponse``.
 
     Returns ``(parsed, reason_if_empty)``. Reuses ``_llm._extract_json`` so
     truncated JSON (the most common failure mode on K2-Think when ``<think>``
-    eats most of the token budget) gets repaired before validation. The
-    ``reason_if_empty`` string is surfaced in the placeholder RailwayStep so
-    the UI shows "Model returned JSON but missed the schema" or similar
-    instead of the generic "Could not parse..." message.
+    eats most of the token budget) gets repaired before validation. Also
+    applies key aliasing so a model that wrote ``recommendations`` or
+    ``rationale`` doesn't get tossed wholesale. The ``reason_if_empty``
+    string is surfaced in the placeholder RailwayStep so the UI shows an
+    honest reason instead of the generic "Could not parse..." message.
     """
     if not answer.strip():
         return _PhaseResponse(decisions=[]), "Model returned no answer content."
@@ -271,12 +367,13 @@ def _parse_phase_response(answer: str) -> tuple[_PhaseResponse, str]:
     except json.JSONDecodeError as e:
         return _PhaseResponse(decisions=[]), f"JSON parse failed: {e.msg}."
 
-    # Unwrap common wrapper shapes: {"response": {"decisions": [...]}}, etc.
-    if isinstance(data, dict) and "decisions" not in data:
-        for v in data.values():
-            if isinstance(v, dict) and "decisions" in v:
-                data = v
-                break
+    # Normalize: unwrap wrapper shapes and alias keys on each decision.
+    data = _unwrap_decisions(data)
+    if isinstance(data, dict) and isinstance(data.get("decisions"), list):
+        data = {
+            **data,
+            "decisions": [_normalize_decision(d) for d in data["decisions"]],
+        }
 
     try:
         return _PhaseResponse.model_validate(data), ""
@@ -284,6 +381,44 @@ def _parse_phase_response(answer: str) -> tuple[_PhaseResponse, str]:
         return (
             _PhaseResponse(decisions=[]),
             f"Model JSON did not match the decision schema ({type(e).__name__}).",
+        )
+
+
+async def _call_phase_structured_retry(
+    phase: "Phase",
+    cancer_type: str,
+    state: "PatientState",
+    citations: list[Citation],
+) -> tuple[_PhaseResponse, str]:
+    """Non-streaming structured retry when the streamed walk failed to parse.
+
+    Uses ``call_for_json`` which:
+      * picks a fresh client from the round-robin key pool
+      * applies lenient coercion before pydantic validation
+      * retries once internally with a stronger 'just JSON' prompt
+
+    Loses the live ``<think>`` stream on the UI, but that was already gone
+    by the time we fell into this path - so it's a net win.
+    """
+    from ..agent._llm import call_for_json
+
+    strict_prompt = (
+        SYSTEM_PROMPT
+        + " Output ONLY a valid JSON object. No prose. No markdown fences. "
+        "No <think> block. Start with `{` and end with `}`."
+    )
+    try:
+        resp = await call_for_json(
+            schema=_PhaseResponse,
+            system_prompt=strict_prompt,
+            user_prompt=_build_phase_prompt(phase, cancer_type, state, citations),
+            max_tokens=3000,
+        )
+        return resp, ""
+    except Exception as e:
+        return (
+            _PhaseResponse(decisions=[]),
+            f"Structured retry failed: {type(e).__name__}",
         )
 
 
@@ -383,14 +518,29 @@ class DynamicRailwayWalker:
             try:
                 if mode == "api":
                     # K2-Think's <think> block routinely eats 500-1500 tokens
-                    # before emitting the post-think JSON. 900 was starving the
-                    # JSON section and producing truncated output that the old
-                    # regex parser couldn't salvage, surfacing in the UI as
-                    # "Needs clinician review" / "Could not parse model
-                    # response into a structured decision." 2500 gives the
-                    # model room to finish.
+                    # before emitting the post-think JSON. On the current
+                    # vLLM server max_total_tokens=8192 and our prompt is
+                    # roughly 1000-2000 tokens, so giving the model 5500 of
+                    # output headroom lets it finish <think> and still emit
+                    # a complete decision JSON. Override via env when the
+                    # model server changes. Too small → every phase fell
+                    # back to "Needs clinician review" because the JSON
+                    # block never got emitted.
+                    walker_max_tokens = int(
+                        os.environ.get("NEOVAX_WALKER_MAX_TOKENS", "5500")
+                    )
+                    # Assistant-prefill jailbreak: MediX-R1 is a reasoning
+                    # model that ignores "return only JSON" instructions and
+                    # writes 10,000 chars of prose before hitting max_tokens
+                    # without ever emitting a `{`. By pre-populating the
+                    # assistant turn with the opening of the JSON object,
+                    # vLLM forces the model to continue from mid-structure:
+                    # it can't escape into free-form reasoning.
+                    _PREFILL = '{"decisions": ['
                     async for kind, chunk in stream_with_thinking(
-                        SYSTEM_PROMPT, user_prompt, max_tokens=2500,
+                        SYSTEM_PROMPT, user_prompt,
+                        max_tokens=walker_max_tokens,
+                        assistant_prefill=_PREFILL,
                     ):
                         if kind == "thinking":
                             think_buf += chunk
@@ -439,6 +589,31 @@ class DynamicRailwayWalker:
                     answer_slice=answer_buf,
                     think_slice=think_buf[:4000],
                 )
+                # Second-chance: if the streamed parse produced zero decisions,
+                # fire a non-streaming structured retry. `call_for_json` uses
+                # lenient coercion + an internal validation-error retry, and
+                # picks a fresh key from the round-robin pool. Lose the live
+                # <think> UI for this phase but recover the decisions.
+                if not parsed.decisions and parse_error:
+                    await emit(
+                        EventKind.LOG,
+                        f"Railway ▸ {phase.title}: streamed parse failed "
+                        f"({parse_error}); retrying with structured call",
+                        {"phase_id": phase.id, "retry": "structured"},
+                    )
+                    parsed, retry_error = await _call_phase_structured_retry(
+                        phase, self.cancer_type, self.state, citations,
+                    )
+                    audit(
+                        "walker", "phase_retry",
+                        phase_id=phase.id,
+                        decisions=len(parsed.decisions),
+                        retry_error=retry_error,
+                    )
+                    if parsed.decisions:
+                        parse_error = ""  # recovered
+                    elif retry_error:
+                        parse_error = f"{parse_error} | {retry_error}"
                 for d in parsed.decisions:
                     node_counter += 1
                     step = RailwayStep(
@@ -509,15 +684,127 @@ class DynamicRailwayWalker:
         return steps
 
 
-def final_recommendation_from_steps(steps: list[RailwayStep]) -> str:
-    """Short English summary combining the systemic-phase decisions."""
-    if not steps:
-        return "No railway generated."
-    systemic = [s for s in steps if s.phase_id == "systemic"]
-    if systemic:
-        head = systemic[0]
+_PLACEHOLDER_LABELS = {
+    "needs clinician review",
+    "needs more data",
+    "insufficient data",
+    "pending",
+}
+
+
+def _is_placeholder(step: RailwayStep) -> bool:
+    return (step.chosen_option_label or "").strip().lower() in _PLACEHOLDER_LABELS
+
+
+def _synthesize_from_evidence(
+    pathology: PathologyFindings | None,
+    mutations: list[Mutation],
+    cancer_type: str,
+) -> str:
+    """Last-resort recommendation built from whatever we do know.
+
+    Triggered only when the model walk produced nothing usable. Never
+    returns an empty string, so the UI always has something to render.
+    """
+    bits: list[str] = []
+
+    cancer_pretty = (cancer_type or "").replace("_", " ").strip()
+    if pathology is not None and pathology.primary_site:
+        site = pathology.primary_site.strip()
+        bits.append(
+            f"Work-up completed for {cancer_pretty or 'primary malignancy'}"
+            f" (primary site: {site})."
+            if cancer_pretty
+            else f"Primary site: {site}."
+        )
+    elif cancer_pretty:
+        bits.append(f"Work-up completed for {cancer_pretty}.")
+
+    # Mutation-driven hint, phrased as a guideline direction rather than a
+    # specific drug recommendation (keeps us honest about being upstream of
+    # the clinician's own call).
+    drivers = [m for m in mutations if m.gene]
+    if drivers:
+        braf_v600 = any(
+            m.gene.upper() == "BRAF" and m.position == 600 for m in drivers
+        )
+        egfr = any(m.gene.upper() == "EGFR" for m in drivers)
+        kras_g12c = any(
+            m.gene.upper() == "KRAS" and m.ref_aa == "G" and m.position == 12
+            for m in drivers
+        )
+        if braf_v600:
+            bits.append(
+                "BRAF V600-mutant disease - BRAF/MEK targeted therapy and"
+                " anti-PD-1 immunotherapy are both on the table; sequencing"
+                " is the decision point."
+            )
+        elif egfr:
+            bits.append(
+                "EGFR-mutant disease - EGFR TKI (e.g., osimertinib-class)"
+                " is the guideline-directed first-line path."
+            )
+        elif kras_g12c:
+            bits.append(
+                "KRAS G12C - targeted inhibitor options (sotorasib,"
+                " adagrasib) should be weighed against standard systemic"
+                " therapy."
+            )
+        else:
+            gene_list = ", ".join(
+                sorted({m.gene.upper() for m in drivers[:3] if m.gene})
+            )
+            if gene_list:
+                bits.append(
+                    f"Driver mutations flagged ({gene_list}); confirm"
+                    " actionability against current targeted-therapy"
+                    " guidelines."
+                )
+
+    # Always close with a clinician hand-off directive so the strip never
+    # reads as a prescription.
+    bits.append(
+        "Refer to medical oncology for guideline-directed systemic therapy"
+        " selection and clinical-trial screening."
+    )
+    return " ".join(bits)
+
+
+def final_recommendation_from_steps(
+    steps: list[RailwayStep],
+    *,
+    pathology: PathologyFindings | None = None,
+    mutations: list[Mutation] | None = None,
+    cancer_type: str = "",
+) -> str:
+    """Compose the final-recommendation strip shown under the treatment plan.
+
+    Priority:
+      1. First real systemic-phase decision (skips placeholders).
+      2. Last real non-terminal decision from any phase.
+      3. Evidence-based synthesis from pathology + mutations + cancer type.
+      4. Generic hand-off directive.
+
+    Always returns a non-empty string so the UI strip has something to
+    display even if every phase fell back to a placeholder.
+    """
+    muts = mutations or []
+
+    real = [s for s in steps if not _is_placeholder(s) and not s.is_terminal]
+
+    if real:
+        systemic = [s for s in real if s.phase_id == "systemic"]
+        head = systemic[0] if systemic else real[-1]
         return f"{head.title}: {head.chosen_option_label}"
-    return f"{steps[-1].title}: {steps[-1].chosen_option_label}"
+
+    synthesized = _synthesize_from_evidence(pathology, muts, cancer_type)
+    if synthesized:
+        return synthesized
+
+    return (
+        "Refer to medical oncology for guideline-directed treatment"
+        " planning and trial screening."
+    )
 
 
 __all__ = ["DynamicRailwayWalker", "PatientState", "PHASES", "final_recommendation_from_steps"]

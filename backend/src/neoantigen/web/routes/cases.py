@@ -9,9 +9,16 @@ from typing import Any
 from fastapi import APIRouter, HTTPException, UploadFile, File, status
 from fastapi.responses import StreamingResponse
 
+from ...agent.audit import audit
 from ...agent.patient_orchestrator import InputPDF, PatientOrchestrator
 from ...models import PathologyFindings, PatientCase
 from ...report.pdf_report import build_report_pdf
+from ..case_cache import (
+    cache_dir as _cache_dir,
+    compute_input_hash,
+    load_cached_entry,
+    save_cached_entry,
+)
 from ..sse import queue_to_sse
 from ..storage import CaseRecord, store
 
@@ -63,8 +70,61 @@ async def create_case(files: list[UploadFile] = File(...)) -> dict[str, Any]:
 
     s = store()
     case_id = s.new_case_id()
+    input_hash = compute_input_hash(inputs)
+
+    # Demo fast-path: if this exact file bundle has been processed before,
+    # skip the ~90s orchestrator and rehydrate the cached PatientCase
+    # straight into a new CaseRecord. Emit a single "done" so any SSE
+    # subscriber immediately transitions to the ready phase.
+    cached = load_cached_entry(input_hash)
+    audit(
+        "cache", "lookup",
+        case_id=case_id, input_hash=input_hash,
+        hit=cached is not None, cache_dir=str(_cache_dir()),
+        file_count=len(inputs),
+    )
+    if cached is not None:
+        from ...agent.events import EventKind  # avoid module-level cycle
+        try:
+            case = PatientCase.model_validate(cached["case"])
+        except Exception:
+            case = None  # fall through to fresh run
+        if case is not None:
+            case.case_id = case_id
+            record = CaseRecord(
+                case_id=case_id,
+                case=case,
+                input_hash=input_hash,
+                done=True,
+            )
+            if cached.get("patient_guide"):
+                from .patient_guide import PatientGuide
+                try:
+                    record.patient_guide = PatientGuide.model_validate(
+                        cached["patient_guide"],
+                    )
+                except Exception:
+                    pass
+            s.put(record)
+
+            async def _replay_cached() -> None:
+                await record.bus.emit(
+                    EventKind.LOG,
+                    "Loaded cached case (content-hash hit) — skipping pipeline.",
+                    {"cached": True, "input_hash": input_hash},
+                )
+                await record.bus.emit(
+                    EventKind.CASE_UPDATE, "cached case", case.model_dump(mode="json"),
+                )
+                await record.bus.emit(EventKind.DONE, "done", {"cached": True})
+                await record.bus.close()
+
+            asyncio.create_task(_replay_cached())
+            return {"case_id": case_id, "cached": True}
+
+    # Fresh run: kick off the orchestrator, persist to cache on completion.
     shell = PatientCase(case_id=case_id, pathology=PathologyFindings())
-    record = CaseRecord(case_id=case_id, case=shell)
+    record = CaseRecord(case_id=case_id, case=shell, input_hash=input_hash)
     s.put(record)
 
     orch = PatientOrchestrator(
@@ -77,6 +137,11 @@ async def create_case(files: list[UploadFile] = File(...)) -> dict[str, Any]:
         try:
             case = await orch.run()
         except Exception as e:  # noqa: BLE001
+            audit(
+                "cache", "skip_save_orch_crashed",
+                case_id=case_id, input_hash=input_hash,
+                error_type=type(e).__name__, error=str(e)[:400],
+            )
             from ...agent.events import EventKind
             try:
                 await record.bus.emit(
@@ -87,10 +152,28 @@ async def create_case(files: list[UploadFile] = File(...)) -> dict[str, Any]:
                 pass
             return
         s.update_case(case_id, case)
+        # Persist to the on-disk cache so the next upload of the same
+        # bundle is instant. Best-effort: never let a cache-write failure
+        # crash the run — but DO surface the error in the audit log so we
+        # can diagnose why the cache stays empty.
+        try:
+            save_cached_entry(input_hash, case, record.patient_guide)
+            audit(
+                "cache", "save_ok",
+                case_id=case_id, input_hash=input_hash,
+                cache_dir=str(_cache_dir()),
+            )
+        except Exception as e:
+            audit(
+                "cache", "save_failed",
+                case_id=case_id, input_hash=input_hash,
+                error_type=type(e).__name__, error=str(e)[:400],
+                cache_dir=str(_cache_dir()),
+            )
 
     asyncio.create_task(_run())
 
-    return {"case_id": case_id}
+    return {"case_id": case_id, "cached": False}
 
 
 @router.get("/{case_id}")

@@ -9,8 +9,8 @@ export function DocumentsTab({ caseData }: { caseData: PatientCase }) {
       <div>
         <div className="eyebrow mb-2">Source documents</div>
         <p className="text-sm text-neutral-600 leading-relaxed">
-          Every extracted field traces back to a page. Expand a document to see
-          what was pulled from it.
+          Every clinical finding traces back to a source page. Expand a document
+          to see what was read from it.
         </p>
       </div>
 

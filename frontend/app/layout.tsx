@@ -1,24 +1,25 @@
 import type { Metadata } from "next";
-import { Inter, Instrument_Serif } from "next/font/google";
+import { Inter } from "next/font/google";
+import { Suspense } from "react";
 import "./globals.css";
+import { HeaderNav } from "@/components/HeaderNav";
 
+// One typeface across the whole app. Inter ships tabular-nums + opsz ranges
+// that cover every register we need (numeric readouts, body copy, display
+// headlines). The `--font-serif` and `--font-mono` CSS vars alias the same
+// Inter family so existing `font-serif` / `font-mono` classes keep rendering
+// without hunting them all down.
 const sans = Inter({
   subsets: ["latin"],
   variable: "--font-sans",
   display: "swap",
-});
-
-const serif = Instrument_Serif({
-  subsets: ["latin"],
-  weight: "400",
-  variable: "--font-serif",
-  display: "swap",
+  weight: ["400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
   title: "NeoVax - oncologist copilot",
   description:
-    "Upload a patient's oncology document folder and get a dynamic treatment railway grounded in phase-2+ trial literature, matched clinical trials, and a downloadable oncologist report.",
+    "Upload a patient's oncology records and receive a guideline-grounded treatment plan, matched clinical trials, and a downloadable oncologist report.",
 };
 
 export default function RootLayout({
@@ -27,7 +28,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${sans.variable} ${serif.variable}`}>
+    <html lang="en" className={sans.variable}>
       <body
         className="min-h-screen font-sans antialiased bg-[#faf7f3] text-black"
         style={{
@@ -46,17 +47,9 @@ export default function RootLayout({
                 Oncology Copilot
               </span>
             </a>
-            <nav className="flex items-center gap-1">
-              <a
-                href="/upload"
-                className="inline-flex items-center gap-1.5 rounded-full bg-black px-4 py-1.5 text-sm font-medium text-white transition hover:bg-brand-700 mr-12"
-              >
-                New case
-                <span aria-hidden className="text-base leading-none">
-                  →
-                </span>
-              </a>
-            </nav>
+            <Suspense fallback={null}>
+              <HeaderNav />
+            </Suspense>
           </div>
         </header>
         <main>{children}</main>

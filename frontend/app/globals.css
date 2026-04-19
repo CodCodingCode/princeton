@@ -120,3 +120,128 @@ body {
     transform: translateX(350%);
   }
 }
+
+/* ─────────────────────────────────────────────────────────────
+   Instrument chrome
+   ─────────────────────────────────────────────────────────────
+   Biotech-panel visual language used across the case cockpit.
+   One keyframe, one utility, applied sparingly. */
+
+/* Breathe: a slow alpha pulse for "live" indicators. Replaces the snappier
+   Tailwind animate-pulse where a more deliberate cadence fits. */
+@keyframes breathe {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+.animate-breathe {
+  animation: breathe 2.4s ease-in-out infinite;
+}
+
+/* Scan: a thin vertical line sweeps across the parent once per cycle.
+   Attach to a positioned parent; the ::before is absolutely positioned. */
+.scan-line {
+  position: relative;
+  overflow: hidden;
+}
+.scan-line::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 18%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(11, 37, 69, 0.08) 45%,
+    rgba(11, 37, 69, 0.16) 50%,
+    rgba(11, 37, 69, 0.08) 55%,
+    transparent 100%
+  );
+  animation: scan-sweep 3.4s cubic-bezier(0.6, 0.04, 0.35, 1) infinite;
+  pointer-events: none;
+}
+@keyframes scan-sweep {
+  0% {
+    transform: translateX(-30%);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(630%);
+    opacity: 0;
+  }
+}
+
+/* Ruler: a row of 1px ticks used as section-header chrome. Set width on the
+   container; ticks render via a repeating linear-gradient so there's no DOM
+   cost. Two variants: `.tick-ruler` (uniform) and `.tick-ruler-keyed` (every
+   5th tick taller, for ruler-like rhythm). */
+.tick-ruler {
+  height: 6px;
+  background-image: linear-gradient(
+    to right,
+    rgba(10, 10, 10, 0.22) 0 1px,
+    transparent 1px 100%
+  );
+  background-size: 8px 100%;
+  background-repeat: repeat-x;
+  background-position: left bottom;
+}
+.tick-ruler-keyed {
+  height: 8px;
+  background-image:
+    linear-gradient(
+      to right,
+      rgba(10, 10, 10, 0.32) 0 1px,
+      transparent 1px 100%
+    ),
+    linear-gradient(
+      to right,
+      rgba(10, 10, 10, 0.18) 0 1px,
+      transparent 1px 100%
+    );
+  background-size:
+    40px 100%,
+    8px 60%;
+  background-repeat: repeat-x;
+  background-position:
+    left bottom,
+    left bottom;
+}
+
+/* Hairline: a thin bottom border used between instrument-panel sections.
+   Slightly less contrast than border-neutral-200, which reads as "drawn"
+   rather than "containered". */
+.hairline {
+  border-bottom: 1px solid rgba(10, 10, 10, 0.08);
+}
+.hairline-t {
+  border-top: 1px solid rgba(10, 10, 10, 0.08);
+}
+
+/* Paper grain: a vanishingly-faint noise overlay you can drop on a section
+   to give it a printed feel. Opacity kept low so it reads as texture, never
+   as pattern. */
+.paper-grain {
+  position: relative;
+}
+.paper-grain::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.06 0 0 0 0 0.06 0 0 0 0 0.06 0 0 0 0.12 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  opacity: 0.25;
+  mix-blend-mode: multiply;
+}

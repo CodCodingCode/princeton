@@ -6,6 +6,7 @@
 
 import { useRef, useState } from "react";
 import { uploadPdfs } from "@/lib/api";
+import { Button } from "@/components/ui/Button";
 
 interface Props {
   onUploaded: (caseId: string) => void;
@@ -139,12 +140,12 @@ export function IntakeOverlay({ onUploaded }: Props) {
   return (
     <div className="absolute inset-0 flex items-center justify-center p-6 pointer-events-none">
       <div className="pointer-events-auto max-w-xl w-full rounded-2xl bg-white/40 backdrop-blur-2xl backdrop-saturate-150 border border-white/50 ring-1 ring-black/5 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.25)] p-8">
-        <div className="eyebrow mb-2">Step 1 · share your records</div>
+        <div className="eyebrow mb-2">Step 1 · Share your records</div>
         <h2 className="text-2xl font-semibold tracking-tight text-black leading-tight mb-1">
           Drop your medical records
         </h2>
         <p className="text-xs text-neutral-500 mb-5">
-          PDFs, scans, notes - .pdf · .txt · .md · .csv · .json · .png · .jpg ·
+          PDFs, scans, notes: .pdf · .txt · .md · .csv · .json · .png · .jpg ·
           .tiff
         </p>
 
@@ -193,23 +194,23 @@ export function IntakeOverlay({ onUploaded }: Props) {
             <>
               <p className="text-black font-medium mb-1">Drop a folder here</p>
               <p className="text-xs text-neutral-500 mb-4">
-                or pick files below
+                Or pick files below.
               </p>
               <div className="flex flex-wrap justify-center gap-2">
-                <button
-                  type="button"
+                <Button
+                  variant="primary"
+                  size="sm"
                   onClick={() => folderInputRef.current?.click()}
-                  className="px-4 py-2 rounded-full border border-black bg-black/80 backdrop-blur text-white hover:bg-black text-xs transition"
                 >
                   Select folder
-                </button>
-                <button
-                  type="button"
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="sm"
                   onClick={() => fileInputRef.current?.click()}
-                  className="px-4 py-2 rounded-full border border-white/60 bg-white/30 backdrop-blur text-neutral-800 hover:border-black hover:bg-white/60 hover:text-black text-xs transition"
                 >
                   Select files
-                </button>
+                </Button>
               </div>
             </>
           )}
@@ -221,14 +222,14 @@ export function IntakeOverlay({ onUploaded }: Props) {
               <span className="text-xs text-neutral-700">
                 Queued {picked.length} document{picked.length === 1 ? "" : "s"}
               </span>
-              <button
-                type="button"
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => setPicked([])}
                 disabled={busy}
-                className="text-[11px] text-neutral-500 hover:text-black disabled:opacity-40"
               >
-                clear
-              </button>
+                Clear
+              </Button>
             </div>
             <ul className="text-xs space-y-1 max-h-36 overflow-y-auto border border-white/60 bg-white/30 backdrop-blur rounded-lg p-2">
               {picked.map((f, i) => (
@@ -236,23 +237,23 @@ export function IntakeOverlay({ onUploaded }: Props) {
                   key={`${f.name}-${i}`}
                   className="flex items-center justify-between gap-2 text-neutral-800"
                 >
-                  <span className="truncate font-mono">{f.name}</span>
+                  <span className="font-mono">{f.name}</span>
                   <span className="text-neutral-500 shrink-0">
                     {Math.round(f.size / 1024)} kB
                   </span>
                 </li>
               ))}
             </ul>
-            <button
-              type="button"
+            <Button
               onClick={submit}
               disabled={busy || !picked.length}
-              className="mt-4 w-full px-4 py-3 rounded-full bg-brand-700 hover:bg-brand-900 text-white text-sm font-medium disabled:opacity-30 disabled:cursor-not-allowed transition"
+              size="lg"
+              className="mt-4 w-full"
             >
               {busy
                 ? "Starting…"
                 : `Analyze ${picked.length} document${picked.length === 1 ? "" : "s"}`}
-            </button>
+            </Button>
           </div>
         )}
 

@@ -2,8 +2,8 @@
 
 Exposes two helpers:
 
-* ``assessment_paragraphs(case)``     → list[str] — clinical impression.
-* ``treatment_plan_paragraphs(case)`` → list[str] — recommended plan.
+* ``assessment_paragraphs(case)``     → list[str]: clinical impression.
+* ``treatment_plan_paragraphs(case)`` → list[str]: recommended plan.
 
 Both prefer a single K2 call ([agent/_llm.call_for_json]) when
 ``has_api_key()`` is True, and fall back to deterministic templates when the
@@ -121,7 +121,7 @@ def _assessment_template(case: PatientCase) -> list[str]:
         conf = "; ".join(conflicts[:3])
         p3 = (
             f"Note: the following data-quality issues were flagged during intake and should "
-            f"be reconciled before finalizing the plan — {conf}."
+            f"be reconciled before finalizing the plan: {conf}."
         )
         return [p1, p2, p3]
     return [p1, p2]
@@ -150,7 +150,7 @@ def _plan_template(case: PatientCase) -> list[str]:
         p1_bits.append(f"The final recommendation on that path is {final_rec}.")
     elif final_step and final_step.chosen_rationale:
         p1_bits.append(
-            f"The terminal decision favors {final_step.chosen_option_label} — "
+            f"The terminal decision favors {final_step.chosen_option_label}: "
             f"{final_step.chosen_rationale}"
         )
     p1 = " ".join(p1_bits) or "Treatment plan under active review."
@@ -185,7 +185,7 @@ def _plan_template(case: PatientCase) -> list[str]:
 
 
 def _case_context_blob(case: PatientCase) -> str:
-    """Compact, LLM-friendly case summary — keep under ~1.5k tokens."""
+    """Compact, LLM-friendly case summary: keep under ~1.5k tokens."""
     lines: list[str] = []
     lines.append(f"Case ID: {case.case_id}")
     lines.append(f"Primary cancer type: {case.primary_cancer_type or 'unknown'}")
@@ -207,8 +207,8 @@ def _case_context_blob(case: PatientCase) -> str:
     p = case.pathology
     lines.append(
         "Pathology: histology="
-        + (p.histology or "—")
-        + f"; site={p.primary_site or '—'}"
+        + (p.histology or "-")
+        + f"; site={p.primary_site or '-'}"
         + f"; subtype={p.melanoma_subtype}"
         + f"; Breslow={p.breslow_thickness_mm}"
         + f"; ulceration={p.ulceration}"
@@ -250,7 +250,7 @@ def _case_context_blob(case: PatientCase) -> str:
 
 _ASSESSMENT_SYSTEM = (
     "You are a board-certified medical oncologist writing the ASSESSMENT section "
-    "of a written consult note. Tone: formal, chart-note register — NOT patient-facing "
+    "of a written consult note. Tone: formal, chart-note register: NOT patient-facing "
     "speech. Use standard oncology shorthand where appropriate (ECOG, RECIST, TMB, PD-L1). "
     "Do not hedge with 'I think'. Do not greet the reader. No markdown, no headings, "
     "no bullet points. 2–3 tight paragraphs summarizing: (1) patient and disease at "
@@ -263,7 +263,7 @@ _PLAN_SYSTEM = (
     "the NCCN-aligned railway path and final recommendation provided. No markdown, no "
     "headings. Two short paragraphs: (1) the proposed first-line treatment and its "
     "rationale, citing the railway decision; (2) concrete next steps as a simple list "
-    "using '• ' bullets inside the paragraph — staging, labs, outstanding data, trial "
+    "using '• ' bullets inside the paragraph: staging, labs, outstanding data, trial "
     "referral, tumor-board timing."
 )
 
@@ -313,7 +313,7 @@ def _llm_paragraphs(system_prompt: str, case: PatientCase) -> list[str] | None:
         + _case_context_blob(case)
         + "\n\nReturn a JSON object with key 'paragraphs' whose value is a list of "
         "plain-text paragraphs (strings). No markdown. No leading labels like "
-        "'Assessment:' — the section heading is added separately."
+        "'Assessment:': the section heading is added separately."
     )
 
     try:

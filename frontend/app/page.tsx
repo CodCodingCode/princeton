@@ -55,6 +55,7 @@ import {
 } from "@/components/stage/ProcessingOverlay";
 import { ResultsSidebar } from "@/components/stage/ResultsSidebar";
 import type { ExtractFeedEntry } from "@/components/CaseTabs";
+import { buttonClasses } from "@/components/ui/Button";
 
 type Phase = "welcome" | "intake" | "processing" | "ready";
 
@@ -416,7 +417,11 @@ function ExperiencePage() {
           aria-label={sidebarCollapsed ? "Show case panel" : "Hide case panel"}
           title={sidebarCollapsed ? "Show case panel" : "Hide case panel"}
           aria-pressed={!sidebarCollapsed}
-          className="fixed top-[14px] right-6 z-40 inline-flex h-9 w-9 items-center justify-center rounded-full border border-neutral-200 bg-white/90 backdrop-blur-xl text-neutral-700 shadow-sm transition hover:border-neutral-300 hover:bg-white hover:text-black"
+          className={buttonClasses(
+            "secondary",
+            "icon",
+            "fixed top-[14px] right-6 z-40",
+          )}
         >
           <svg
             aria-hidden

@@ -120,7 +120,7 @@ export const AvatarStage = forwardRef<AvatarStageHandle, Props>(
                 </svg>
               </div>
               <div className="text-sm font-medium text-neutral-300">
-                {status === "connecting" ? "Connecting…" : "Your concierge"}
+                {status === "connecting" ? "Connecting" : "Your concierge"}
               </div>
               {status === "error" && error && (
                 <div className="text-xs text-red-400 mt-2 max-w-sm mx-auto px-4">

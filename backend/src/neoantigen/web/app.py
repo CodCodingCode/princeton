@@ -18,7 +18,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from .routes import cases, chat, heygen
+from .routes import cases, chat, heygen, patient_guide
 
 
 def _allowed_origins() -> list[str]:
@@ -86,6 +86,7 @@ app.add_middleware(
 app.include_router(cases.router)
 app.include_router(chat.router)
 app.include_router(heygen.router)
+app.include_router(patient_guide.router)
 
 
 @app.get("/api/health")

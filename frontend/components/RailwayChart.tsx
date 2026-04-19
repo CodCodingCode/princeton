@@ -50,10 +50,10 @@ export function RailwayChart({
     return (
       <div className="rounded-2xl border border-dashed border-neutral-300 bg-neutral-50/60 p-10 text-center">
         <div className="text-[10px] uppercase tracking-[0.3em] text-neutral-400 font-semibold mb-2">
-          Treatment railway
+          Treatment plan
         </div>
         <div className="text-sm text-neutral-500">
-          Renders here once the guideline walker finishes.
+          Your treatment plan will appear here once the analysis finishes.
         </div>
       </div>
     );
@@ -66,16 +66,13 @@ export function RailwayChart({
       {/* Header strip - mono meta row, biotech-dashboard feel */}
       <div className="flex items-baseline justify-between px-5 py-3 border-b border-neutral-100 bg-neutral-50/50">
         <div className="flex items-center gap-2">
-          <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500" />
           <span className="text-[10px] uppercase tracking-[0.3em] text-neutral-600 font-semibold">
-            Treatment railway
+            Treatment plan
           </span>
         </div>
         <div className="text-[10px] tabular-nums text-neutral-500 font-mono">
-          {String(phases.length).padStart(2, "0")} PHASE
-          {phases.length === 1 ? "" : "S"} ·{" "}
-          {String(steps.length).padStart(2, "0")} STEP
-          {steps.length === 1 ? "" : "S"}
+          {phases.length} PHASE{phases.length === 1 ? "" : "S"} · {steps.length}{" "}
+          STEP{steps.length === 1 ? "" : "S"}
         </div>
       </div>
 
@@ -131,16 +128,18 @@ function PhaseColumn({
         !last ? "border-r border-dashed border-neutral-200" : ""
       }`}
     >
-      {/* Phase header */}
+      {/* Phase header - phase number then title, nothing else, so the row
+          reads as a clean 1/2/3/4 sequence across the top of the chart. The
+          per-phase step count was removed because placed next to the phase
+          number it made the headers scan as "1 3 2 2 3 2" instead of the
+          intended 1/2/3/4 sequence. Total-step count already lives in the
+          chart header strip. */}
       <div className="flex items-baseline gap-2 mb-4 pb-2 border-b border-neutral-100">
         <span className="font-mono text-[10px] tabular-nums text-neutral-400 font-semibold">
-          {String(index + 1).padStart(2, "0")}
+          {index + 1}
         </span>
-        <span className="text-[10px] uppercase tracking-[0.22em] text-neutral-700 font-semibold truncate">
+        <span className="text-[10px] uppercase tracking-[0.22em] text-neutral-700 font-semibold">
           {phase.title || phase.id.replace(/_/g, " ")}
-        </span>
-        <span className="ml-auto font-mono text-[10px] tabular-nums text-neutral-400">
-          {phase.steps.length}
         </span>
       </div>
 
@@ -168,19 +167,18 @@ function PhaseColumn({
 }
 
 function StepCard({ step }: { step: RailwayStep }) {
-  const altCount = step.alternatives?.length ?? 0;
   const citeCount = step.citations?.length ?? 0;
 
   return (
     <div className="group rounded-xl border border-neutral-200 bg-white p-3.5 hover:border-neutral-400 hover:shadow-sm transition">
       {/* Monospace node_id strip - the "chip" that anchors the card */}
       <div className="flex items-center justify-between mb-2">
-        <span className="text-[9px] font-mono uppercase tracking-[0.15em] text-neutral-400 truncate">
-          {step.node_id}
+        <span className="text-[9px] font-mono uppercase tracking-[0.15em] text-neutral-400 ">
+          {step.node_id.replace(/_/g, " ")}
         </span>
         {step.is_terminal && (
           <span className="text-[9px] font-mono uppercase tracking-[0.15em] text-emerald-600 font-semibold">
-            TERM
+            END
           </span>
         )}
       </div>
@@ -191,39 +189,14 @@ function StepCard({ step }: { step: RailwayStep }) {
       </div>
 
       {/* Chosen option - left-bar accent */}
-      <div className="border-l-2 border-black pl-2.5 mb-2">
+      <div className="border-l-2 border-black pl-2.5">
         <div className="text-[9px] uppercase tracking-[0.2em] text-neutral-500 font-semibold mb-0.5">
           {step.is_terminal ? "Outcome" : "Chosen"}
         </div>
-        <div className="text-[13px] text-black font-medium leading-snug">
+        <div className="text-[13px] text-black font-medium leading-snug break-words">
           {step.chosen_option_label || "-"}
         </div>
       </div>
-
-      {/* Alternatives - struck through, muted */}
-      {altCount > 0 && (
-        <ul className="space-y-0.5 mb-1">
-          {step.alternatives.slice(0, 3).map((a, i) => (
-            <li
-              key={i}
-              className="text-[11px] text-neutral-400 flex items-center gap-1.5 truncate"
-              title={a.reason_not_chosen || a.option_description}
-            >
-              <span aria-hidden className="text-neutral-300 shrink-0">
-                ×
-              </span>
-              <span className="line-through decoration-neutral-300 truncate">
-                {a.option_label}
-              </span>
-            </li>
-          ))}
-          {altCount > 3 && (
-            <li className="text-[10px] font-mono text-neutral-400 pl-4">
-              +{altCount - 3} more
-            </li>
-          )}
-        </ul>
-      )}
 
       {/* Citation footer */}
       {citeCount > 0 && (
@@ -232,8 +205,7 @@ function StepCard({ step }: { step: RailwayStep }) {
             Evidence
           </span>
           <span className="text-[9px] font-mono tabular-nums text-neutral-500">
-            {String(citeCount).padStart(2, "0")} CITE
-            {citeCount === 1 ? "" : "S"}
+            {citeCount} CITE{citeCount === 1 ? "" : "S"}
           </span>
         </div>
       )}

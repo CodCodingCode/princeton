@@ -1,12 +1,12 @@
 // Module-level LiveAvatar session singleton that survives React Fast Refresh
 // AND survives the three things that used to drop the session unexpectedly:
 //
-//   1. Idle timeout — LiveAvatar closes "quiet" sessions after a few minutes.
+//   1. Idle timeout: LiveAvatar closes "quiet" sessions after a few minutes.
 //      Fix: tick `session.keepAlive()` every 30s while live.
-//   2. Token TTL — the mint token has a fixed lifetime; even an active session
+//   2. Token TTL: the mint token has a fixed lifetime; even an active session
 //      can be killed when it expires. Fix: on any non-CLIENT_INITIATED
 //      disconnect, mint a new token and reconnect transparently.
-//   3. Network blips / server-side teardown — same as #2, the reconnect path
+//   3. Network blips / server-side teardown: same as #2, the reconnect path
 //      handles them.
 //
 // During a transparent reconnect the previous video frame stays on screen
@@ -15,7 +15,7 @@
 //
 // The component (AvatarStage) is a thin subscriber: it registers UI-state
 // callbacks, attaches its <video> element, and unsubscribes on cleanup. It
-// never starts or stops the session on mount/unmount — only an explicit
+// never starts or stops the session on mount/unmount: only an explicit
 // user action (clicking "End session") tears down for real.
 
 import {
@@ -43,7 +43,7 @@ interface AvatarGlobal {
   listeners: Set<AvatarSubscriber>;
   videoEl: HTMLVideoElement | null;
   starting: boolean;
-  // Keepalive timer ID — kept on the global so module reload doesn't leak
+  // Keepalive timer ID: kept on the global so module reload doesn't leak
   // duplicate timers.
   keepaliveId: ReturnType<typeof setInterval> | null;
   // Reconnect bookkeeping. We back off on rapid failure loops.
@@ -111,7 +111,7 @@ function startKeepalive() {
   if (state.keepaliveId) return;
   state.keepaliveId = setInterval(() => {
     state.session?.keepAlive().catch((e) => {
-      // The SDK's keepAlive can fail transiently — don't let that crash the
+      // The SDK's keepAlive can fail transiently: don't let that crash the
       // singleton. The disconnect handler will catch a fatal failure.
       console.warn("avatar.keepAlive failed", e);
     });
@@ -143,7 +143,7 @@ function scheduleReconnect() {
     notify();
     return;
   }
-  // Exponential backoff: 800ms, 1.6s, 3.2s, … capped at 15s.
+  // Exponential backoff: 800ms, 1.6s, 3.2s,  capped at 15s.
   const delay = Math.min(
     RECONNECT_BASE_DELAY_MS * 2 ** state.reconnectAttempts,
     RECONNECT_MAX_DELAY_MS,
@@ -188,7 +188,7 @@ async function _start(opts: { silent?: boolean } = {}) {
         }
       }
       state.status = "live";
-      state.reconnectAttempts = 0; // success — reset backoff
+      state.reconnectAttempts = 0; // success: reset backoff
       notify();
       startKeepalive();
     });
@@ -201,7 +201,7 @@ async function _start(opts: { silent?: boolean } = {}) {
         state.speaking = false;
 
         if (reason === SessionDisconnectReason.CLIENT_INITIATED) {
-          // User clicked End session — clean teardown, drop the video.
+          // User clicked End session: clean teardown, drop the video.
           state.status = "idle";
           state.caption = "";
           state.reconnectAttempts = 0;
@@ -212,10 +212,10 @@ async function _start(opts: { silent?: boolean } = {}) {
         }
 
         // Unexpected disconnect (idle timeout, token TTL, network, server).
-        // Keep the last video frame visible — do NOT touch srcObject — and
+        // Keep the last video frame visible: do NOT touch srcObject: and
         // queue a transparent reconnect with backoff.
         console.warn(
-          `[avatar] disconnected (${reason}) — auto-reconnecting (attempt ${state.reconnectAttempts + 1})`,
+          `[avatar] disconnected (${reason}): auto-reconnecting (attempt ${state.reconnectAttempts + 1})`,
         );
         notify();
         scheduleReconnect();
@@ -233,7 +233,7 @@ async function _start(opts: { silent?: boolean } = {}) {
     await session.start();
   } catch (e) {
     if (opts.silent) {
-      // Silent reconnect failed — back off and try again.
+      // Silent reconnect failed: back off and try again.
       console.warn("[avatar] silent reconnect failed", e);
       state.session = null;
       scheduleReconnect();

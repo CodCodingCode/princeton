@@ -68,7 +68,7 @@ export function RailwayMermaid({
   if (empty) {
     return (
       <div className="rounded-xl border border-neutral-200 bg-white p-8 text-neutral-500 text-sm text-center">
-        Railway will appear here as the phase-walker runs…
+        Treatment plan will appear here as the analysis progresses.
       </div>
     );
   }
@@ -76,10 +76,10 @@ export function RailwayMermaid({
   return (
     <div className="rounded-xl border border-neutral-200 bg-white p-4 overflow-x-auto">
       {rendering && (
-        <div className="text-neutral-500 text-xs mb-2">rendering…</div>
+        <div className="text-neutral-500 text-xs mb-2">Rendering…</div>
       )}
       {err && (
-        <div className="text-red-600 text-xs mb-2">mermaid error: {err}</div>
+        <div className="text-red-600 text-xs mb-2">Unable to render chart.</div>
       )}
       <div ref={ref} className="mermaid" />
     </div>

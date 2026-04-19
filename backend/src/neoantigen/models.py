@@ -11,18 +11,29 @@ from pydantic import BaseModel, Field
 
 
 class Mutation(BaseModel):
-    gene: str
-    ref_aa: str
-    position: int
-    alt_aa: str
+    """A molecular variant. Fields are all optional so we can represent both
+    point mutations (BRAF V600E → gene/ref_aa/position/alt_aa filled) and
+    non-point events (EGFR exon 19 deletion, MET amplification, ALK fusion →
+    raw_label filled, structural fields empty)."""
+
+    gene: str = ""
+    ref_aa: str = ""
+    position: int | None = None
+    alt_aa: str = ""
+    raw_label: str = ""       # free-form text when the event isn't a point mutation
 
     @property
     def label(self) -> str:
-        return f"{self.ref_aa}{self.position}{self.alt_aa}"
+        if self.position is not None and self.ref_aa and self.alt_aa:
+            return f"{self.ref_aa}{self.position}{self.alt_aa}"
+        return self.raw_label
 
     @property
     def full_label(self) -> str:
-        return f"{self.gene} {self.label}"
+        if self.raw_label and self.position is None:
+            return self.raw_label
+        parts = [self.gene, self.label]
+        return " ".join(p for p in parts if p).strip() or self.raw_label
 
 
 # ─────────────────────────────────────────────────────────────
@@ -177,6 +188,29 @@ class ClinicianIntake(BaseModel):
     age_years: int | None = Field(default=None, ge=0, le=120)
 
 
+class PatientDemographics(BaseModel):
+    """Patient identity + contact fields pulled from a demographics /
+    registration document. All optional — any field that wasn't on the form
+    (or wasn't extracted) stays ``None`` so the UI can render "Not
+    documented" rather than hiding the row."""
+
+    full_name: str | None = None
+    sex: str | None = None
+    date_of_birth: str | None = None      # ISO-like string, e.g. "1962-04-17"
+    mrn: str | None = None
+    race: str | None = None
+    ethnicity: str | None = None
+    preferred_language: str | None = None
+    marital_status: str | None = None
+    phone: str | None = None
+    email: str | None = None
+    address: str | None = None            # full address as a single line
+    insurance: str | None = None          # payer + member id / plan name
+    emergency_contact: str | None = None  # name (rel) · phone
+    primary_care_provider: str | None = None
+    source_filename: str | None = None    # which uploaded doc supplied the fields
+
+
 # ─────────────────────────────────────────────────────────────
 # Clinical trials
 # ─────────────────────────────────────────────────────────────
@@ -274,6 +308,7 @@ class PatientCase(BaseModel):
     pathology: PathologyFindings
     primary_cancer_type: str = "unknown"        # detected from pathology + mutations
     intake: ClinicianIntake = Field(default_factory=ClinicianIntake)
+    demographics: PatientDemographics | None = None
     enrichment: EnrichedBiomarkers | None = None
     mutations: list[Mutation] = Field(default_factory=list)
     documents: list[DocumentExtraction] = Field(default_factory=list)

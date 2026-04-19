@@ -23,7 +23,7 @@ import asyncio
 import os
 import re
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from ..agent._llm import call_for_json, has_api_key
 from ..agent.audit import audit
@@ -44,18 +44,157 @@ from ..models import (
 
 
 class _AggMutation(BaseModel):
-    gene: str
-    ref_aa: str
-    position: int
-    alt_aa: str
+    """Permissive mutation shape.
+
+    Real oncogenic events don't always fit {gene, ref_aa, position, alt_aa}:
+    exon deletions, fusions, amplifications, splice variants all lack a single
+    residue-position substitution. Every structural field is optional; a
+    free-form ``raw_label`` (e.g. "EGFR exon 19 deletion") survives when the
+    model can't decompose it.
+
+    We also accept the model's invented shape ``{"EGFR exon 19 deletion":
+    "source.pdf_p2"}`` via ``model_validator``: coercing it into the proper
+    fields instead of failing validation and silently dropping the mutation.
+    """
+
+    gene: str = ""
+    ref_aa: str = ""
+    position: int | None = None
+    alt_aa: str = ""
+    raw_label: str = ""
     source_filename: str = ""
     source_page: int | None = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def _coerce_permissive(cls, data: object) -> object:
+        """Be forgiving: MediX-R1 invents a new mutation schema every run.
+
+        Seen in the wild:
+          A.  {"gene": "EGFR", "ref_aa": "E", "position": 746, "alt_aa": "A"} ← spec shape, already valid
+          B.  {"EGFR exon 19 deletion": "file.pdf_p2"}                        ← dict-as-key
+          C.  {"name": "EGFR T790M", "value": "c.2369C>T",
+               "source": "FILE: 15_hospital_discharge_summary.pdf (page 1)"}  ← name/value/source
+          D.  {"mutation": "EGFR exon 19 deletion", ...}                      ← single "mutation" key
+
+        We flatten all four into ``{raw_label, source_filename, source_page}``
+        when the spec fields aren't already populated, so the downstream
+        regex parser gets a shot at structural extraction.
+        """
+        if not isinstance(data, dict):
+            return data
+        spec_keys = {"gene", "ref_aa", "position", "alt_aa", "raw_label",
+                     "source_filename", "source_page"}
+        # Shape A: already compliant, let pydantic validate normally.
+        if any(k in data and data[k] not in (None, "") for k in ("gene", "raw_label")):
+            return data
+
+        label = ""
+        source_blob = ""
+        # Shape C/D: common-name keys.
+        for label_key in ("name", "mutation", "variant", "label", "description"):
+            if label_key in data and isinstance(data[label_key], str):
+                label = data[label_key]
+                break
+        # Append "value" (e.g. "p.E746_A750del") to the label when present.
+        val = data.get("value")
+        if isinstance(val, str) and val and val != label:
+            label = f"{label} ({val})" if label else val
+        # Source: try common keys.
+        for src_key in ("source", "source_filename", "file", "filename", "cite"):
+            if src_key in data and isinstance(data[src_key], str):
+                source_blob = data[src_key]
+                break
+
+        # Shape B: single unknown key, value is source-like.
+        if not label:
+            unknown = {k: v for k, v in data.items() if k not in spec_keys}
+            if len(unknown) == 1:
+                k, v = next(iter(unknown.items()))
+                if isinstance(k, str):
+                    label = k
+                if isinstance(v, str) and not source_blob:
+                    source_blob = v
+
+        if not label:
+            return data  # pydantic will fail validation: fine.
+
+        # Parse source blob. Patterns observed:
+        #   "file.pdf_p2"                                    → (file.pdf, 2)
+        #   "FILE: file.pdf (page 1)"                        → (file.pdf, 1)
+        #   "file.pdf, page 3"                               → (file.pdf, 3)
+        #   "file.pdf"                                       → (file.pdf, None)
+        source_filename, source_page = "", None
+        if source_blob:
+            m = re.search(r"([\w.\-]+\.(?:pdf|txt|csv|json|png|jpg|jpeg))", source_blob, re.I)
+            if m:
+                source_filename = m.group(1)
+            m = re.search(r"(?:page|_p)\s*(\d+)", source_blob, re.I)
+            if m:
+                try:
+                    source_page = int(m.group(1))
+                except ValueError:
+                    pass
+            if not source_filename:
+                source_filename = source_blob  # best-effort fallback
+
+        return {
+            "raw_label": label,
+            "source_filename": source_filename,
+            "source_page": source_page,
+        }
+
+
+_NULL_STRINGS = {"", "null", "none", "n/a", "na", "unknown", "not applicable", "-"}
 
 
 class _AggField(BaseModel):
+    """One extracted field + its source. Every subfield is lenient about the
+    model's inventive null-equivalents so validation doesn't drop the whole
+    payload over cosmetic "n/a" strings where a real int / null was expected.
+    """
+
     value: str | None = None
     source_filename: str = ""
     source_page: int | None = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def _normalize_nulls(cls, data: object) -> object:
+        if not isinstance(data, dict):
+            return data
+        out = dict(data)
+        # value: accepts str | None. Normalize string null-equivalents to None.
+        v = out.get("value")
+        if isinstance(v, str) and v.strip().lower() in _NULL_STRINGS:
+            out["value"] = None
+        elif isinstance(v, (int, float, bool)):
+            # Some models emit native numbers/bools; stringify so downstream
+            # parsers (_parse_float, _parse_bool) can consume uniformly.
+            out["value"] = str(v).lower() if isinstance(v, bool) else str(v)
+        # source_filename: required str, default "". None or null-strings → "".
+        sf = out.get("source_filename")
+        if sf is None:
+            out["source_filename"] = ""
+        elif isinstance(sf, str) and sf.strip().lower() in _NULL_STRINGS:
+            out["source_filename"] = ""
+        elif not isinstance(sf, str):
+            out["source_filename"] = str(sf)
+        # source_page: str|int|None. Coerce "n/a"/"null"/"" → None; parse ints.
+        sp = out.get("source_page")
+        if isinstance(sp, str):
+            lo = sp.strip().lower()
+            if lo in _NULL_STRINGS:
+                out["source_page"] = None
+            else:
+                try:
+                    out["source_page"] = int(lo)
+                except (ValueError, TypeError):
+                    out["source_page"] = None
+        elif isinstance(sp, float):
+            out["source_page"] = int(sp)
+        # None is already fine for source_page.
+        return out
 
 
 class _AggPayload(BaseModel):
@@ -263,22 +402,60 @@ def _payload_to_models(
     )
 
     mutations: list[Mutation] = []
-    seen: set[tuple[str, str, int, str]] = set()
+    seen_keys: set[tuple[str, str, int, str]] = set()
+    seen_labels: set[str] = set()
     for m in payload.mutations:
-        try:
+        # 1. Try structural: if the model populated gene/ref/pos/alt directly.
+        if m.gene and m.ref_aa and m.position is not None and m.alt_aa:
             key = (m.gene.upper(), m.ref_aa.upper(), int(m.position), m.alt_aa.upper())
-        except Exception:
-            continue
-        if key in seen:
-            continue
-        seen.add(key)
-        mutations.append(Mutation(
-            gene=key[0], ref_aa=key[1], position=key[2], alt_aa=key[3],
-        ))
+            if key in seen_keys:
+                continue
+            seen_keys.add(key)
+            mut = Mutation(
+                gene=key[0], ref_aa=key[1], position=key[2], alt_aa=key[3],
+                raw_label=f"{key[0]} {key[1]}{key[2]}{key[3]}",
+            )
+            mutations.append(mut)
+            prov_value = mut.full_label
+        else:
+            # 2. Fall back to raw_label. Regex-extract structural fields when
+            # the label matches a point-mutation pattern; otherwise store as
+            # free-form (exon deletions, fusions, amplifications, etc.).
+            label = (m.raw_label or "").strip()
+            if not label:
+                continue
+            canonical_label = label.upper()
+            if canonical_label in seen_labels:
+                continue
+            seen_labels.add(canonical_label)
+            hit = _MUT_RE.search(label)
+            if hit:
+                gene, ref_aa, position, alt_aa = (
+                    hit.group(1), hit.group(2), int(hit.group(3)), hit.group(4),
+                )
+                key = (gene.upper(), ref_aa.upper(), position, alt_aa.upper())
+                if key in seen_keys:
+                    continue
+                seen_keys.add(key)
+                mutations.append(Mutation(
+                    gene=gene.upper(), ref_aa=ref_aa.upper(), position=position,
+                    alt_aa=alt_aa.upper(), raw_label=label,
+                ))
+            else:
+                # Free-form event (EGFR exon 19 deletion, MET amplification, ...)
+                # Best-effort gene extraction: first all-caps token.
+                gene_guess = ""
+                for token in label.split():
+                    t = token.strip(",.;:()[]")
+                    if t.isupper() and 2 <= len(t) <= 10 and t.isalnum():
+                        gene_guess = t
+                        break
+                mutations.append(Mutation(gene=gene_guess, raw_label=label))
+            prov_value = label
         if m.source_filename:
             provenance.append(ProvenanceEntry(
-                field=f"mutation:{key[0]} {key[1]}{key[2]}{key[3]}",
-                value=f"{key[0]} {key[1]}{key[2]}{key[3]}",
+                field=f"mutation:{prov_value}",
+                value=prov_value,
                 filename=m.source_filename,
                 page_number=m.source_page,
             ))
@@ -303,6 +480,7 @@ def _heuristic_aggregate(
     provenance: list[ProvenanceEntry] = []
     mutations: list[Mutation] = []
     seen_muts: set[tuple[str, str, int, str]] = set()
+    seen_free: set[str] = set()
 
     def _set(obj, field: str, value, fname: str, page: int | None) -> None:
         if value is None:
@@ -335,19 +513,37 @@ def _heuristic_aggregate(
             _set(intake, "prior_anti_pd1", page.prior_anti_pd1, doc.filename, page.page_number)
 
             for mtxt in page.mutations_text:
-                m = _MUT_RE.search(mtxt)
-                if not m:
+                label = (mtxt or "").strip()
+                if not label:
                     continue
-                key = (m.group(1), m.group(2), int(m.group(3)), m.group(4))
-                if key in seen_muts:
-                    continue
-                seen_muts.add(key)
-                mutations.append(Mutation(
-                    gene=key[0], ref_aa=key[1], position=key[2], alt_aa=key[3],
-                ))
+                m = _MUT_RE.search(label)
+                if m:
+                    key = (m.group(1), m.group(2), int(m.group(3)), m.group(4))
+                    if key in seen_muts:
+                        continue
+                    seen_muts.add(key)
+                    mutations.append(Mutation(
+                        gene=key[0], ref_aa=key[1], position=key[2],
+                        alt_aa=key[3], raw_label=label,
+                    ))
+                    prov_value = f"{key[0]} {key[1]}{key[2]}{key[3]}"
+                else:
+                    # Free-form event (exon deletion, amplification, fusion).
+                    canonical = label.upper()
+                    if canonical in seen_free:
+                        continue
+                    seen_free.add(canonical)
+                    gene_guess = ""
+                    for token in label.split():
+                        t = token.strip(",.;:()[]")
+                        if t.isupper() and 2 <= len(t) <= 10 and t.isalnum():
+                            gene_guess = t
+                            break
+                    mutations.append(Mutation(gene=gene_guess, raw_label=label))
+                    prov_value = label
                 provenance.append(ProvenanceEntry(
-                    field=f"mutation:{key[0]} {key[1]}{key[2]}{key[3]}",
-                    value=f"{key[0]} {key[1]}{key[2]}{key[3]}",
+                    field=f"mutation:{prov_value}",
+                    value=prov_value,
                     filename=doc.filename,
                     page_number=page.page_number,
                 ))
@@ -417,9 +613,9 @@ async def aggregate_documents(
 
     if not has_api_key() or not docs:
         if not docs:
-            reason = "Heuristic merge — no documents extracted."
+            reason = "Heuristic merge: no documents extracted."
         else:
-            reason = "Heuristic merge — no API key configured (set KIMI_API_KEY)."
+            reason = "Heuristic merge: no API key configured (set KIMI_API_KEY)."
         pathology, intake, muts, provenance = _heuristic_aggregate(docs, reason=reason)
         audit(
             "aggregator", "fallback",
@@ -472,7 +668,7 @@ async def aggregate_documents(
         )
     except Exception as e:
         err_msg = str(e)[:400]
-        reason = f"Heuristic merge — LLM call failed: {type(e).__name__}: {err_msg}"
+        reason = f"Heuristic merge: LLM call failed: {type(e).__name__}: {err_msg}"
         pathology, intake, muts, provenance = _heuristic_aggregate(docs, reason=reason)
         audit(
             "aggregator", "fallback",

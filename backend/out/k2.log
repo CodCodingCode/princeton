@@ -3201,3 +3201,924 @@ mutations.1.alt_aa
 2026-04-18 17:24:28,310 [INFO] neoantigen.llm: stream_with_thinking done
 2026-04-18 17:24:28,323 [INFO] neoantigen.llm: stream_with_thinking start user_len=2261 images=0
 2026-04-18 17:24:40,831 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 17:39:07,062 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+2026-04-18 17:39:07,064 [INFO] neoantigen.llm: call schema=_VisionPayload images=1 user_len=260
+2026-04-18 17:39:08,074 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=5704
+2026-04-18 17:39:08,076 [INFO] neoantigen.llm: call schema=_VisionPayload images=1 user_len=260
+2026-04-18 17:39:08,152 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=2599
+2026-04-18 17:39:08,154 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=1114
+2026-04-18 17:39:08,155 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=2081
+2026-04-18 17:39:08,156 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=681
+2026-04-18 17:39:08,157 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=3126
+2026-04-18 17:39:08,158 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=1809
+2026-04-18 17:39:08,159 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=1990
+2026-04-18 17:39:08,161 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=2846
+2026-04-18 17:39:08,162 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=2607
+2026-04-18 17:39:08,163 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=2152
+2026-04-18 17:39:57,254 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+2026-04-18 17:39:57,256 [INFO] neoantigen.llm: call schema=_VisionPayload images=1 user_len=260
+2026-04-18 17:39:58,221 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=5704
+2026-04-18 17:39:58,223 [INFO] neoantigen.llm: call schema=_VisionPayload images=1 user_len=260
+2026-04-18 17:39:58,297 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=2599
+2026-04-18 17:39:58,298 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=1114
+2026-04-18 17:39:58,300 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=2081
+2026-04-18 17:39:58,301 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=681
+2026-04-18 17:39:58,302 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=3126
+2026-04-18 17:39:58,303 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=1809
+2026-04-18 17:39:58,304 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=1990
+2026-04-18 17:39:58,306 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=2846
+2026-04-18 17:39:58,307 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=2607
+2026-04-18 17:39:58,308 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=2152
+2026-04-18 17:40:08,815 [INFO] neoantigen.llm: call response schema=_VisionPayload len=3071
+2026-04-18 17:40:08,895 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=2665
+2026-04-18 17:40:09,825 [INFO] neoantigen.llm: call response schema=_VisionPayload len=3615
+2026-04-18 17:40:09,827 [INFO] neoantigen.llm: call schema=_VisionPayload images=1 user_len=260
+2026-04-18 17:40:10,533 [INFO] neoantigen.llm: call response schema=_VisionPayload len=4432
+2026-04-18 17:40:17,170 [INFO] neoantigen.llm: call response schema=_VisionPayload len=5882
+2026-04-18 17:40:17,173 [INFO] neoantigen.llm: call schema=_VisionPayload images=1 user_len=260
+2026-04-18 17:40:17,558 [INFO] neoantigen.llm: call response schema=_VisionPayload len=6462
+2026-04-18 17:40:17,966 [INFO] neoantigen.llm: call response schema=_VisionPayload len=6169
+2026-04-18 17:40:21,504 [INFO] neoantigen.llm: call response schema=_VisionPayload len=6976
+2026-04-18 17:40:21,507 [INFO] neoantigen.llm: call schema=_VisionPayload images=1 user_len=260
+2026-04-18 17:40:22,897 [INFO] neoantigen.llm: call response schema=_VisionPayload len=8243
+2026-04-18 17:40:22,968 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=3360
+2026-04-18 17:40:24,104 [INFO] neoantigen.llm: call response schema=_VisionPayload len=7867
+2026-04-18 17:40:24,107 [INFO] neoantigen.llm: call schema=_VisionPayload images=1 user_len=260
+2026-04-18 17:40:25,282 [INFO] neoantigen.llm: call response schema=_VisionPayload len=8379
+2026-04-18 17:40:25,284 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=6365
+2026-04-18 17:40:25,311 [ERROR] neoantigen.llm: call HTTP error schema=_VisionPayload model=medix-r1-30b err=BadRequestError: Error code: 400 - {'error': {'message': "This model's maximum context length is 8192 tokens. However, you requested 2500 output tokens and your prompt contains at least 5693 input tokens, for a total of at least 8193 tokens. Please reduce the length of the input prompt or the number of requested output tokens. (parameter=input_tokens, value=5693)", 'type': 'BadRequestError', 'param': 'input_tokens', 'code': 400}}
+2026-04-18 17:40:25,366 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=1527
+2026-04-18 17:40:25,653 [INFO] neoantigen.llm: call response schema=_VisionPayload len=5601
+2026-04-18 17:40:25,748 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=2722
+2026-04-18 17:40:26,043 [INFO] neoantigen.llm: call response schema=_VisionPayload len=2700
+2026-04-18 17:40:26,046 [INFO] neoantigen.llm: call schema=_VisionPayload images=1 user_len=260
+2026-04-18 17:40:27,102 [INFO] neoantigen.llm: call response schema=_VisionPayload len=9525
+2026-04-18 17:40:27,158 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=1776
+2026-04-18 17:40:27,839 [INFO] neoantigen.llm: call response schema=_VisionPayload len=9310
+2026-04-18 17:40:27,839 [ERROR] neoantigen.llm: JSON parse failed schema=_VisionPayload raw='Okay, let\'s start by analyzing the provided medical document. The user wants me to extract specific fields from this page. First, I need to check what information is present here.\n\nThe document is an Emergency Department note. The main sections are Patient info, Chief Complaint, HPI, ED Course, etc. \n\nLooking at the fields I need to extract:\n\n1. **primary_cancer_type**: The HPI mentions "stage IV NSCLC (EGFR exon 19 del)". NSCLC stands for Non-Small Cell Lung Cancer, which typically includes adenocarcinoma. So the primary type would be \'lung_adenocarcinoma\' maybe? Wait, but NSCLC could also be'
+2026-04-18 17:40:27,839 [WARNING] neoantigen.llm: retrying schema=_VisionPayload after first-attempt failure:
+  - ValueError: model did not return valid JSON: "Okay, let's start by analyzing the provided medical document. The user wants me to extract specific fields from this page. First, I need to check what information is present here.\n\nThe document is an Emergency Department note. The main sections are Patient info, Chief Complaint, HPI, ED Course, etc."
+2026-04-18 17:40:27,911 [INFO] neoantigen.llm: call response schema=_VisionPayload len=10038
+2026-04-18 17:40:27,911 [ERROR] neoantigen.llm: JSON parse failed schema=_VisionPayload raw='Okay, let\'s start by reading the user\'s query carefully. They want me to extract specific fields from a medical document page. The document is a fax cover sheet and progress notes from three pages. I need to check each section for the required fields.\n\nFirst, the page description. The user provided a note saying it\'s page 1 of the medical document, but looking at the content, it\'s actually page 2 of the fax. But the user says "You are reading page 1 of a patient\'s medical document." Wait, maybe it\'s a typo. The text shows it\'s page 2, 3, and 4. The actual medical content starts on what\'s label'
+2026-04-18 17:40:27,912 [WARNING] neoantigen.llm: retrying schema=_VisionPayload after first-attempt failure:
+  - ValueError: model did not return valid JSON: "Okay, let's start by reading the user's query carefully. They want me to extract specific fields from a medical document page. The document is a fax cover sheet and progress notes from three pages. I need to check each section for the required fields.\n\nFirst, the page description. The user provided "
+2026-04-18 17:40:28,173 [INFO] neoantigen.llm: call response schema=_VisionPayload len=4930
+2026-04-18 17:40:28,325 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=2666
+2026-04-18 17:40:28,327 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=1277
+2026-04-18 17:40:31,596 [INFO] neoantigen.llm: call response schema=_VisionPayload len=1930
+2026-04-18 17:40:31,598 [INFO] neoantigen.llm: call schema=_VisionPayload images=1 user_len=260
+2026-04-18 17:40:32,761 [INFO] neoantigen.llm: call response schema=_VisionPayload len=3025
+2026-04-18 17:40:32,763 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=5500
+2026-04-18 17:40:37,291 [INFO] neoantigen.llm: call response schema=_VisionPayload len=4144
+2026-04-18 17:40:41,147 [INFO] neoantigen.llm: call response schema=_VisionPayload len=4218
+2026-04-18 17:40:43,898 [INFO] neoantigen.llm: call response schema=_VisionPayload len=7533
+2026-04-18 17:40:49,110 [INFO] neoantigen.llm: call response schema=_VisionPayload len=7305
+2026-04-18 17:40:49,539 [INFO] neoantigen.llm: call response schema=_VisionPayload len=9828
+2026-04-18 17:40:51,291 [INFO] neoantigen.llm: call response schema=_VisionPayload len=8694
+2026-04-18 17:40:51,987 [INFO] neoantigen.llm: call response schema=_VisionPayload len=7024
+2026-04-18 17:40:52,531 [INFO] neoantigen.llm: call response schema=_VisionPayload len=9145
+2026-04-18 17:40:53,533 [INFO] neoantigen.llm: call response schema=_VisionPayload len=9603
+2026-04-18 17:40:53,533 [ERROR] neoantigen.llm: JSON parse failed schema=_VisionPayload raw='Okay, let\'s go through this. The user wants me to extract specific fields from the medical document page provided.\n\nFirst, the page is an MRI report from Central Virginia Imaging Center. The patient is Margaret O\'Brien, diagnosed with NSCLC and being staged for brain mets. The exam is MRI Brain with and without contrast.\n\nLooking at the fields:\n\n- primary_cancer_type: The history says "NSCLC, staging". NSCLC is Non-Small Cell Lung Cancer, so the type would be lung_adenocarcinoma? Wait, but NSCLC includes adenocarcinoma, squamous, etc. But the exact type here isn\'t specified. Wait, the history '
+2026-04-18 17:40:53,533 [WARNING] neoantigen.llm: retrying schema=_VisionPayload after first-attempt failure:
+  - ValueError: model did not return valid JSON: "Okay, let's go through this. The user wants me to extract specific fields from the medical document page provided.\n\nFirst, the page is an MRI report from Central Virginia Imaging Center. The patient is Margaret O'Brien, diagnosed with NSCLC and being staged for brain mets. The exam is MRI Brain with"
+2026-04-18 17:40:54,358 [INFO] neoantigen.llm: call response schema=_VisionPayload len=9644
+2026-04-18 17:40:54,358 [ERROR] neoantigen.llm: JSON parse failed schema=_VisionPayload raw='Okay, let\'s tackle this. The user wants me to extract specific fields from the given medical document. Let\'s start by reading through the page carefully.\n\nFirst, the page is a discharge summary for a patient with metastatic lung cancer. The main points here are:\n\n1. **Primary Cancer Type**: The document mentions "Stage IV non-small cell lung cancer (adenocarcinoma, EGFR exon 19 del)". So the cancer type is lung adenocarcinoma. The system requires snake_case, so "lung_adenocarcinoma" is correct.\n\n2. **Histology**: It\'s specified as adenocarcinoma, so that\'s straightforward.\n\n3. **Primary Site**'
+2026-04-18 17:40:54,358 [WARNING] neoantigen.llm: retrying schema=_VisionPayload after first-attempt failure:
+  - ValueError: model did not return valid JSON: "Okay, let's tackle this. The user wants me to extract specific fields from the given medical document. Let's start by reading through the page carefully.\n\nFirst, the page is a discharge summary for a patient with metastatic lung cancer. The main points here are:\n\n1. **Primary Cancer Type**: The docu"
+2026-04-18 17:40:57,102 [INFO] neoantigen.llm: call response schema=_VisionPayload len=9840
+2026-04-18 17:40:57,103 [ERROR] neoantigen.llm: JSON parse failed schema=_VisionPayload raw='Okay, let\'s tackle this problem. So, I need to extract the data from the provided medical document page and map it to the specified schema. Let me go through each field step by step.\n\nFirst, the page description. The document is a medical record with details about a patient with lung cancer. The key parts here are the primary diagnosis, biomarkers, treatment timeline, etc. The page description should reflect the main content. Since it\'s a comprehensive cancer report with pathology, NGS results, and treatment, I\'ll say "Medical record with primary lung cancer diagnosis, biomarkers, and treatmen'
+2026-04-18 17:40:57,104 [WARNING] neoantigen.llm: retrying schema=_VisionPayload after first-attempt failure:
+  - ValueError: model did not return valid JSON: "Okay, let's tackle this problem. So, I need to extract the data from the provided medical document page and map it to the specified schema. Let me go through each field step by step.\n\nFirst, the page description. The document is a medical record with details about a patient with lung cancer. The key"
+2026-04-18 17:41:04,458 [INFO] neoantigen.llm: call response schema=_VisionPayload len=5288
+2026-04-18 17:41:10,459 [INFO] neoantigen.llm: call response schema=_VisionPayload len=9561
+2026-04-18 17:41:10,460 [ERROR] neoantigen.llm: JSON parse failed schema=_VisionPayload raw='Okay, let\'s tackle this. The user provided a medical document page, specifically an MRI report, and wants me to extract the specified fields into a JSON format. I need to be careful not to add any extra information or guess anything that\'s not explicitly stated in the text.\n\nFirst, I\'ll go through each required field and check the document for relevant info.\n\nPrimary cancer type: The report mentions "NSCLC, staging. R/O brain mets." NSCLC stands for Non-Small Cell Lung Cancer, so the primary cancer type should be "lung_adenocarcinoma" or another subtype? Wait, NSCLC includes adenocarcinoma, sq'
+2026-04-18 17:41:10,460 [ERROR] neoantigen.llm: retry failed schema=_VisionPayload err=model did not return valid JSON: "Okay, let's tackle this. The user provided a medical document page, specifically an MRI report, and wants me to extract the specified fields into a JSON format. I need to be careful not to add any extra information or guess anything that's not explicitly stated in the text.\n\nFirst, I'll go through e"
+2026-04-18 17:41:10,461 [INFO] neoantigen.llm: call schema=_VisionPayload images=1 user_len=1915
+2026-04-18 17:41:12,779 [INFO] neoantigen.llm: call response schema=_VisionPayload len=9147
+2026-04-18 17:41:23,721 [INFO] neoantigen.llm: call response schema=_VisionPayload len=9797
+2026-04-18 17:41:23,722 [ERROR] neoantigen.llm: JSON parse failed schema=_VisionPayload raw='Okay, let\'s see. I need to extract the specified fields from this medical document. The document is an imaging report from Central Virginia Imaging Center. First, I\'ll check the page_description. It\'s an MRI brain report, so the description should mention that.\n\nLooking for primary_cancer_type: The history mentions "NSCLC, staging. R/O brain mets." NSCLC is non-small cell lung cancer, so primary_cancer_type would be lung_adenocarcinoma? Wait, NSCLC includes adenocarcinoma, but maybe it\'s specified. Wait, the report doesn\'t specify the histology type here. Wait, the primary_cancer_type uses sna'
+2026-04-18 17:41:23,722 [WARNING] neoantigen.llm: retrying schema=_VisionPayload after first-attempt failure:
+  - ValueError: model did not return valid JSON: "Okay, let's see. I need to extract the specified fields from this medical document. The document is an imaging report from Central Virginia Imaging Center. First, I'll check the page_description. It's an MRI brain report, so the description should mention that.\n\nLooking for primary_cancer_type: The "
+2026-04-18 17:41:36,568 [INFO] neoantigen.llm: call response schema=_VisionPayload len=9452
+2026-04-18 17:41:36,570 [INFO] neoantigen.llm: call schema=_AggPayload images=0 user_len=10017
+2026-04-18 17:41:54,648 [INFO] neoantigen.llm: call response schema=_AggPayload len=12947
+2026-04-18 17:41:54,650 [ERROR] neoantigen.llm: JSON parse failed schema=_AggPayload raw='Okay, let\'s tackle this problem step by step. The user wants me to reconcile multiple per-page findings into a single canonical JSON record for a patient with lung adenocarcinoma. The key is to follow the field priority tiers and resolve conflicts correctly.\n\nFirst, for tier 1 fields (primary_cancer_type, histology, primary_site), I need to prioritize the primary pathology report. Looking through the documents, the pathology reports like 02_pathology_initial_AMENDED and 03_pathology_IHC_addendum consistently state "lung_adenocarcinoma" for primary_cancer_type. Histology is "adenocarcinoma" acr'
+2026-04-18 17:41:54,650 [WARNING] neoantigen.llm: retrying schema=_AggPayload after first-attempt failure:
+  - ValueError: model did not return valid JSON: "Okay, let's tackle this problem step by step. The user wants me to reconcile multiple per-page findings into a single canonical JSON record for a patient with lung adenocarcinoma. The key is to follow the field priority tiers and resolve conflicts correctly.\n\nFirst, for tier 1 fields (primary_cancer"
+2026-04-18 17:42:12,579 [INFO] neoantigen.llm: call response schema=_AggPayload len=11840
+2026-04-18 17:42:12,581 [ERROR] neoantigen.llm: validation failed schema=_AggPayload err=12 validation errors for _AggPayload
+mutations.0.gene
+  Field required [type=missing, input_value={'EGFR exon 19 deletion':...tionone_cdx_report.pdf'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.13/v/missing
+mutations.0.ref_aa
+  Field required [type=missing, input_value={'EGFR exon 19 deletion':...tionone_cdx_report.pdf'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.13/v/missing
+mutations.0.position
+  Field required [type=missing, input_value={'EGFR exon 19 deletion':...tionone_cdx_report.pdf'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.13/v/missing
+mutations.0.alt_aa
+  Field required [type=missing, input_value={'EGFR exon 19 deletion':...tionone_cdx_report.pdf'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.13/v/missing
+mutations.1.gene
+  Field required [type=missing, input_value={'EGFR T790M': '13_liquid...psy_guardant360.pdf_p1'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.13/v/missing
+mutations.1.ref_aa
+  Field required [type=missing, input_value={'EGFR T790M': '13_liquid...psy_guardant360.pdf_p1'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.13/v/missing
+mutations.1.position
+  Field required [type=missing, input_value={'EGFR T790M': '13_liquid...psy_guardant360.pdf_p1'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.13/v/missing
+mutations.1.alt_aa
+  Field required [type=missing, input_value={'EGFR T790M': '13_liquid...psy_guardant360.pdf_p1'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.13/v/missing
+mutations.2.gene
+  Field required [type=missing, input_value={}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.13/v/missing
+mutations.2.ref_aa
+  Field required [type=missing, input_value={}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.13/v/missing
+mutations.2.position
+  Field required [type=missing, input_value={}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.13/v/missing
+mutations.2.alt_aa
+  Field required [type=missing, input_value={}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.13/v/missing data={'primary_cancer_type': {'value': 'lung_adenocarcinoma', 'source': '03_pathology_IHC_addendum.pdf_p1'}, 'histology': {'value': 'adenocarcinoma', 'source': '03_pathology_IHC_addendum.pdf_p1'}, 'primary_site': {'value': 'right upper lobe lung', 'source': '08_med_onc_initial_consult.pdf_p1'}, 'melanoma_subtype': {'value': 'null', 'source': 'null'}, 'breslow_thickness_mm': {'value': 'null', 'source': 'null'}, 'ulceration': {'value': 'null', 'source': 'null'}, 'mitotic_rate_per_mm2': {'value': 'null', 'source': 'null'}, 'tils_present': {'value': 'null', 'source': 'null'}, 'pdl1_estimate': {'value': 'low', 'source': '03_pathology_IHC_addendum.pdf_p1'}, 'lag3_ihc_percent': {'value': 'null', 'source': 'null'}, 'ajcc_stage': {'value': 'IV', 'source': '15_hospital_discharge_summary.pdf_p1'}, 'age_years': {'value': '68', 'source': '15_hospital_discharge_summary.pdf_p1'}, 'ecog': {'value': '1', 'source': '04_foundationone_cdx_report.pdf'}, 'measurable_disease_recist': {'value': 'true', 'source': '10_restaging_ct_progress_note.pdf'}, 'life_expectancy_months': {'value': 'null', 'source': 'null'}, 'prior_systemic_therapy': {'value': 'true', 'source': '15_hospital_discharge_summary.pdf_p1'}, 'prior_anti_pd1': {'value': 'false', 'source': '15_hospital_discharge_summary.pdf_p1'}, 'mutations': [{'EGFR exon 19 deletion': '04_foundationone_cdx_report.pdf'}, {'EGFR T790M': '13_liquid_biopsy_guardant360.pdf_p1'}, {}]}
+2026-04-18 17:42:12,581 [ERROR] neoantigen.llm: retry failed schema=_AggPayload err=12 validation errors for _AggPayload
+mutations.0.gene
+  Field required [type=missing, input_value={'EGFR exon 19 deletion':...tionone_cdx_report.pdf'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.13/v/missing
+mutations.0.ref_aa
+  Field required [type=missing, input_value={'EGFR exon 19 deletion':...tionone_cdx_report.pdf'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.13/v/missing
+mutations.0.position
+  Field required [type=missing, input_value={'EGFR exon 19 deletion':...tionone_cdx_report.pdf'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.13/v/missing
+mutations.0.alt_aa
+  Field required [type=missing, input_value={'EGFR exon 19 deletion':...tionone_cdx_report.pdf'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.13/v/missing
+mutations.1.gene
+  Field required [type=missing, input_value={'EGFR T790M': '13_liquid...psy_guardant360.pdf_p1'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.13/v/missing
+mutations.1.ref_aa
+  Field required [type=missing, input_value={'EGFR T790M': '13_liquid...psy_guardant360.pdf_p1'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.13/v/missing
+mutations.1.position
+  Field required [type=missing, input_value={'EGFR T790M': '13_liquid...psy_guardant360.pdf_p1'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.13/v/missing
+mutations.1.alt_aa
+  Field required [type=missing, input_value={'EGFR T790M': '13_liquid...psy_guardant360.pdf_p1'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.13/v/missing
+mutations.2.gene
+  Field required [type=missing, input_value={}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.13/v/missing
+mutations.2.ref_aa
+  Field required [type=missing, input_value={}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.13/v/missing
+mutations.2.position
+  Field required [type=missing, input_value={}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.13/v/missing
+mutations.2.alt_aa
+  Field required [type=missing, input_value={}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.13/v/missing
+2026-04-18 17:42:12,682 [INFO] neoantigen.llm: stream_with_thinking start user_len=2350 images=0
+2026-04-18 17:42:25,162 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 17:42:25,173 [INFO] neoantigen.llm: stream_with_thinking start user_len=2209 images=0
+2026-04-18 17:42:37,663 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 17:42:37,673 [INFO] neoantigen.llm: stream_with_thinking start user_len=2395 images=0
+2026-04-18 17:42:46,970 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 17:42:46,982 [INFO] neoantigen.llm: stream_with_thinking start user_len=2278 images=0
+2026-04-18 17:42:59,475 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 17:49:22,585 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+2026-04-18 17:49:22,587 [INFO] neoantigen.llm: call schema=_VisionPayload images=1 user_len=260
+2026-04-18 17:49:23,670 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=5704
+2026-04-18 17:49:23,672 [INFO] neoantigen.llm: call schema=_VisionPayload images=1 user_len=260
+2026-04-18 17:49:23,749 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=2599
+2026-04-18 17:49:23,751 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=1114
+2026-04-18 17:49:23,753 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=2081
+2026-04-18 17:49:23,754 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=681
+2026-04-18 17:49:23,756 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=3126
+2026-04-18 17:49:23,757 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=1809
+2026-04-18 17:49:23,758 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=1990
+2026-04-18 17:49:23,759 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=2846
+2026-04-18 17:49:23,761 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=2607
+2026-04-18 17:49:23,763 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=2152
+2026-04-18 17:49:36,155 [INFO] neoantigen.llm: call response schema=_VisionPayload len=4699
+2026-04-18 17:49:36,582 [INFO] neoantigen.llm: call response schema=_VisionPayload len=4177
+2026-04-18 17:49:38,710 [INFO] neoantigen.llm: call response schema=_VisionPayload len=4854
+2026-04-18 17:49:40,991 [INFO] neoantigen.llm: call response schema=_VisionPayload len=5008
+2026-04-18 17:49:41,069 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=2665
+2026-04-18 17:49:43,243 [INFO] neoantigen.llm: call response schema=_VisionPayload len=6214
+2026-04-18 17:49:43,244 [INFO] neoantigen.llm: call schema=_VisionPayload images=1 user_len=260
+2026-04-18 17:49:43,291 [INFO] neoantigen.llm: call response schema=_VisionPayload len=6886
+2026-04-18 17:49:43,294 [INFO] neoantigen.llm: call schema=_VisionPayload images=1 user_len=260
+2026-04-18 17:49:44,676 [INFO] neoantigen.llm: call response schema=_VisionPayload len=6360
+2026-04-18 17:49:44,679 [INFO] neoantigen.llm: call schema=_VisionPayload images=1 user_len=260
+2026-04-18 17:49:46,291 [INFO] neoantigen.llm: call response schema=_VisionPayload len=6896
+2026-04-18 17:49:46,362 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=3360
+2026-04-18 17:49:50,647 [INFO] neoantigen.llm: call response schema=_VisionPayload len=7906
+2026-04-18 17:49:50,650 [INFO] neoantigen.llm: call schema=_VisionPayload images=1 user_len=260
+2026-04-18 17:49:52,670 [INFO] neoantigen.llm: call response schema=_VisionPayload len=9709
+2026-04-18 17:49:52,671 [ERROR] neoantigen.llm: JSON parse failed schema=_VisionPayload raw='Okay, let me try to tackle this. So the user wants me to extract specific fields from the medical document provided. The image is a flowsheet page with infusion details, weight trend graph, and cumulative notes. Let me check each field required.\n\nFirst, page_description: The document is a flowsheet from the UVA Infusion Center, so I should mention it\'s a flowsheet with infusion details and weight trends.\n\nprimary_cancer_type: The cumulative notes mention "NSCLC" (non-small cell lung cancer), but wait, does it specify the type? Wait, in the cumulative notes it says "patient tolerated osimertini'
+2026-04-18 17:49:52,672 [WARNING] neoantigen.llm: retrying schema=_VisionPayload after first-attempt failure:
+  - ValueError: model did not return valid JSON: 'Okay, let me try to tackle this. So the user wants me to extract specific fields from the medical document provided. The image is a flowsheet page with infusion details, weight trend graph, and cumulative notes. Let me check each field required.\n\nFirst, page_description: The document is a flowsheet '
+2026-04-18 17:49:52,738 [INFO] neoantigen.llm: call response schema=_VisionPayload len=9118
+2026-04-18 17:49:52,738 [ERROR] neoantigen.llm: JSON parse failed schema=_VisionPayload raw="Okay, let's tackle this problem. So I need to extract specific data from a medical document page. The user provided a 4-page document, but I'm only looking at the text content here. The task is to fill out a fixed schema with the fields specified, only if they're explicitly stated on this page.\n\nFirst, I'll read through the entire document to see what's mentioned. Starting with the cover sheet, it's a fax cover page with no medical data, so that's probably not relevant. Then the actual medical content starts on page 2. Let's go through each page.\n\nPage 2: It's a progress note dated 04/18/2024."
+2026-04-18 17:49:52,739 [WARNING] neoantigen.llm: retrying schema=_VisionPayload after first-attempt failure:
+  - ValueError: model did not return valid JSON: "Okay, let's tackle this problem. So I need to extract specific data from a medical document page. The user provided a 4-page document, but I'm only looking at the text content here. The task is to fill out a fixed schema with the fields specified, only if they're explicitly stated on this page.\n\nFir"
+2026-04-18 17:49:52,922 [INFO] neoantigen.llm: call response schema=_VisionPayload len=9724
+2026-04-18 17:49:52,923 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=6365
+2026-04-18 17:49:52,935 [INFO] neoantigen.llm: call response schema=_VisionPayload len=9893
+2026-04-18 17:49:52,936 [ERROR] neoantigen.llm: JSON parse failed schema=_VisionPayload raw='Alright, let\'s tackle this problem. The task is to extract specific fields from the provided medical document page. First, I need to carefully read through the text to identify any mentions of the required fields.\n\nStarting with the page description: The document is a medical oncology progress note, so I\'ll set page_description to "Medical oncology progress note - 6-month restaging".\n\nPrimary cancer type: The note mentions "NSCLC" in the context of the patient\'s condition. Specifically, it says "Partial response to osimertinib after 6 months." Osimertinib is a drug used for EGFR-mutant NSCLC, '
+2026-04-18 17:49:52,936 [WARNING] neoantigen.llm: retrying schema=_VisionPayload after first-attempt failure:
+  - ValueError: model did not return valid JSON: "Alright, let's tackle this problem. The task is to extract specific fields from the provided medical document page. First, I need to carefully read through the text to identify any mentions of the required fields.\n\nStarting with the page description: The document is a medical oncology progress note,"
+2026-04-18 17:49:52,950 [ERROR] neoantigen.llm: call HTTP error schema=_VisionPayload model=medix-r1-30b err=BadRequestError: Error code: 400 - {'error': {'message': "This model's maximum context length is 8192 tokens. However, you requested 2500 output tokens and your prompt contains at least 5693 input tokens, for a total of at least 8193 tokens. Please reduce the length of the input prompt or the number of requested output tokens. (parameter=input_tokens, value=5693)", 'type': 'BadRequestError', 'param': 'input_tokens', 'code': 400}}
+2026-04-18 17:49:53,004 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=1527
+2026-04-18 17:49:57,678 [INFO] neoantigen.llm: call response schema=_VisionPayload len=3666
+2026-04-18 17:49:57,764 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=2722
+2026-04-18 17:50:00,501 [INFO] neoantigen.llm: call response schema=_VisionPayload len=5051
+2026-04-18 17:50:00,504 [INFO] neoantigen.llm: call schema=_VisionPayload images=1 user_len=260
+2026-04-18 17:50:03,065 [INFO] neoantigen.llm: call response schema=_VisionPayload len=6943
+2026-04-18 17:50:03,120 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=1776
+2026-04-18 17:50:03,122 [INFO] neoantigen.llm: call response schema=_VisionPayload len=6343
+2026-04-18 17:50:03,275 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=2666
+2026-04-18 17:50:03,277 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=1277
+2026-04-18 17:50:08,340 [INFO] neoantigen.llm: call response schema=_VisionPayload len=5581
+2026-04-18 17:50:08,343 [INFO] neoantigen.llm: call schema=_VisionPayload images=1 user_len=260
+2026-04-18 17:50:09,744 [INFO] neoantigen.llm: call response schema=_VisionPayload len=10322
+2026-04-18 17:50:09,746 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=5500
+2026-04-18 17:50:10,723 [INFO] neoantigen.llm: call response schema=_VisionPayload len=3621
+2026-04-18 17:50:12,332 [INFO] neoantigen.llm: call response schema=_VisionPayload len=8105
+2026-04-18 17:50:15,668 [INFO] neoantigen.llm: call response schema=_VisionPayload len=5433
+2026-04-18 17:50:15,768 [INFO] neoantigen.llm: call response schema=_VisionPayload len=4184
+2026-04-18 17:50:18,819 [INFO] neoantigen.llm: call response schema=_VisionPayload len=8526
+2026-04-18 17:50:18,820 [ERROR] neoantigen.llm: JSON parse failed schema=_VisionPayload raw='Okay, let\'s tackle this. The user provided an image of a medical document, specifically a flowsheet. The task is to extract the specified fields from the page.\n\nFirst, I need to check if the page mentions any of the required fields. The image shows a table with date, cycle, drug dose, admin, weight, ECOG, labs, toxicity, and RN. There\'s also a graph and cumulative notes.\n\nLooking at the fields:\n\n- primary_cancer_type: The cumulative notes mention "NSCLC" (non-small cell lung cancer) and "acquired T790M on ctDNA". So the cancer type should be lung_adenocarcinoma or similar. Wait, NSCLC can incl'
+2026-04-18 17:50:18,820 [ERROR] neoantigen.llm: retry failed schema=_VisionPayload err=model did not return valid JSON: "Okay, let's tackle this. The user provided an image of a medical document, specifically a flowsheet. The task is to extract the specified fields from the page.\n\nFirst, I need to check if the page mentions any of the required fields. The image shows a table with date, cycle, drug dose, admin, weight,"
+2026-04-18 17:50:20,280 [INFO] neoantigen.llm: call response schema=_VisionPayload len=9921
+2026-04-18 17:50:20,281 [ERROR] neoantigen.llm: JSON parse failed schema=_VisionPayload raw="Okay, let's start by looking at the user's request. They want me to extract specific fields from a medical document page, following a strict schema. The key here is to only include what's explicitly stated on the page and not infer anything. The user mentioned that previous attempts had errors, so I need to be careful.\n\nFirst, I'll go through the page text provided. The document is a fax cover sheet and progress notes from Blue Ridge Oncology. Let's break down the information.\n\nStarting with page 2 of 4: There's a progress note for a patient named Margret O'Brien. The HPI states she's a 67-yea"
+2026-04-18 17:50:20,281 [ERROR] neoantigen.llm: retry failed schema=_VisionPayload err=model did not return valid JSON: "Okay, let's start by looking at the user's request. They want me to extract specific fields from a medical document page, following a strict schema. The key here is to only include what's explicitly stated on the page and not infer anything. The user mentioned that previous attempts had errors, so I"
+2026-04-18 17:50:20,419 [INFO] neoantigen.llm: call response schema=_VisionPayload len=9563
+2026-04-18 17:50:20,419 [ERROR] neoantigen.llm: JSON parse failed schema=_VisionPayload raw='Okay, let\'s tackle this. The user wants me to extract specific fields from the provided medical document page. The document is a progress note for a patient, Margaret O\'Brien, who\'s on osimertinib for NSCLC.\n\nFirst, I need to check each required field. Let\'s go through them one by one.\n\nPrimary cancer type: The note mentions "lung" in the context of the RUL primary lesion. The initial mention says "RUL primary" which refers to the right upper lobe of the lung, so the cancer type is lung adenocarcinoma. Wait, the histology here isn\'t explicitly stated as adenocarcinoma, but in the context, NSCL'
+2026-04-18 17:50:20,419 [ERROR] neoantigen.llm: retry failed schema=_VisionPayload err=model did not return valid JSON: "Okay, let's tackle this. The user wants me to extract specific fields from the provided medical document page. The document is a progress note for a patient, Margaret O'Brien, who's on osimertinib for NSCLC.\n\nFirst, I need to check each required field. Let's go through them one by one.\n\nPrimary canc"
+2026-04-18 17:50:20,421 [INFO] neoantigen.llm: call schema=_VisionPayload images=1 user_len=2746
+2026-04-18 17:50:25,369 [INFO] neoantigen.llm: call response schema=_VisionPayload len=8185
+2026-04-18 17:50:28,045 [INFO] neoantigen.llm: call response schema=_VisionPayload len=9752
+2026-04-18 17:50:28,046 [ERROR] neoantigen.llm: JSON parse failed schema=_VisionPayload raw='Okay, let\'s start by analyzing the given page. The user provided a medical document from Central Virginia Imaging Center, specifically an MRI report of a brain scan. I need to extract the required fields based on the instructions.\n\nFirst, the page description. Since it\'s an MRI report, the description should be something like "Imaging report - MRI brain focusing on metastasis evaluation." But I need to make sure it\'s accurate. The findings mention "NSCLC, staging. R/O brain mets," so that\'s the context.\n\nLooking at the fields:\n\nprimary_cancer_type: The history says "NSCLC," which is Non-Small '
+2026-04-18 17:50:28,046 [WARNING] neoantigen.llm: retrying schema=_VisionPayload after first-attempt failure:
+  - ValueError: model did not return valid JSON: "Okay, let's start by analyzing the given page. The user provided a medical document from Central Virginia Imaging Center, specifically an MRI report of a brain scan. I need to extract the required fields based on the instructions.\n\nFirst, the page description. Since it's an MRI report, the descripti"
+2026-04-18 17:50:29,382 [INFO] neoantigen.llm: call response schema=_VisionPayload len=8192
+2026-04-18 17:50:31,173 [INFO] neoantigen.llm: call response schema=_VisionPayload len=9813
+2026-04-18 17:50:31,174 [ERROR] neoantigen.llm: JSON parse failed schema=_VisionPayload raw='Okay, let\'s start by analyzing the given pathology report. The task is to extract specific fields into a JSON object. Let\'s go through each field one by one.\n\nFirst, the primary_cancer_type. The report mentions "primary pulmonary adenocarcinoma" in the Interpretive Comment section. The histology is listed as "adenocarcinoma" under the Immunohistochemistry marker Napsin A. So the primary_cancer_type should be "lung_adenocarcinoma" because it\'s a lung cancer.\n\nNext, histology. The report says "try to specify histology" but in the IHC part, Napsin A is positive which is consistent with adenocarci'
+2026-04-18 17:50:31,174 [WARNING] neoantigen.llm: retrying schema=_VisionPayload after first-attempt failure:
+  - ValueError: model did not return valid JSON: 'Okay, let\'s start by analyzing the given pathology report. The task is to extract specific fields into a JSON object. Let\'s go through each field one by one.\n\nFirst, the primary_cancer_type. The report mentions "primary pulmonary adenocarcinoma" in the Interpretive Comment section. The histology is '
+2026-04-18 17:50:35,473 [INFO] neoantigen.llm: call response schema=_VisionPayload len=7618
+2026-04-18 17:50:43,819 [INFO] neoantigen.llm: call response schema=_VisionPayload len=6553
+2026-04-18 17:50:44,747 [INFO] neoantigen.llm: call response schema=_VisionPayload len=9710
+2026-04-18 17:50:44,748 [ERROR] neoantigen.llm: JSON parse failed schema=_VisionPayload raw='Okay, let\'s see. The user provided a medical document, specifically an MRI report for a patient with NSCLC. The task is to extract specific fields according to the schema.\n\nFirst, I need to check each field. Let\'s go step by step.\n\nPage description: It\'s an MRI Brain with contrast, so the description would be something like "MRI Brain report - NSCLC staging". Wait, the example mentioned "MRI Brain W and W/O contrast". So maybe "MRI brain with and without contrast imaging".\n\nPrimary cancer type: The history says "NSCLC, staging. R/O brain mets." So NSCLC is non-small cell lung cancer. The schem'
+2026-04-18 17:50:44,748 [ERROR] neoantigen.llm: retry failed schema=_VisionPayload err=model did not return valid JSON: "Okay, let's see. The user provided a medical document, specifically an MRI report for a patient with NSCLC. The task is to extract specific fields according to the schema.\n\nFirst, I need to check each field. Let's go step by step.\n\nPage description: It's an MRI Brain with contrast, so the descriptio"
+2026-04-18 17:50:44,750 [INFO] neoantigen.llm: call schema=_VisionPayload images=1 user_len=1915
+2026-04-18 17:50:55,661 [INFO] neoantigen.llm: call response schema=_VisionPayload len=7818
+2026-04-18 17:50:55,663 [INFO] neoantigen.llm: call schema=_AggPayload images=0 user_len=9480
+2026-04-18 17:51:07,243 [INFO] neoantigen.llm: call response schema=_AggPayload len=8250
+2026-04-18 17:51:07,351 [INFO] neoantigen.llm: stream_with_thinking start user_len=2383 images=0
+2026-04-18 17:51:20,016 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 17:51:20,039 [INFO] neoantigen.llm: stream_with_thinking start user_len=2325 images=0
+2026-04-18 17:51:32,594 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 17:51:32,607 [INFO] neoantigen.llm: stream_with_thinking start user_len=2382 images=0
+2026-04-18 17:51:45,178 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 17:51:45,191 [INFO] neoantigen.llm: stream_with_thinking start user_len=2253 images=0
+2026-04-18 17:51:57,761 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 17:53:45,817 [INFO] neoantigen.llm: call schema=PatientGuide images=0 user_len=2628
+2026-04-18 17:53:45,819 [INFO] neoantigen.llm: call schema=PatientGuide images=0 user_len=2628
+2026-04-18 17:53:54,486 [INFO] neoantigen.llm: call response schema=PatientGuide len=6358
+2026-04-18 17:53:57,841 [INFO] neoantigen.llm: call response schema=PatientGuide len=9544
+2026-04-18 17:58:50,780 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+2026-04-18 17:58:50,783 [INFO] neoantigen.llm: call schema=_VisionPayload images=1 user_len=260
+2026-04-18 17:58:51,099 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=2599
+2026-04-18 17:58:51,112 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=1114
+2026-04-18 17:58:51,115 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=2081
+2026-04-18 17:58:51,132 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=681
+2026-04-18 17:58:51,134 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=3126
+2026-04-18 17:58:51,135 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=1809
+2026-04-18 17:58:51,136 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=1990
+2026-04-18 17:58:51,138 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=3360
+2026-04-18 17:58:51,139 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=1527
+2026-04-18 17:58:51,140 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=2666
+2026-04-18 17:58:51,141 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=1277
+2026-04-18 17:58:56,258 [INFO] neoantigen.llm: call response schema=_VisionPayload len=1599
+2026-04-18 17:59:01,026 [INFO] neoantigen.llm: call response schema=_VisionPayload len=3716
+2026-04-18 17:59:01,512 [INFO] neoantigen.llm: call response schema=_VisionPayload len=3506
+2026-04-18 17:59:04,265 [INFO] neoantigen.llm: call response schema=_VisionPayload len=4027
+2026-04-18 17:59:04,680 [INFO] neoantigen.llm: call response schema=_VisionPayload len=4088
+2026-04-18 17:59:04,922 [INFO] neoantigen.llm: call response schema=_VisionPayload len=4308
+2026-04-18 17:59:06,635 [INFO] neoantigen.llm: call response schema=_VisionPayload len=5282
+2026-04-18 17:59:10,413 [INFO] neoantigen.llm: call response schema=_VisionPayload len=8151
+2026-04-18 17:59:13,854 [INFO] neoantigen.llm: call response schema=_VisionPayload len=8663
+2026-04-18 17:59:14,369 [INFO] neoantigen.llm: call response schema=_VisionPayload len=8116
+2026-04-18 17:59:14,654 [INFO] neoantigen.llm: call response schema=_VisionPayload len=10032
+2026-04-18 17:59:15,156 [INFO] neoantigen.llm: call response schema=_VisionPayload len=10820
+2026-04-18 17:59:15,156 [ERROR] neoantigen.llm: JSON parse failed schema=_VisionPayload raw='Okay, let\'s tackle this problem. I need to extract specific fields from the given medical document page. First, I\'ll read through the entire page to understand what\'s provided.\n\nThe page is a registration/demographics form from Riverside Regional Medical Center. It lists patient info, registration details, insurance, reason for visit, etc. The main sections here are Patient Information, Contact Information, Insurance, and Reason for Visit.\n\nNow, looking at the target fields. Let\'s go through each one.\n\nPrimary_cancer_type: The document mentions "right upper lobe pulmonary mass". Pulmonary usua'
+2026-04-18 17:59:15,156 [WARNING] neoantigen.llm: retrying schema=_VisionPayload after first-attempt failure:
+  - ValueError: model did not return valid JSON: "Okay, let's tackle this problem. I need to extract specific fields from the given medical document page. First, I'll read through the entire page to understand what's provided.\n\nThe page is a registration/demographics form from Riverside Regional Medical Center. It lists patient info, registration d"
+2026-04-18 18:00:05,208 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+2026-04-18 18:00:05,210 [INFO] neoantigen.llm: call schema=_VisionPayload images=1 user_len=260
+2026-04-18 18:00:05,503 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=2599
+2026-04-18 18:00:05,516 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=1114
+2026-04-18 18:00:05,518 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=2081
+2026-04-18 18:00:05,533 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=681
+2026-04-18 18:00:05,535 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=3126
+2026-04-18 18:00:05,536 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=1809
+2026-04-18 18:00:05,537 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=1990
+2026-04-18 18:00:05,539 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=3360
+2026-04-18 18:00:05,540 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=1527
+2026-04-18 18:00:05,541 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=2666
+2026-04-18 18:00:05,542 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=1277
+2026-04-18 18:00:12,502 [INFO] neoantigen.llm: call response schema=_VisionPayload len=2475
+2026-04-18 18:00:15,943 [INFO] neoantigen.llm: call response schema=_VisionPayload len=3664
+2026-04-18 18:00:16,047 [INFO] neoantigen.llm: call response schema=_VisionPayload len=3570
+2026-04-18 18:00:21,291 [INFO] neoantigen.llm: call response schema=_VisionPayload len=5013
+2026-04-18 18:00:22,392 [INFO] neoantigen.llm: call response schema=_VisionPayload len=5365
+2026-04-18 18:00:22,755 [INFO] neoantigen.llm: call response schema=_VisionPayload len=5670
+2026-04-18 18:00:22,827 [INFO] neoantigen.llm: call response schema=_VisionPayload len=6451
+2026-04-18 18:00:24,172 [INFO] neoantigen.llm: call response schema=_VisionPayload len=7611
+2026-04-18 18:00:24,414 [INFO] neoantigen.llm: call response schema=_VisionPayload len=6940
+2026-04-18 18:00:29,436 [INFO] neoantigen.llm: call response schema=_VisionPayload len=9017
+2026-04-18 18:00:29,909 [INFO] neoantigen.llm: call response schema=_VisionPayload len=9759
+2026-04-18 18:00:29,921 [INFO] neoantigen.llm: call response schema=_VisionPayload len=10011
+2026-04-18 18:00:29,922 [ERROR] neoantigen.llm: JSON parse failed schema=_VisionPayload raw='Okay, let\'s tackle this. The task is to extract specific fields from the provided medical document. First, I need to carefully read through the page text to identify any relevant information.\n\nStarting with the page description: It\'s a discharge summary for a patient with lung cancer. The key parts mention Stage IV non-small cell lung cancer (adenocarcinoma), so the page description should reflect that.\n\nPrimary cancer type: The document states "Stage IV non-small cell lung cancer (adenocarcinoma, EGFR exon 19 del)". So the primary cancer type is "lung_adenocarcinoma".\n\nHistology: It\'s specifi'
+2026-04-18 18:00:29,922 [WARNING] neoantigen.llm: retrying schema=_VisionPayload after first-attempt failure:
+  - ValueError: model did not return valid JSON: "Okay, let's tackle this. The task is to extract specific fields from the provided medical document. First, I need to carefully read through the page text to identify any relevant information.\n\nStarting with the page description: It's a discharge summary for a patient with lung cancer. The key parts "
+2026-04-18 18:00:42,606 [INFO] neoantigen.llm: call response schema=_VisionPayload len=9490
+2026-04-18 18:00:42,608 [INFO] neoantigen.llm: call schema=_AggPayload images=0 user_len=4325
+2026-04-18 18:00:56,314 [INFO] neoantigen.llm: call response schema=_AggPayload len=10041
+2026-04-18 18:00:56,315 [ERROR] neoantigen.llm: validation failed schema=_AggPayload err=8 validation errors for _AggPayload
+melanoma_subtype.source_filename
+  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]
+    For further information visit https://errors.pydantic.dev/2.13/v/string_type
+breslow_thickness_mm.source_filename
+  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]
+    For further information visit https://errors.pydantic.dev/2.13/v/string_type
+ulceration.source_filename
+  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]
+    For further information visit https://errors.pydantic.dev/2.13/v/string_type
+mitotic_rate_per_mm2.source_filename
+  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]
+    For further information visit https://errors.pydantic.dev/2.13/v/string_type
+tils_present.source_filename
+  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]
+    For further information visit https://errors.pydantic.dev/2.13/v/string_type
+pdl1_estimate.source_filename
+  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]
+    For further information visit https://errors.pydantic.dev/2.13/v/string_type
+lag3_ihc_percent.source_filename
+  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]
+    For further information visit https://errors.pydantic.dev/2.13/v/string_type
+life_expectancy_months.source_filename
+  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]
+    For further information visit https://errors.pydantic.dev/2.13/v/string_type data={'primary_cancer_type': {'value': 'lung_adenocarcinoma', 'source_filename': '02_pathology_initial_AMENDED.pdf', 'source_page': 1}, 'histology': {'value': 'adenocarcinoma', 'source_filename': '02_pathology_initial_AMENDED.pdf', 'source_page': 1}, 'primary_site': {'value': 'right upper lobe lung', 'source_filename': '02_pathology_initial_AMENDED.pdf', 'source_page': 1}, 'melanoma_subtype': {'value': None, 'source_filename': None, 'source_page': None}, 'breslow_thickness_mm': {'value': None, 'source_filename': None, 'source_page': None}, 'ulceration': {'value': None, 'source_filename': None, 'source_page': None}, 'mitotic_rate_per_mm2': {'value': None, 'source_filename': None, 'source_page': None}, 'tils_present': {'value': None, 'source_filename': None, 'source_page': None}, 'pdl1_estimate': {'value': None, 'source_filename': None, 'source_page': None}, 'lag3_ihc_percent': {'value': None, 'source_filename': None, 'source_page': None}, 'ajcc_stage': {'value': 'IIIB', 'source_filename': '02_pathology_initial_AMENDED.pdf', 'source_page': 1}, 'age_years': {'value': '66', 'source_filename': '02_pathology_initial_AMENDED.pdf', 'source_page': 1}, 'ecog': {'value': '1', 'source_filename': '08_med_onc_initial_consult.pdf', 'source_page': 1}, 'measurable_disease_recist': {'value': 'true', 'source_filename': '08_med_onc_initial_consult.pdf', 'source_page': 1}, 'life_expectancy_months': {'value': None, 'source_filename': None, 'source_page': None}, 'prior_systemic_therapy': {'value': 'true', 'source_filename': '09_chemo_infusion_flowsheet.pdf', 'source_page': 2}, 'prior_anti_pd1': {'value': 'false', 'source_filename': '08_med_onc_initial_consult.pdf', 'source_page': 1}, 'mutations': [{'value': 'EGFR p.E746_A750del', 'source_filename': '04_foundationone_cdx_report.pdf', 'source_page': 1}, {'value': 'EGFR p.T790M', 'source_filename': '13_liquid_biopsy_guardant360.pdf', 'source_page': 1}], 'overall_notes': 'Patient started 1L osimertinib based on EGFR exon 19 deletion (tissue). Acquired T790M on ctDNA after progression with brain metastases. Transitioned to 2L amivantamab + lazertinib. Stage IIIB lung adenocarcinoma with no prior systemic therapy before 1L osimertinib. PD-L1 status pending.', 'conflicts': ['prior_systemic_therapy: initial consult (08_med_onc_initial_consult.pdf, page 1) says False vs chemo flowsheet (09_chemo_infusion_flowsheet.pdf, page 2) says True - used chemo flowsheet (most recent clinical note)']}
+2026-04-18 18:00:56,315 [WARNING] neoantigen.llm: retrying schema=_AggPayload after first-attempt failure:
+  - melanoma_subtype.source_filename: Input should be a valid string (got: None)
+  - breslow_thickness_mm.source_filename: Input should be a valid string (got: None)
+  - ulceration.source_filename: Input should be a valid string (got: None)
+  - mitotic_rate_per_mm2.source_filename: Input should be a valid string (got: None)
+  - tils_present.source_filename: Input should be a valid string (got: None)
+  - pdl1_estimate.source_filename: Input should be a valid string (got: None)
+  - lag3_ihc_percent.source_filename: Input should be a valid string (got: None)
+  - life_expectancy_months.source_filename: Input should be a valid string (got: None)
+2026-04-18 18:01:14,159 [INFO] neoantigen.llm: call response schema=_AggPayload len=16146
+2026-04-18 18:01:14,160 [ERROR] neoantigen.llm: JSON parse failed schema=_AggPayload raw='Okay, let\'s tackle this problem step by step. The user is an oncology chart reconciler, and they provided multiple pages from different documents. The goal is to create a single canonical JSON record by selecting the most authoritative values for each field based on the given priority tiers.\n\nFirst, I need to focus on the priority tier 1 fields: primary_cancer_type, histology, and primary_site. These are crucial and must be accurate. Looking through all the documents, all of them consistently list "lung_adenocarcinoma" for primary_cancer_type, "adenocarcinoma" for histology, and "right upper l'
+2026-04-18 18:01:14,160 [ERROR] neoantigen.llm: retry failed schema=_AggPayload err=model did not return valid JSON: "Okay, let's tackle this problem step by step. The user is an oncology chart reconciler, and they provided multiple pages from different documents. The goal is to create a single canonical JSON record by selecting the most authoritative values for each field based on the given priority tiers.\n\nFirst,"
+2026-04-18 18:01:14,268 [INFO] neoantigen.llm: stream_with_thinking start user_len=2518 images=0 prefill_len=15
+2026-04-18 18:01:33,907 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 18:01:33,924 [INFO] neoantigen.llm: stream_with_thinking start user_len=2321 images=0 prefill_len=15
+2026-04-18 18:02:39,836 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+2026-04-18 18:02:39,838 [INFO] neoantigen.llm: call schema=_VisionPayload images=1 user_len=260
+2026-04-18 18:02:40,126 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=2599
+2026-04-18 18:02:40,139 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=1114
+2026-04-18 18:02:40,151 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=2081
+2026-04-18 18:02:40,154 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=681
+2026-04-18 18:02:40,167 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=3126
+2026-04-18 18:02:40,168 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=1809
+2026-04-18 18:02:40,170 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=1990
+2026-04-18 18:02:40,171 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=3360
+2026-04-18 18:02:40,172 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=1527
+2026-04-18 18:02:40,173 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=2666
+2026-04-18 18:02:40,174 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=1277
+2026-04-18 18:02:48,253 [INFO] neoantigen.llm: call response schema=_VisionPayload len=2688
+2026-04-18 18:02:49,070 [INFO] neoantigen.llm: call response schema=_VisionPayload len=3194
+2026-04-18 18:02:51,937 [INFO] neoantigen.llm: call response schema=_VisionPayload len=3753
+2026-04-18 18:02:53,154 [INFO] neoantigen.llm: call response schema=_VisionPayload len=4902
+2026-04-18 18:02:56,648 [INFO] neoantigen.llm: call response schema=_VisionPayload len=5864
+2026-04-18 18:02:56,795 [INFO] neoantigen.llm: call response schema=_VisionPayload len=5486
+2026-04-18 18:02:57,223 [INFO] neoantigen.llm: call response schema=_VisionPayload len=6210
+2026-04-18 18:02:59,106 [INFO] neoantigen.llm: call response schema=_VisionPayload len=6420
+2026-04-18 18:03:01,393 [INFO] neoantigen.llm: call response schema=_VisionPayload len=6850
+2026-04-18 18:03:02,586 [INFO] neoantigen.llm: call response schema=_VisionPayload len=9937
+2026-04-18 18:03:03,213 [INFO] neoantigen.llm: call response schema=_VisionPayload len=8138
+2026-04-18 18:03:03,738 [INFO] neoantigen.llm: call response schema=_VisionPayload len=8823
+2026-04-18 18:03:03,740 [INFO] neoantigen.llm: call schema=_AggPayload images=0 user_len=5192
+2026-04-18 18:03:21,581 [INFO] neoantigen.llm: call response schema=_AggPayload len=12859
+2026-04-18 18:03:21,670 [INFO] neoantigen.llm: stream_with_thinking start user_len=2486 images=0 prefill_len=15
+2026-04-18 18:03:44,638 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 18:03:44,659 [INFO] neoantigen.llm: stream_with_thinking start user_len=2254 images=0 prefill_len=15
+2026-04-18 18:04:11,391 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 18:04:11,403 [INFO] neoantigen.llm: stream_with_thinking start user_len=2409 images=0 prefill_len=15
+2026-04-18 18:05:44,716 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+2026-04-18 18:05:44,718 [INFO] neoantigen.llm: call schema=_VisionPayload images=1 user_len=260
+2026-04-18 18:05:45,028 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=2599
+2026-04-18 18:05:45,043 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=1114
+2026-04-18 18:05:45,045 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=2081
+2026-04-18 18:05:45,057 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=681
+2026-04-18 18:05:45,070 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=3126
+2026-04-18 18:05:45,072 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=1809
+2026-04-18 18:05:45,074 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=1990
+2026-04-18 18:05:45,075 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=3360
+2026-04-18 18:05:45,077 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=1527
+2026-04-18 18:05:45,078 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=2666
+2026-04-18 18:05:45,079 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=1277
+2026-04-18 18:05:49,834 [INFO] neoantigen.llm: call response schema=_VisionPayload len=1553
+2026-04-18 18:05:55,279 [INFO] neoantigen.llm: call response schema=_VisionPayload len=3791
+2026-04-18 18:05:56,258 [INFO] neoantigen.llm: call response schema=_VisionPayload len=3526
+2026-04-18 18:05:57,998 [INFO] neoantigen.llm: call response schema=_VisionPayload len=3891
+2026-04-18 18:05:58,336 [INFO] neoantigen.llm: call response schema=_VisionPayload len=5014
+2026-04-18 18:06:04,960 [INFO] neoantigen.llm: call response schema=_VisionPayload len=7060
+2026-04-18 18:06:05,151 [INFO] neoantigen.llm: call response schema=_VisionPayload len=7815
+2026-04-18 18:06:05,169 [INFO] neoantigen.llm: call response schema=_VisionPayload len=7053
+2026-04-18 18:06:05,818 [INFO] neoantigen.llm: call response schema=_VisionPayload len=7884
+2026-04-18 18:06:09,589 [INFO] neoantigen.llm: call response schema=_VisionPayload len=8897
+2026-04-18 18:06:09,590 [ERROR] neoantigen.llm: JSON parse failed schema=_VisionPayload raw='Okay, I need to extract the information from the provided medical document. Let\'s start by going through the page content carefully.\n\nFirst, the patient is diagnosed with non-small cell lung adenocarcinoma, metastatic. So the primary_cancer_type should be \'lung_adenocarcinoma\' and histology is \'adenocarcinoma\'. The primary site is mentioned as "Non-small cell lung adenocarcinoma", but more specifically, it says "Non-small cell lung adenocarcinoma, metastatic". The primary site would be the initial site, but since it\'s metastatic, maybe just "lung" or "lung adenocarcinoma" case. Wait, looking a'
+2026-04-18 18:06:09,590 [WARNING] neoantigen.llm: retrying schema=_VisionPayload after first-attempt failure:
+  - ValueError: model did not return valid JSON: "Okay, I need to extract the information from the provided medical document. Let's start by going through the page content carefully.\n\nFirst, the patient is diagnosed with non-small cell lung adenocarcinoma, metastatic. So the primary_cancer_type should be 'lung_adenocarcinoma' and histology is 'aden"
+2026-04-18 18:06:09,602 [INFO] neoantigen.llm: call response schema=_VisionPayload len=9570
+2026-04-18 18:06:09,602 [ERROR] neoantigen.llm: JSON parse failed schema=_VisionPayload raw="Okay, let's start by analyzing the page text provided. The user is a medical document, specifically a flowsheet page from a patient's record. The main task is to extract information based on the specified fields in the schema.\n\nFirst, I'll check the page description. The text is a flowsheet with infusion details, drug dosages, dates, ECOG scores, and some notes. There's no pathology or molecular data mentioned here. The page includes cycles, drugs like amivantamab and lazertinib, ECOG scores, weight, and toxicity notes. Since it's a flowsheet, the page description should reflect that.\n\nNext, t"
+2026-04-18 18:06:09,602 [WARNING] neoantigen.llm: retrying schema=_VisionPayload after first-attempt failure:
+  - ValueError: model did not return valid JSON: "Okay, let's start by analyzing the page text provided. The user is a medical document, specifically a flowsheet page from a patient's record. The main task is to extract information based on the specified fields in the schema.\n\nFirst, I'll check the page description. The text is a flowsheet with inf"
+2026-04-18 18:06:09,603 [INFO] neoantigen.llm: call response schema=_VisionPayload len=10192
+2026-04-18 18:06:24,865 [INFO] neoantigen.llm: call response schema=_VisionPayload len=9306
+2026-04-18 18:06:24,865 [ERROR] neoantigen.llm: JSON parse failed schema=_VisionPayload raw='Okay, let\'s tackle this. The user provided a medical document, specifically a Guardant360 CDx report for a patient with non-small cell lung adenocarcinoma. The task is to extract the specified fields into a JSON.\n\nFirst, I need to go through each field. Let\'s start with primary_cancer_type. The document says "Dx: Non-small cell lung adenocarcinoma, metastatic". So the cancer type here is lung adenocarcinoma. The schema uses snake_case, so it\'s "lung_adenocarcinoma".\n\nNext, histology. The same line mentions "Non-small cell lung adenocarcinoma", so histology is "adenocarcinoma". Wait, the exampl'
+2026-04-18 18:06:24,866 [ERROR] neoantigen.llm: retry failed schema=_VisionPayload err=model did not return valid JSON: "Okay, let's tackle this. The user provided a medical document, specifically a Guardant360 CDx report for a patient with non-small cell lung adenocarcinoma. The task is to extract the specified fields into a JSON.\n\nFirst, I need to go through each field. Let's start with primary_cancer_type. The docu"
+2026-04-18 18:06:24,867 [INFO] neoantigen.llm: call schema=_VisionPayload images=1 user_len=2219
+2026-04-18 18:06:24,878 [INFO] neoantigen.llm: call response schema=_VisionPayload len=9820
+2026-04-18 18:06:24,879 [ERROR] neoantigen.llm: JSON parse failed schema=_VisionPayload raw="Okay, let's see. The user is asking me to extract specific fields from a medical document page, which is a flowsheet here. The task is to output a JSON with the exact fields listed, and if any info isn't present, they should be null.\n\nFirst, I need to look at the page text. The page is a flowsheet showing infusion treatments. It mentions drug names like Amivantamab and Lazertinib, dates, doses, ECOG scores, etc. The key here is to check which of the required fields are present.\n\nThe primary_cancer_type: The problem is that the page describes a treatment for non-small cell lung cancer (NSCLC), "
+2026-04-18 18:06:24,879 [ERROR] neoantigen.llm: retry failed schema=_VisionPayload err=model did not return valid JSON: "Okay, let's see. The user is asking me to extract specific fields from a medical document page, which is a flowsheet here. The task is to output a JSON with the exact fields listed, and if any info isn't present, they should be null.\n\nFirst, I need to look at the page text. The page is a flowsheet s"
+2026-04-18 18:06:24,880 [INFO] neoantigen.llm: call schema=_VisionPayload images=1 user_len=1252
+2026-04-18 18:06:32,609 [INFO] neoantigen.llm: call response schema=_VisionPayload len=4192
+2026-04-18 18:06:39,185 [INFO] neoantigen.llm: call response schema=_VisionPayload len=8997
+2026-04-18 18:06:39,187 [INFO] neoantigen.llm: call schema=_AggPayload images=0 user_len=3898
+2026-04-18 18:06:54,954 [INFO] neoantigen.llm: call response schema=_AggPayload len=10823
+2026-04-18 18:06:54,955 [ERROR] neoantigen.llm: validation failed schema=_AggPayload err=9 validation errors for _AggPayload
+melanoma_subtype.source_filename
+  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]
+    For further information visit https://errors.pydantic.dev/2.13/v/string_type
+breslow_thickness_mm.source_filename
+  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]
+    For further information visit https://errors.pydantic.dev/2.13/v/string_type
+ulceration.source_filename
+  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]
+    For further information visit https://errors.pydantic.dev/2.13/v/string_type
+mitotic_rate_per_mm2.source_filename
+  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]
+    For further information visit https://errors.pydantic.dev/2.13/v/string_type
+tils_present.source_filename
+  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]
+    For further information visit https://errors.pydantic.dev/2.13/v/string_type
+pdl1_estimate.source_filename
+  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]
+    For further information visit https://errors.pydantic.dev/2.13/v/string_type
+lag3_ihc_percent.source_filename
+  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]
+    For further information visit https://errors.pydantic.dev/2.13/v/string_type
+measurable_disease_recist.source_filename
+  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]
+    For further information visit https://errors.pydantic.dev/2.13/v/string_type
+life_expectancy_months.source_filename
+  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]
+    For further information visit https://errors.pydantic.dev/2.13/v/string_type data={'primary_cancer_type': {'value': 'lung_adenocarcinoma', 'source_filename': '09_chemo_infusion_flowsheet.pdf', 'source_page': 1}, 'histology': {'value': 'adenocarcinoma', 'source_filename': '09_chemo_infusion_flowsheet.pdf', 'source_page': 1}, 'primary_site': {'value': 'right upper lobe lung', 'source_filename': '08_med_onc_initial_consult.pdf', 'source_page': 1}, 'melanoma_subtype': {'value': 'unknown', 'source_filename': None, 'source_page': None}, 'breslow_thickness_mm': {'value': None, 'source_filename': None, 'source_page': None}, 'ulceration': {'value': None, 'source_filename': None, 'source_page': None}, 'mitotic_rate_per_mm2': {'value': None, 'source_filename': None, 'source_page': None}, 'tils_present': {'value': None, 'source_filename': None, 'source_page': None}, 'pdl1_estimate': {'value': None, 'source_filename': None, 'source_page': None}, 'lag3_ihc_percent': {'value': None, 'source_filename': None, 'source_page': None}, 'ajcc_stage': {'value': 'IV', 'source_filename': '15_hospital_discharge_summary.pdf', 'source_page': 1}, 'age_years': {'value': '68', 'source_filename': '15_hospital_discharge_summary.pdf', 'source_page': 1}, 'ecog': {'value': '1', 'source_filename': '09_chemo_infusion_flowsheet.pdf', 'source_page': 1}, 'measurable_disease_recist': {'value': None, 'source_filename': None, 'source_page': None}, 'life_expectancy_months': {'value': None, 'source_filename': None, 'source_page': None}, 'prior_systemic_therapy': {'value': 'true', 'source_filename': '09_chemo_infusion_flowsheet.pdf', 'source_page': 1}, 'prior_anti_pd1': {'value': 'false', 'source_filename': '15_hospital_discharge_summary.pdf', 'source_page': 1}, 'mutations': [{'value': 'EGFR p.E746_A750del (exon 19 del)', 'source_filename': '04_foundationone_cdx_report.pdf', 'source_page': 1}, {'value': 'EGFR p.T790M (c.2369C>T)', 'source_filename': '13_liquid_biopsy_guardant360.pdf', 'source_page': 1}, {'value': 'TP53 p.R175H (c.524G>A)', 'source_filename': '13_liquid_biopsy_guardant360.pdf', 'source_page': 1}, {'value': 'MET amplification (CN ~5.8)', 'source_filename': '13_liquid_biopsy_guardant360.pdf', 'source_page': 1}, {'value': 'CDKN2A/B loss', 'source_filename': '04_foundationone_cdx_report.pdf', 'source_page': 1}], 'overall_notes': 'Patient had initial diagnosis of lung adenocarcinoma (right upper lobe). Initial staging: IIIB. Acquired T790M mutation and progressed to Stage IV with CNS metastases. Currently on 2L amivantamab + lazertinib for 26 months. Age: 68.', 'conflicts': ['ajcc_stage: IIIB (08_med_onc_initial_consult.pdf p1, 09_chemo_infusion_flowsheet.pdf p1) vs IV (15_hospital_discharge_summary.pdf p1) - used most recent discharge summary.']}
+2026-04-18 18:06:54,955 [WARNING] neoantigen.llm: retrying schema=_AggPayload after first-attempt failure:
+  - melanoma_subtype.source_filename: Input should be a valid string (got: None)
+  - breslow_thickness_mm.source_filename: Input should be a valid string (got: None)
+  - ulceration.source_filename: Input should be a valid string (got: None)
+  - mitotic_rate_per_mm2.source_filename: Input should be a valid string (got: None)
+  - tils_present.source_filename: Input should be a valid string (got: None)
+  - pdl1_estimate.source_filename: Input should be a valid string (got: None)
+  - lag3_ihc_percent.source_filename: Input should be a valid string (got: None)
+  - measurable_disease_recist.source_filename: Input should be a valid string (got: None)
+  - life_expectancy_months.source_filename: Input should be a valid string (got: None)
+2026-04-18 18:07:12,784 [INFO] neoantigen.llm: call response schema=_AggPayload len=12989
+2026-04-18 18:07:12,785 [ERROR] neoantigen.llm: JSON parse failed schema=_AggPayload raw='Okay, let\'s tackle this problem. The user is asking me to reconcile the per-page findings from the provided documents into a single JSON record. They\'ve specified the fields and priority tiers for each. First, I need to check where each field is mentioned across the different pages and pages.\n\nLooking at the files, the patient seems to have lung adenocarcinoma, since multiple documents mention that. Primary cancer type is "lung_adenocarcinoma" as per the priority tier 1. Let\'s confirm:\n\n- File 09 mentions primary_cancer_type as lung_adenocarcinoma, histology as adenocarcinoma, primary_site as '
+2026-04-18 18:07:12,785 [ERROR] neoantigen.llm: retry failed schema=_AggPayload err=model did not return valid JSON: "Okay, let's tackle this problem. The user is asking me to reconcile the per-page findings from the provided documents into a single JSON record. They've specified the fields and priority tiers for each. First, I need to check where each field is mentioned across the different pages and pages.\n\nLooki"
+2026-04-18 18:07:12,882 [INFO] neoantigen.llm: stream_with_thinking start user_len=2506 images=0 prefill_len=15
+2026-04-18 18:07:37,950 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 18:07:37,976 [INFO] neoantigen.llm: stream_with_thinking start user_len=2446 images=0 prefill_len=15
+2026-04-18 18:11:34,029 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+2026-04-18 18:11:34,032 [INFO] neoantigen.llm: call schema=_VisionPayload images=1 user_len=260
+2026-04-18 18:11:34,484 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=2599
+2026-04-18 18:11:34,502 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=1114
+2026-04-18 18:11:34,518 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=2081
+2026-04-18 18:11:34,519 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=681
+2026-04-18 18:11:34,521 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=3126
+2026-04-18 18:11:34,522 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=1809
+2026-04-18 18:11:34,523 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=1990
+2026-04-18 18:11:34,524 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=3360
+2026-04-18 18:11:34,525 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=1527
+2026-04-18 18:11:34,526 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=2666
+2026-04-18 18:11:34,528 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=1277
+2026-04-18 18:11:41,096 [INFO] neoantigen.llm: call response schema=_VisionPayload len=2266
+2026-04-18 18:11:46,857 [INFO] neoantigen.llm: call response schema=_VisionPayload len=4205
+2026-04-18 18:11:47,285 [INFO] neoantigen.llm: call response schema=_VisionPayload len=4180
+2026-04-18 18:11:48,896 [INFO] neoantigen.llm: call response schema=_VisionPayload len=4469
+2026-04-18 18:11:50,100 [INFO] neoantigen.llm: call response schema=_VisionPayload len=5583
+2026-04-18 18:11:52,609 [INFO] neoantigen.llm: call response schema=_VisionPayload len=5660
+2026-04-18 18:11:53,199 [INFO] neoantigen.llm: call response schema=_VisionPayload len=6258
+2026-04-18 18:11:55,464 [INFO] neoantigen.llm: call response schema=_VisionPayload len=8246
+2026-04-18 18:11:59,061 [INFO] neoantigen.llm: call response schema=_VisionPayload len=8330
+2026-04-18 18:11:59,617 [INFO] neoantigen.llm: call response schema=_VisionPayload len=9202
+2026-04-18 18:11:59,630 [INFO] neoantigen.llm: call response schema=_VisionPayload len=10200
+2026-04-18 18:11:59,630 [ERROR] neoantigen.llm: JSON parse failed schema=_VisionPayload raw='Okay, let\'s tackle this. I need to extract the data from the given medical document page. Let\'s start by reading through the text carefully.\n\nFirst, the page describes a 66-year-old female with newly diagnosed stage IIIB non-small cell lung cancer, adenocarcinoma, right upper lobe. There\'s mention of ECOG 1. Also, discussions about treatment options and molecular testing.\n\nLooking at the fields:\n\nprimary_cancer_type: The document says "non-small cell lung cancer, adenocarcinoma, RUL". So that\'s lung adenocarcinoma. The schema wants snake_case, so "lung_adenocarcinoma".\n\nhistology: "adenocarcin'
+2026-04-18 18:11:59,631 [WARNING] neoantigen.llm: retrying schema=_VisionPayload after first-attempt failure:
+  - ValueError: model did not return valid JSON: "Okay, let's tackle this. I need to extract the data from the given medical document page. Let's start by reading through the text carefully.\n\nFirst, the page describes a 66-year-old female with newly diagnosed stage IIIB non-small cell lung cancer, adenocarcinoma, right upper lobe. There's mention o"
+2026-04-18 18:11:59,635 [INFO] neoantigen.llm: call response schema=_VisionPayload len=10258
+2026-04-18 18:11:59,635 [ERROR] neoantigen.llm: JSON parse failed schema=_VisionPayload raw='Okay, let\'s tackle this. So I need to extract the relevant information from the given medical document page. Let\'s start by reading through the text carefully.\n\nFirst, the page is from a medical oncology consult, specifically a new patient visit. The patient is Margaret O\'Brien, 66 years old. The chief complaint mentions "stage IIIB non-small cell lung cancer (adenocarcinoma), RUL." \n\nLooking for primary_cancer_type: "non-small cell lung cancer (adenocarcinoma)" is stated. The specific type under the schema would be lung_adenocarcinoma since adenocarcinoma is the histology. The schema lists lu'
+2026-04-18 18:11:59,635 [WARNING] neoantigen.llm: retrying schema=_VisionPayload after first-attempt failure:
+  - ValueError: model did not return valid JSON: "Okay, let's tackle this. So I need to extract the relevant information from the given medical document page. Let's start by reading through the text carefully.\n\nFirst, the page is from a medical oncology consult, specifically a new patient visit. The patient is Margaret O'Brien, 66 years old. The ch"
+2026-04-18 18:12:06,455 [INFO] neoantigen.llm: call response schema=_VisionPayload len=4161
+2026-04-18 18:12:07,150 [INFO] neoantigen.llm: call response schema=_VisionPayload len=4779
+2026-04-18 18:12:07,152 [INFO] neoantigen.llm: call schema=_AggPayload images=0 user_len=5005
+2026-04-18 18:12:25,364 [INFO] neoantigen.llm: call response schema=_AggPayload len=13402
+2026-04-18 18:12:25,457 [INFO] neoantigen.llm: stream_with_thinking start user_len=2360 images=0 prefill_len=15
+2026-04-18 18:12:44,242 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 18:12:44,253 [INFO] neoantigen.llm: stream_with_thinking start user_len=2302 images=0 prefill_len=15
+2026-04-18 18:13:12,011 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 18:13:12,024 [INFO] neoantigen.llm: stream_with_thinking start user_len=2359 images=0 prefill_len=15
+2026-04-18 18:13:24,555 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 18:13:24,566 [INFO] neoantigen.llm: stream_with_thinking start user_len=2230 images=0 prefill_len=15
+2026-04-18 18:13:52,316 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 18:53:39,780 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+2026-04-18 18:53:39,782 [INFO] neoantigen.llm: call schema=_VisionPayload images=1 user_len=260
+2026-04-18 18:53:40,255 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=2599
+2026-04-18 18:53:40,273 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=1114
+2026-04-18 18:53:40,291 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=2081
+2026-04-18 18:53:40,292 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=681
+2026-04-18 18:53:40,293 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=3126
+2026-04-18 18:53:40,294 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=1809
+2026-04-18 18:53:40,296 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=1990
+2026-04-18 18:53:40,297 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=3360
+2026-04-18 18:53:40,298 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=1527
+2026-04-18 18:53:40,299 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=2666
+2026-04-18 18:53:40,300 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=1277
+2026-04-18 18:53:46,990 [INFO] neoantigen.llm: call response schema=_VisionPayload len=2283
+2026-04-18 18:53:47,171 [INFO] neoantigen.llm: call response schema=_VisionPayload len=2229
+2026-04-18 18:53:47,705 [INFO] neoantigen.llm: call response schema=_VisionPayload len=2687
+2026-04-18 18:53:50,985 [INFO] neoantigen.llm: call response schema=_VisionPayload len=4099
+2026-04-18 18:53:51,163 [INFO] neoantigen.llm: call response schema=_VisionPayload len=3273
+2026-04-18 18:53:55,214 [INFO] neoantigen.llm: call response schema=_VisionPayload len=5144
+2026-04-18 18:53:56,870 [INFO] neoantigen.llm: call response schema=_VisionPayload len=6560
+2026-04-18 18:53:59,973 [INFO] neoantigen.llm: call response schema=_VisionPayload len=7420
+2026-04-18 18:54:02,901 [INFO] neoantigen.llm: call response schema=_VisionPayload len=9872
+2026-04-18 18:54:04,052 [INFO] neoantigen.llm: call response schema=_VisionPayload len=9799
+2026-04-18 18:54:04,238 [INFO] neoantigen.llm: call response schema=_VisionPayload len=9539
+2026-04-18 18:54:04,238 [ERROR] neoantigen.llm: JSON parse failed schema=_VisionPayload raw='Okay, let\'s go through this step by step. The user provided a page from a patient\'s medical document, specifically an infusion flowsheet. I need to extract information according to the specified schema.\n\nFirst, the page description. The text says "UVA INFUSION CENTER — ORAL ONCOLYTIC TRACKING & INFUSION FLOWSHEET". So the page_description should be something like "Infusion flowsheet - oral oncolytic tracking and treatment history".\n\nNext, primary_cancer_type. The document mentions "NSCLC adenocarcinoma RUL". NSCLC is non-small cell lung cancer, specifically adenocarcinoma. So the primary_cance'
+2026-04-18 18:54:04,239 [WARNING] neoantigen.llm: retrying schema=_VisionPayload after first-attempt failure:
+  - ValueError: model did not return valid JSON: 'Okay, let\'s go through this step by step. The user provided a page from a patient\'s medical document, specifically an infusion flowsheet. I need to extract information according to the specified schema.\n\nFirst, the page description. The text says "UVA INFUSION CENTER — ORAL ONCOLYTIC TRACKING & INFU'
+2026-04-18 18:54:04,251 [INFO] neoantigen.llm: call response schema=_VisionPayload len=9344
+2026-04-18 18:54:04,251 [ERROR] neoantigen.llm: JSON parse failed schema=_VisionPayload raw='Okay, let\'s tackle this. The user provided a page from a medical document, which is a Guardant360 CDx report for a patient with non-small cell lung adenocarcinoma.\n\nFirst, I need to extract the data according to the schema. Let\'s go through each field.\n\nPrimary cancer type: The report states "Dx: Non-small cell lung adenocarcinoma, metastatic". So primary_cancer_type should be "lung_adenocarcinoma". Wait, the options say "lung_adenocarcinoma" is a valid category. Correct.\n\nHistology: It says "non-small cell lung adenocarcinoma", so histology would be "adenocarcinoma".\n\nPrimary site: The cancer'
+2026-04-18 18:54:04,251 [WARNING] neoantigen.llm: retrying schema=_VisionPayload after first-attempt failure:
+  - ValueError: model did not return valid JSON: 'Okay, let\'s tackle this. The user provided a page from a medical document, which is a Guardant360 CDx report for a patient with non-small cell lung adenocarcinoma.\n\nFirst, I need to extract the data according to the schema. Let\'s go through each field.\n\nPrimary cancer type: The report states "Dx: No'
+2026-04-18 18:54:18,270 [INFO] neoantigen.llm: call response schema=_VisionPayload len=8686
+2026-04-18 18:54:19,449 [INFO] neoantigen.llm: call response schema=_VisionPayload len=8275
+2026-04-18 18:54:19,451 [INFO] neoantigen.llm: call schema=_AggPayload images=0 user_len=4896
+2026-04-18 18:54:27,493 [INFO] neoantigen.llm: call response schema=_AggPayload len=5520
+2026-04-18 18:54:27,494 [ERROR] neoantigen.llm: validation failed schema=_AggPayload err=9 validation errors for _AggPayload
+melanoma_subtype.source_filename
+  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]
+    For further information visit https://errors.pydantic.dev/2.13/v/string_type
+breslow_thickness_mm.source_filename
+  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]
+    For further information visit https://errors.pydantic.dev/2.13/v/string_type
+ulceration.source_filename
+  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]
+    For further information visit https://errors.pydantic.dev/2.13/v/string_type
+mitotic_rate_per_mm2.source_filename
+  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]
+    For further information visit https://errors.pydantic.dev/2.13/v/string_type
+tils_present.source_filename
+  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]
+    For further information visit https://errors.pydantic.dev/2.13/v/string_type
+pdl1_estimate.source_filename
+  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]
+    For further information visit https://errors.pydantic.dev/2.13/v/string_type
+lag3_ihc_percent.source_filename
+  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]
+    For further information visit https://errors.pydantic.dev/2.13/v/string_type
+measurable_disease_recist.source_filename
+  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]
+    For further information visit https://errors.pydantic.dev/2.13/v/string_type
+life_expectancy_months.source_filename
+  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]
+    For further information visit https://errors.pydantic.dev/2.13/v/string_type data={'primary_cancer_type': {'value': 'lung_adenocarcinoma', 'source_filename': '02_pathology_initial_AMENDED.pdf', 'source_page': '1'}, 'histology': {'value': 'adenocarcinoma', 'source_filename': '02_pathology_initial_AMENDED.pdf', 'source_page': '1'}, 'primary_site': {'value': 'right upper lobe lung', 'source_filename': '02_pathology_initial_AMENDED.pdf', 'source_page': '1'}, 'melanoma_subtype': {'value': 'unknown', 'source_filename': None, 'source_page': None}, 'breslow_thickness_mm': {'value': None, 'source_filename': None, 'source_page': None}, 'ulceration': {'value': None, 'source_filename': None, 'source_page': None}, 'mitotic_rate_per_mm2': {'value': None, 'source_filename': None, 'source_page': None}, 'tils_present': {'value': 'unknown', 'source_filename': None, 'source_page': None}, 'pdl1_estimate': {'value': 'unknown', 'source_filename': None, 'source_page': None}, 'lag3_ihc_percent': {'value': None, 'source_filename': None, 'source_page': None}, 'ajcc_stage': {'value': 'IIIB', 'source_filename': '02_pathology_initial_AMENDED.pdf', 'source_page': '1'}, 'age_years': {'value': '66', 'source_filename': '08_med_onc_initial_consult.pdf', 'source_page': '1'}, 'ecog': {'value': '1', 'source_filename': '08_med_onc_initial_consult.pdf', 'source_page': '1'}, 'measurable_disease_recist': {'value': None, 'source_filename': None, 'source_page': None}, 'life_expectancy_months': {'value': None, 'source_filename': None, 'source_page': None}, 'prior_systemic_therapy': {'value': 'True', 'source_filename': '09_chemo_infusion_flowsheet.pdf', 'source_page': '2'}, 'prior_anti_pd1': {'value': 'False', 'source_filename': '09_chemo_infusion_flowsheet.pdf', 'source_page': '2'}, 'mutations': [{'value': 'EGFR exon 19 del', 'source_filename': '04_foundationone_cdx_report.pdf', 'source_page': '1'}, {'value': 'EGFR T790M', 'source_filename': '09_chemo_infusion_flowsheet.pdf', 'source_page': '2'}, {'value': 'TP53 p.R175H', 'source_filename': '13_liquid_biopsy_guardant360.pdf', 'source_page': '1'}, {'value': 'MET amplification', 'source_filename': '13_liquid_biopsy_guardant360.pdf', 'source_page': '1'}, {'value': 'PIK3CA p.E545K', 'source_filename': '13_liquid_biopsy_guardant360.pdf', 'source_page': '1'}], 'overall_notes': 'Patient diagnosed with lung adenocarcinoma; stage IIIB per pathology report. Received osimertinib (1L), progressing with T790M and MET amplification leading to amivantamab + lazertinib (2L). Maintained ECOG 1 with manageable toxicities.', 'conflicts': ['AJCC stage: pathology report (IIIB) vs liquid biopsy/discharge summary (IV) - used pathology report as initial diagnosis staging', 'Age: initial consult (66) vs discharge summary (68) - used initial consult per registration consistency']}
+2026-04-18 18:54:27,494 [WARNING] neoantigen.llm: retrying schema=_AggPayload after first-attempt failure:
+  - melanoma_subtype.source_filename: Input should be a valid string (got: None)
+  - breslow_thickness_mm.source_filename: Input should be a valid string (got: None)
+  - ulceration.source_filename: Input should be a valid string (got: None)
+  - mitotic_rate_per_mm2.source_filename: Input should be a valid string (got: None)
+  - tils_present.source_filename: Input should be a valid string (got: None)
+  - pdl1_estimate.source_filename: Input should be a valid string (got: None)
+  - lag3_ihc_percent.source_filename: Input should be a valid string (got: None)
+  - measurable_disease_recist.source_filename: Input should be a valid string (got: None)
+  - life_expectancy_months.source_filename: Input should be a valid string (got: None)
+2026-04-18 18:54:44,968 [INFO] neoantigen.llm: call response schema=_AggPayload len=14511
+2026-04-18 18:54:45,079 [INFO] neoantigen.llm: stream_with_thinking start user_len=2430 images=0 prefill_len=15
+2026-04-18 18:55:12,861 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 18:55:12,874 [INFO] neoantigen.llm: stream_with_thinking start user_len=2391 images=0 prefill_len=15
+2026-04-18 18:55:26,279 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 18:55:26,290 [INFO] neoantigen.llm: stream_with_thinking start user_len=2529 images=0 prefill_len=15
+2026-04-18 18:55:54,065 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 18:55:54,079 [INFO] neoantigen.llm: stream_with_thinking start user_len=2388 images=0 prefill_len=15
+2026-04-18 18:56:15,694 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 19:09:07,646 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+2026-04-18 19:09:07,648 [INFO] neoantigen.llm: call schema=_VisionPayload images=1 user_len=260
+2026-04-18 19:09:08,117 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=2599
+2026-04-18 19:09:08,136 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=1114
+2026-04-18 19:09:08,154 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=2081
+2026-04-18 19:09:08,156 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=681
+2026-04-18 19:09:08,157 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=3126
+2026-04-18 19:09:08,159 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=1809
+2026-04-18 19:09:08,160 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=1990
+2026-04-18 19:09:08,162 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=3360
+2026-04-18 19:09:08,163 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=1527
+2026-04-18 19:09:08,165 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=2666
+2026-04-18 19:09:08,167 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=1277
+2026-04-18 19:09:13,445 [INFO] neoantigen.llm: call response schema=_VisionPayload len=1644
+2026-04-18 19:09:15,680 [INFO] neoantigen.llm: call response schema=_VisionPayload len=2801
+2026-04-18 19:09:16,257 [INFO] neoantigen.llm: call response schema=_VisionPayload len=2933
+2026-04-18 19:09:19,059 [INFO] neoantigen.llm: call response schema=_VisionPayload len=3483
+2026-04-18 19:09:22,752 [INFO] neoantigen.llm: call response schema=_VisionPayload len=5195
+2026-04-18 19:09:23,758 [INFO] neoantigen.llm: call response schema=_VisionPayload len=5900
+2026-04-18 19:09:23,902 [INFO] neoantigen.llm: call response schema=_VisionPayload len=5298
+2026-04-18 19:09:24,691 [INFO] neoantigen.llm: call response schema=_VisionPayload len=5968
+2026-04-18 19:09:24,938 [INFO] neoantigen.llm: call response schema=_VisionPayload len=5527
+2026-04-18 19:09:26,006 [INFO] neoantigen.llm: call response schema=_VisionPayload len=5758
+2026-04-18 19:09:27,985 [INFO] neoantigen.llm: call response schema=_VisionPayload len=7097
+2026-04-18 19:09:30,309 [INFO] neoantigen.llm: call response schema=_VisionPayload len=9562
+2026-04-18 19:09:30,309 [ERROR] neoantigen.llm: JSON parse failed schema=_VisionPayload raw='Okay, let\'s go through this step by step. The user provided a medical document, which is a Guardant360 CDx report for a patient with non-small cell lung adenocarcinoma. I need to extract the specified fields based on the content.\n\nFirst, check the primary_cancer_type. The document states "Dx: Non-small cell lung adenocarcinoma, metastatic". So this should be "lung_adenocarcinoma" as per the schema.\n\nNext, histology. The diagnosis says "Non-small cell lung adenocarcinoma", so the histology is "adenocarcinoma".\n\nPrimary_site: The problem is, the document doesn\'t specify a specific anatomical sit'
+2026-04-18 19:09:30,310 [WARNING] neoantigen.llm: retrying schema=_VisionPayload after first-attempt failure:
+  - ValueError: model did not return valid JSON: 'Okay, let\'s go through this step by step. The user provided a medical document, which is a Guardant360 CDx report for a patient with non-small cell lung adenocarcinoma. I need to extract the specified fields based on the content.\n\nFirst, check the primary_cancer_type. The document states "Dx: Non-sm'
+2026-04-18 19:09:42,990 [INFO] neoantigen.llm: call response schema=_VisionPayload len=8844
+2026-04-18 19:09:42,990 [ERROR] neoantigen.llm: JSON parse failed schema=_VisionPayload raw='Okay, let\'s tackle this. The user provided a medical document, specifically a Guardant360 CDx report for a patient with non-small cell lung adenocarcinoma. I need to extract the required fields from this page.\n\nStarting with page_description: The document is a comprehensive liquid biopsy report, so the description should be something like "Liquid biopsy report - EGFR-mutant NSCLC". \n\nPrimary_cancer_type: The diagnosis is "Non-small cell lung adenocarcinoma", so the correct snake_case would be "lung_adenocarcinoma".\n\nHistology: It\'s listed as adenocarcinoma, so "adenocarcinoma".\n\nPrimary_site: '
+2026-04-18 19:09:42,990 [ERROR] neoantigen.llm: retry failed schema=_VisionPayload err=model did not return valid JSON: "Okay, let's tackle this. The user provided a medical document, specifically a Guardant360 CDx report for a patient with non-small cell lung adenocarcinoma. I need to extract the required fields from this page.\n\nStarting with page_description: The document is a comprehensive liquid biopsy report, so "
+2026-04-18 19:09:42,992 [INFO] neoantigen.llm: call schema=_VisionPayload images=1 user_len=2219
+2026-04-18 19:09:56,027 [INFO] neoantigen.llm: call response schema=_VisionPayload len=9603
+2026-04-18 19:09:56,028 [ERROR] neoantigen.llm: JSON parse failed schema=_VisionPayload raw='Okay, let\'s tackle this. The user wants me to extract specific fields from the provided medical document page. First, I need to go through each field in the schema and see what\'s mentioned here.\n\nStarting with primary_cancer_type. The document says "Non-small cell lung adenocarcinoma, metastatic". So that would correspond to "lung_adenocarcinoma" in the snake_case format. But wait, sometimes it\'s specified as NSCLC, but the schema lists lung_adenocarcinoma as an option. So primary_cancer_type should be "lung_adenocarcinoma".\n\nNext, histology. The diagnosis is "Non-small cell lung adenocarcinom'
+2026-04-18 19:09:56,028 [WARNING] neoantigen.llm: retrying schema=_VisionPayload after first-attempt failure:
+  - ValueError: model did not return valid JSON: 'Okay, let\'s tackle this. The user wants me to extract specific fields from the provided medical document page. First, I need to go through each field in the schema and see what\'s mentioned here.\n\nStarting with primary_cancer_type. The document says "Non-small cell lung adenocarcinoma, metastatic". S'
+2026-04-18 19:10:09,083 [INFO] neoantigen.llm: call response schema=_VisionPayload len=8810
+2026-04-18 19:10:09,084 [ERROR] neoantigen.llm: JSON parse failed schema=_VisionPayload raw='Okay, let\'s tackle this. The user provided a medical document page and wants me to extract specific fields into a JSON. Let me start by reading through the document carefully.\n\nFirst, the page is a Guardant360 CDx report. The patient\'s diagnosis is "Non-small cell lung adenocarcinoma, metastatic". So the primary_cancer_type should be "lung_adenocarcinoma" because that\'s the specific type mentioned. Histology would be "adenocarcinoma" as part of the diagnosis.\n\nLooking at the primary site, the document doesn\'t specify an exact location like "right upper lobe" but says "non-small cell lung adeno'
+2026-04-18 19:10:09,084 [ERROR] neoantigen.llm: retry failed schema=_VisionPayload err=model did not return valid JSON: 'Okay, let\'s tackle this. The user provided a medical document page and wants me to extract specific fields into a JSON. Let me start by reading through the document carefully.\n\nFirst, the page is a Guardant360 CDx report. The patient\'s diagnosis is "Non-small cell lung adenocarcinoma, metastatic". S'
+2026-04-18 19:10:09,085 [INFO] neoantigen.llm: call schema=_AggPayload images=0 user_len=4868
+2026-04-18 19:10:18,077 [INFO] neoantigen.llm: call response schema=_AggPayload len=6360
+2026-04-18 19:10:18,077 [ERROR] neoantigen.llm: validation failed schema=_AggPayload err=9 validation errors for _AggPayload
+melanoma_subtype.source_page
+  Input should be a valid integer, unable to parse string as an integer [type=int_parsing, input_value='n/a', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/int_parsing
+breslow_thickness_mm.source_page
+  Input should be a valid integer, unable to parse string as an integer [type=int_parsing, input_value='n/a', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/int_parsing
+ulceration.source_page
+  Input should be a valid integer, unable to parse string as an integer [type=int_parsing, input_value='n/a', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/int_parsing
+mitotic_rate_per_mm2.source_page
+  Input should be a valid integer, unable to parse string as an integer [type=int_parsing, input_value='n/a', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/int_parsing
+tils_present.source_page
+  Input should be a valid integer, unable to parse string as an integer [type=int_parsing, input_value='n/a', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/int_parsing
+pdl1_estimate.source_page
+  Input should be a valid integer, unable to parse string as an integer [type=int_parsing, input_value='n/a', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/int_parsing
+lag3_ihc_percent.source_page
+  Input should be a valid integer, unable to parse string as an integer [type=int_parsing, input_value='n/a', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/int_parsing
+measurable_disease_recist.source_page
+  Input should be a valid integer, unable to parse string as an integer [type=int_parsing, input_value='n/a', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/int_parsing
+life_expectancy_months.source_page
+  Input should be a valid integer, unable to parse string as an integer [type=int_parsing, input_value='n/a', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/int_parsing data={'primary_cancer_type': {'value': 'lung_adenocarcinoma', 'source_filename': '02_pathology_initial_AMENDED.pdf', 'source_page': 1}, 'histology': {'value': 'adenocarcinoma', 'source_filename': '02_pathology_initial_AMENDED.pdf', 'source_page': 1}, 'primary_site': {'value': 'right upper lobe lung', 'source_filename': '02_pathology_initial_AMENDED.pdf', 'source_page': 1}, 'melanoma_subtype': {'value': 'unknown', 'source_filename': 'n/a', 'source_page': 'n/a'}, 'breslow_thickness_mm': {'value': 'null', 'source_filename': 'n/a', 'source_page': 'n/a'}, 'ulceration': {'value': 'null', 'source_filename': 'n/a', 'source_page': 'n/a'}, 'mitotic_rate_per_mm2': {'value': 'null', 'source_filename': 'n/a', 'source_page': 'n/a'}, 'tils_present': {'value': 'null', 'source_filename': 'n/a', 'source_page': 'n/a'}, 'pdl1_estimate': {'value': 'null', 'source_filename': 'n/a', 'source_page': 'n/a'}, 'lag3_ihc_percent': {'value': 'null', 'source_filename': 'n/a', 'source_page': 'n/a'}, 'ajcc_stage': {'value': 'IV', 'source_filename': '15_hospital_discharge_summary.pdf', 'source_page': 1}, 'age_years': {'value': '68', 'source_filename': '09_chemo_infusion_flowsheet.pdf', 'source_page': 2}, 'ecog': {'value': '1', 'source_filename': '09_chemo_infusion_flowsheet.pdf', 'source_page': 2}, 'measurable_disease_recist': {'value': 'null', 'source_filename': 'n/a', 'source_page': 'n/a'}, 'life_expectancy_months': {'value': 'null', 'source_filename': 'n/a', 'source_page': 'n/a'}, 'prior_systemic_therapy': {'value': 'true', 'source_filename': '09_chemo_infusion_flowsheet.pdf', 'source_page': 2}, 'prior_anti_pd1': {'value': 'false', 'source_filename': '09_chemo_infusion_flowsheet.pdf', 'source_page': 2}, 'mutations': [{'value': 'EGFR exon 19 deletion', 'source_filename': '04_foundationone_cdx_report.pdf', 'source_page': 1}, {'value': 'EGFR T790M mutation', 'source_filename': '09_chemo_infusion_flowsheet.pdf', 'source_page': 2}, {'value': 'TP53 R175H', 'source_filename': '04_foundationone_cdx_report.pdf', 'source_page': 1}, {'value': 'CDKN2A/B loss', 'source_filename': '04_foundationone_cdx_report.pdf', 'source_page': 1}, {'value': 'MET amplification', 'source_filename': '15_hospital_discharge_summary.pdf', 'source_page': 1}], 'overall_notes': 'Patient transitioned to 2nd-line amivantamab + lazertinib due to CNS progression (brain mets) after 26 months on osimertinib; EGFR exon 19 del (initially detected), acquired T790M (ctDNA), and MET amplification detected on liquid biopsy.', 'conflicts': ['AJCC stage: pathology report IIIB vs discharge summary IV (post-CNS progression) - used most recent discharge summary']}
+2026-04-18 19:10:18,078 [WARNING] neoantigen.llm: retrying schema=_AggPayload after first-attempt failure:
+  - melanoma_subtype.source_page: Input should be a valid integer, unable to parse string as an integer (got: 'n/a')
+  - breslow_thickness_mm.source_page: Input should be a valid integer, unable to parse string as an integer (got: 'n/a')
+  - ulceration.source_page: Input should be a valid integer, unable to parse string as an integer (got: 'n/a')
+  - mitotic_rate_per_mm2.source_page: Input should be a valid integer, unable to parse string as an integer (got: 'n/a')
+  - tils_present.source_page: Input should be a valid integer, unable to parse string as an integer (got: 'n/a')
+  - pdl1_estimate.source_page: Input should be a valid integer, unable to parse string as an integer (got: 'n/a')
+  - lag3_ihc_percent.source_page: Input should be a valid integer, unable to parse string as an integer (got: 'n/a')
+  - measurable_disease_recist.source_page: Input should be a valid integer, unable to parse string as an integer (got: 'n/a')
+  - life_expectancy_months.source_page: Input should be a valid integer, unable to parse string as an integer (got: 'n/a')
+2026-04-18 19:10:35,916 [INFO] neoantigen.llm: call response schema=_AggPayload len=15881
+2026-04-18 19:10:35,982 [INFO] neoantigen.llm: stream_with_thinking start user_len=1952 images=0 prefill_len=15
+2026-04-18 19:10:56,187 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 19:10:56,199 [INFO] neoantigen.llm: stream_with_thinking start user_len=2280 images=0 prefill_len=15
+2026-04-18 19:11:23,932 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 19:11:23,937 [INFO] neoantigen.llm: call schema=_PhaseResponse images=0 user_len=2280
+2026-04-18 19:11:39,045 [INFO] neoantigen.llm: call response schema=_PhaseResponse len=13253
+2026-04-18 19:11:39,046 [ERROR] neoantigen.llm: JSON parse failed schema=_PhaseResponse raw="Okay, let's tackle this. The user is an oncologist looking at a treatment plan for primary/local therapy, specifically surgery, radiation, or other local control for a primary tumor or regional disease. The primary cancer type is unknown, histology unknown, primary site unknown, no mutations reported, and tumor mutational burden unknown.\n\nFirst, I need to check the retrieved literature. There are three studies:\n\n1. PMID 40454639: Phase 3 trial of adjuvant Cemiplimab vs placebo for high-risk cutaneous squamous-cell carcinoma (SCC). But the patient's primary cancer type is unknown, so maybe this"
+2026-04-18 19:11:39,046 [WARNING] neoantigen.llm: retrying schema=_PhaseResponse after first-attempt failure:
+  - ValueError: model did not return valid JSON: "Okay, let's tackle this. The user is an oncologist looking at a treatment plan for primary/local therapy, specifically surgery, radiation, or other local control for a primary tumor or regional disease. The primary cancer type is unknown, histology unknown, primary site unknown, no mutations reporte"
+2026-04-18 19:11:54,103 [INFO] neoantigen.llm: call response schema=_PhaseResponse len=13762
+2026-04-18 19:11:54,104 [ERROR] neoantigen.llm: JSON parse failed schema=_PhaseResponse raw="Okay, let's try to figure this out. The user is an oncologist needing a treatment plan for primary/local therapy. The cancer type is unknown, so the options are limited. The retrieved trials are all about squamous cell carcinoma, especially head and neck and cutaneous. But the patient's primary site is unknown, which is a problem. However, since the executors mentioned that the clinical trial literature provided doesn't consider non-squamous cases, maybe they have to default to the available data.\n\nFirst, I need to check each trial. PMID 40454639 is a phase 3 trial for adjuvant cemiplimab in h"
+2026-04-18 19:11:54,104 [ERROR] neoantigen.llm: retry failed schema=_PhaseResponse err=model did not return valid JSON: "Okay, let's try to figure this out. The user is an oncologist needing a treatment plan for primary/local therapy. The cancer type is unknown, so the options are limited. The retrieved trials are all about squamous cell carcinoma, especially head and neck and cutaneous. But the patient's primary site"
+2026-04-18 19:11:54,114 [INFO] neoantigen.llm: stream_with_thinking start user_len=2154 images=0 prefill_len=15
+2026-04-18 19:12:20,603 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 19:12:20,614 [INFO] neoantigen.llm: stream_with_thinking start user_len=2203 images=0 prefill_len=15
+2026-04-18 19:12:48,383 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 19:12:48,388 [INFO] neoantigen.llm: call schema=_PhaseResponse images=0 user_len=2203
+2026-04-18 19:13:03,479 [INFO] neoantigen.llm: call response schema=_PhaseResponse len=13710
+2026-04-18 19:13:03,479 [ERROR] neoantigen.llm: JSON parse failed schema=_PhaseResponse raw="Okay, let's tackle this problem. The user is asking for a decision tree for the Follow-up & adjuvant phase, focusing on surveillance, survivorship, adjuvant monitoring, response assessment cadence, and long-term toxicity management. The primary cancer type is unknown, which complicates things since the literature provided is about breast cancer and maybe other specific cancers.\n\nLooking at the retrieved papers: Paper 1 is about pembrolizumab plus neoadjuvant chemo in early-stage breast cancer. Paper 2 is about adjuvant dabrafenib plus trametinib for resected cases, phase 3. Paper 3 is datopota"
+2026-04-18 19:13:03,480 [WARNING] neoantigen.llm: retrying schema=_PhaseResponse after first-attempt failure:
+  - ValueError: model did not return valid JSON: "Okay, let's tackle this problem. The user is asking for a decision tree for the Follow-up & adjuvant phase, focusing on surveillance, survivorship, adjuvant monitoring, response assessment cadence, and long-term toxicity management. The primary cancer type is unknown, which complicates things since "
+2026-04-18 19:13:18,537 [INFO] neoantigen.llm: call response schema=_PhaseResponse len=13537
+2026-04-18 19:13:18,538 [ERROR] neoantigen.llm: JSON parse failed schema=_PhaseResponse raw='Okay, let\'s start by understanding the user\'s query. They want a JSON response with 2-4 decision steps for the "Follow-up & adjuvant" phase. The scope is surveillance, survivorship, adjuvant monitoring, response assessment, and long-term toxicity management. The primary cancer type is unknown, which is tricky because the retrieved literature is about breast cancer (trials 1 and 3) and a melanoma-like trial (trial 2 with dabrafenib and trametinib, which is typically for BRAF-mutant melanoma).\n\nFirst, I need to check if the literature is relevant. The user says the primary cancer type is unknown'
+2026-04-18 19:13:18,538 [ERROR] neoantigen.llm: retry failed schema=_PhaseResponse err=model did not return valid JSON: 'Okay, let\'s start by understanding the user\'s query. They want a JSON response with 2-4 decision steps for the "Follow-up & adjuvant" phase. The scope is surveillance, survivorship, adjuvant monitoring, response assessment, and long-term toxicity management. The primary cancer type is unknown, which'
+2026-04-18 19:28:38,331 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+2026-04-18 19:28:38,334 [INFO] neoantigen.llm: call schema=_VisionPayload images=1 user_len=260
+2026-04-18 19:28:38,850 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=2599
+2026-04-18 19:28:38,871 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=1114
+2026-04-18 19:28:38,890 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=2081
+2026-04-18 19:28:38,892 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=681
+2026-04-18 19:28:38,893 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=3126
+2026-04-18 19:28:38,895 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=1809
+2026-04-18 19:28:38,896 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=1990
+2026-04-18 19:28:38,897 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=3360
+2026-04-18 19:28:38,899 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=1527
+2026-04-18 19:28:38,900 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=2666
+2026-04-18 19:28:38,901 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=1277
+2026-04-18 19:28:43,577 [INFO] neoantigen.llm: call response schema=_VisionPayload len=1518
+2026-04-18 19:28:50,034 [INFO] neoantigen.llm: call response schema=_VisionPayload len=3887
+2026-04-18 19:28:51,862 [INFO] neoantigen.llm: call response schema=_VisionPayload len=4747
+2026-04-18 19:28:53,902 [INFO] neoantigen.llm: call response schema=_VisionPayload len=5689
+2026-04-18 19:28:54,299 [INFO] neoantigen.llm: call response schema=_VisionPayload len=4578
+2026-04-18 19:28:55,651 [INFO] neoantigen.llm: call response schema=_VisionPayload len=5680
+2026-04-18 19:28:56,786 [INFO] neoantigen.llm: call response schema=_VisionPayload len=6538
+2026-04-18 19:28:57,459 [INFO] neoantigen.llm: call response schema=_VisionPayload len=6043
+2026-04-18 19:29:01,911 [INFO] neoantigen.llm: call response schema=_VisionPayload len=8365
+2026-04-18 19:29:03,427 [INFO] neoantigen.llm: call response schema=_VisionPayload len=9026
+2026-04-18 19:29:03,428 [ERROR] neoantigen.llm: JSON parse failed schema=_VisionPayload raw='Okay, let\'s see. I need to extract the information from this medical document page. The user is asking for a JSON with specific fields. Let me go through the text carefully.\n\nFirst, the page is labeled as page 2, which is a flowsheet. The main content is about treatment cycles, drugs, doses, and some notes. Let me check each field one by one.\n\nprimary_cancer_type: The text mentions NSCLC (non-small cell lung cancer) in the cumulative notes, but the document is a flowsheet. Wait, the example had a lung NGS report. Let me check. Oh, in the cumulative notes: "Patient tolerated osimertinib 1L well'
+2026-04-18 19:29:03,428 [WARNING] neoantigen.llm: retrying schema=_VisionPayload after first-attempt failure:
+  - ValueError: model did not return valid JSON: "Okay, let's see. I need to extract the information from this medical document page. The user is asking for a JSON with specific fields. Let me go through the text carefully.\n\nFirst, the page is labeled as page 2, which is a flowsheet. The main content is about treatment cycles, drugs, doses, and som"
+2026-04-18 19:29:03,440 [INFO] neoantigen.llm: call response schema=_VisionPayload len=9540
+2026-04-18 19:29:03,441 [ERROR] neoantigen.llm: JSON parse failed schema=_VisionPayload raw='Okay, let\'s tackle this problem. The user wants me to extract specific fields from a medical document, which in this case is a Guardant360 CDx report for a patient with non-small cell lung adenocarcinoma. The key is to only include information explicitly stated on this page, and if something isn\'t mentioned, leave it as null.\n\nFirst, I need to go through each required field and check what\'s present in the text.\n\nStarting with page_description: The document is a comprehensive liquid biopsy report for EGFR resistance in lung cancer. The top of the page mentions "Guardant360® CDx Comprehensive Li'
+2026-04-18 19:29:03,441 [WARNING] neoantigen.llm: retrying schema=_VisionPayload after first-attempt failure:
+  - ValueError: model did not return valid JSON: "Okay, let's tackle this problem. The user wants me to extract specific fields from a medical document, which in this case is a Guardant360 CDx report for a patient with non-small cell lung adenocarcinoma. The key is to only include information explicitly stated on this page, and if something isn't m"
+2026-04-18 19:29:03,447 [INFO] neoantigen.llm: call response schema=_VisionPayload len=10676
+2026-04-18 19:29:03,447 [ERROR] neoantigen.llm: JSON parse failed schema=_VisionPayload raw='Okay, let\'s tackle this. So, I need to extract the relevant fields from the provided medical document. The user specified that I should look at both the text and any figures or tables, but since this is page 1, and there\'s no mention of any images or IHC panels here, I\'ll focus on the text.\n\nFirst, the main thing I need to check is which of the target fields are mentioned. Let\'s go step by step.\n\nStarting with primary_cancer_type. The document says "stage IIIB non-small cell lung cancer (adenocarcinoma), RUL." So the cancer type here is lung adenocarcinoma. The correct snake_case would be \'lun'
+2026-04-18 19:29:03,448 [WARNING] neoantigen.llm: retrying schema=_VisionPayload after first-attempt failure:
+  - ValueError: model did not return valid JSON: "Okay, let's tackle this. So, I need to extract the relevant fields from the provided medical document. The user specified that I should look at both the text and any figures or tables, but since this is page 1, and there's no mention of any images or IHC panels here, I'll focus on the text.\n\nFirst, "
+2026-04-18 19:29:14,183 [INFO] neoantigen.llm: call response schema=_VisionPayload len=5821
+2026-04-18 19:29:20,431 [INFO] neoantigen.llm: call response schema=_VisionPayload len=9434
+2026-04-18 19:29:20,431 [ERROR] neoantigen.llm: JSON parse failed schema=_VisionPayload raw='Okay, let\'s start by looking at the medical document provided. The user wants me to extract specific fields as per the schema. Let\'s go through each field one by one.\n\nFirst, the primary_cancer_type. The document says "Dx: Non-small cell lung adenocarcinoma, metastatic". So that\'s lung_adenocarcinoma. But wait, the schema has "lung_adenocarcinoma" as an option. So primary_cancer_type should be that. Check: yes, correct.\n\nNext, histology. The diagnosis is adenocarcinoma, so histology is "adenocarcinoma".\n\nPrimary_site: the document mentions "non-small cell lung adenocarcinoma", but doesn\'t spec'
+2026-04-18 19:29:20,431 [ERROR] neoantigen.llm: retry failed schema=_VisionPayload err=model did not return valid JSON: 'Okay, let\'s start by looking at the medical document provided. The user wants me to extract specific fields as per the schema. Let\'s go through each field one by one.\n\nFirst, the primary_cancer_type. The document says "Dx: Non-small cell lung adenocarcinoma, metastatic". So that\'s lung_adenocarcinom'
+2026-04-18 19:29:20,433 [INFO] neoantigen.llm: call schema=_VisionPayload images=1 user_len=2219
+2026-04-18 19:29:20,443 [INFO] neoantigen.llm: call response schema=_VisionPayload len=9189
+2026-04-18 19:29:20,443 [ERROR] neoantigen.llm: JSON parse failed schema=_VisionPayload raw='Okay, let\'s tackle this. So, the user provided a medical document page, specifically page 2, which is a flowsheet. The task is to extract the specified fields based on the content.\n\nFirst, I need to check each field in the schema. Let\'s go through them one by one.\n\nThe page description: The text is about a flowsheet with infusion details, so the page_description should be something like "Infusion flowsheet - treatment cycles and toxicity data". But wait, the example in the problem statement had a page_description for "Infusion flowsheet - no pathology or molecular data" when there was nothing '
+2026-04-18 19:29:20,443 [ERROR] neoantigen.llm: retry failed schema=_VisionPayload err=model did not return valid JSON: "Okay, let's tackle this. So, the user provided a medical document page, specifically page 2, which is a flowsheet. The task is to extract the specified fields based on the content.\n\nFirst, I need to check each field in the schema. Let's go through them one by one.\n\nThe page description: The text is "
+2026-04-18 19:29:20,445 [INFO] neoantigen.llm: call schema=_VisionPayload images=1 user_len=1252
+2026-04-18 19:29:33,129 [INFO] neoantigen.llm: call response schema=_VisionPayload len=6968
+2026-04-18 19:29:33,195 [INFO] neoantigen.llm: call response schema=_VisionPayload len=7447
+2026-04-18 19:29:33,197 [INFO] neoantigen.llm: call schema=_AggPayload images=0 user_len=4570
+2026-04-18 19:29:41,690 [INFO] neoantigen.llm: call response schema=_AggPayload len=5937
+2026-04-18 19:29:41,691 [ERROR] neoantigen.llm: validation failed schema=_AggPayload err=8 validation errors for _AggPayload
+melanoma_subtype.source_filename
+  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]
+    For further information visit https://errors.pydantic.dev/2.13/v/string_type
+breslow_thickness_mm.source_filename
+  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]
+    For further information visit https://errors.pydantic.dev/2.13/v/string_type
+ulceration.source_filename
+  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]
+    For further information visit https://errors.pydantic.dev/2.13/v/string_type
+mitotic_rate_per_mm2.source_filename
+  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]
+    For further information visit https://errors.pydantic.dev/2.13/v/string_type
+tils_present.source_filename
+  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]
+    For further information visit https://errors.pydantic.dev/2.13/v/string_type
+pdl1_estimate.source_filename
+  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]
+    For further information visit https://errors.pydantic.dev/2.13/v/string_type
+lag3_ihc_percent.source_filename
+  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]
+    For further information visit https://errors.pydantic.dev/2.13/v/string_type
+life_expectancy_months.source_filename
+  Input should be a valid string [type=string_type, input_value=None, input_type=NoneType]
+    For further information visit https://errors.pydantic.dev/2.13/v/string_type data={'primary_cancer_type': {'value': 'lung_adenocarcinoma', 'source_filename': '02_pathology_initial_AMENDED.pdf', 'source_page': '1'}, 'histology': {'value': 'adenocarcinoma', 'source_filename': '02_pathology_initial_AMENDED.pdf', 'source_page': '1'}, 'primary_site': {'value': 'right upper lobe lung', 'source_filename': '02_pathology_initial_AMENDED.pdf', 'source_page': '1'}, 'melanoma_subtype': {'value': 'unknown', 'source_filename': None, 'source_page': None}, 'breslow_thickness_mm': {'value': None, 'source_filename': None, 'source_page': None}, 'ulceration': {'value': None, 'source_filename': None, 'source_page': None}, 'mitotic_rate_per_mm2': {'value': None, 'source_filename': None, 'source_page': None}, 'tils_present': {'value': None, 'source_filename': None, 'source_page': None}, 'pdl1_estimate': {'value': None, 'source_filename': None, 'source_page': None}, 'lag3_ihc_percent': {'value': None, 'source_filename': None, 'source_page': None}, 'ajcc_stage': {'value': 'IIIB', 'source_filename': '02_pathology_initial_AMENDED.pdf', 'source_page': '1'}, 'age_years': {'value': '66', 'source_filename': '02_pathology_initial_AMENDED.pdf', 'source_page': '1'}, 'ecog': {'value': '1', 'source_filename': '08_med_onc_initial_consult.pdf', 'source_page': '1'}, 'measurable_disease_recist': {'value': 'True', 'source_filename': '09_chemo_infusion_flowsheet.pdf', 'source_page': '2'}, 'life_expectancy_months': {'value': None, 'source_filename': None, 'source_page': None}, 'prior_systemic_therapy': {'value': 'True', 'source_filename': '09_chemo_infusion_flowsheet.pdf', 'source_page': '2'}, 'prior_anti_pd1': {'value': 'False', 'source_filename': '09_chemo_infusion_flowsheet.pdf', 'source_page': '2'}, 'mutations': [{'value': 'EGFR exon 19 del (p.E746_A750del, c.2235_2249del)', 'source_filename': '04_foundationone_cdx_report.pdf', 'source_page': '1'}, {'value': 'EGFR p.T790M (c.2369C>T)', 'source_filename': '13_liquid_biopsy_guardant360.pdf', 'source_page': '1'}, {'value': 'TP53 p.R175H (c.524G>A)', 'source_filename': '04_foundationone_cdx_report.pdf', 'source_page': '1'}, {'value': 'MET amplification (CN ~5.8)', 'source_filename': '13_liquid_biopsy_guardant360.pdf', 'source_page': '1'}], 'overall_notes': 'Established NSCLC with EGFR exon 19 del; progressed to brain mets with T790M resistance; on amivantamab + lazertinib 2L per MDT 10/10/25 (ECOG 1, manageable rash).', 'conflicts': ['AJCC stage: path report 02_pathology_initial_AMENDED says IIIB vs discharge summary 15_hospital_discharge_summary says IV - used path report per priority tier 1']}
+2026-04-18 19:29:41,691 [WARNING] neoantigen.llm: retrying schema=_AggPayload after first-attempt failure:
+  - melanoma_subtype.source_filename: Input should be a valid string (got: None)
+  - breslow_thickness_mm.source_filename: Input should be a valid string (got: None)
+  - ulceration.source_filename: Input should be a valid string (got: None)
+  - mitotic_rate_per_mm2.source_filename: Input should be a valid string (got: None)
+  - tils_present.source_filename: Input should be a valid string (got: None)
+  - pdl1_estimate.source_filename: Input should be a valid string (got: None)
+  - lag3_ihc_percent.source_filename: Input should be a valid string (got: None)
+  - life_expectancy_months.source_filename: Input should be a valid string (got: None)
+2026-04-18 19:29:59,488 [INFO] neoantigen.llm: call response schema=_AggPayload len=15516
+2026-04-18 19:29:59,558 [INFO] neoantigen.llm: stream_with_thinking start user_len=1952 images=0 prefill_len=15
+2026-04-18 19:30:27,266 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 19:30:27,271 [INFO] neoantigen.llm: call schema=_PhaseResponse images=0 user_len=1952
+2026-04-18 19:30:39,910 [INFO] neoantigen.llm: call response schema=_PhaseResponse len=11884
+2026-04-18 19:30:39,921 [INFO] neoantigen.llm: stream_with_thinking start user_len=2280 images=0 prefill_len=15
+2026-04-18 19:31:07,624 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 19:31:07,634 [INFO] neoantigen.llm: stream_with_thinking start user_len=2154 images=0 prefill_len=15
+2026-04-18 19:31:35,329 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 19:31:35,334 [INFO] neoantigen.llm: call schema=_PhaseResponse images=0 user_len=2154
+2026-04-18 19:31:50,503 [INFO] neoantigen.llm: call response schema=_PhaseResponse len=13571
+2026-04-18 19:31:50,513 [INFO] neoantigen.llm: stream_with_thinking start user_len=2203 images=0 prefill_len=15
+2026-04-18 19:32:18,211 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 19:34:58,592 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+2026-04-18 19:34:58,594 [INFO] neoantigen.llm: call schema=_VisionPayload images=1 user_len=260
+2026-04-18 19:34:59,010 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=2599
+2026-04-18 19:34:59,029 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=1114
+2026-04-18 19:34:59,037 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=2081
+2026-04-18 19:34:59,039 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=681
+2026-04-18 19:34:59,040 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=3126
+2026-04-18 19:34:59,042 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=1809
+2026-04-18 19:34:59,043 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=1990
+2026-04-18 19:34:59,044 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=3360
+2026-04-18 19:34:59,045 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=1527
+2026-04-18 19:34:59,047 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=2666
+2026-04-18 19:34:59,048 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=1277
+2026-04-18 19:35:06,521 [INFO] neoantigen.llm: call response schema=_VisionPayload len=2687
+2026-04-18 19:35:10,135 [INFO] neoantigen.llm: call response schema=_VisionPayload len=3325
+2026-04-18 19:35:13,287 [INFO] neoantigen.llm: call response schema=_VisionPayload len=4507
+2026-04-18 19:35:13,715 [INFO] neoantigen.llm: call response schema=_VisionPayload len=5344
+2026-04-18 19:35:16,465 [INFO] neoantigen.llm: call response schema=_VisionPayload len=6419
+2026-04-18 19:35:18,793 [INFO] neoantigen.llm: call response schema=_VisionPayload len=6977
+2026-04-18 19:35:20,209 [INFO] neoantigen.llm: call response schema=_VisionPayload len=7670
+2026-04-18 19:35:22,283 [INFO] neoantigen.llm: call response schema=_VisionPayload len=9587
+2026-04-18 19:35:22,458 [INFO] neoantigen.llm: call response schema=_VisionPayload len=8517
+2026-04-18 19:35:23,327 [INFO] neoantigen.llm: call response schema=_VisionPayload len=8011
+2026-04-18 19:35:23,338 [INFO] neoantigen.llm: call response schema=_VisionPayload len=8702
+2026-04-18 19:35:24,203 [INFO] neoantigen.llm: call response schema=_VisionPayload len=9616
+2026-04-18 19:35:24,204 [ERROR] neoantigen.llm: JSON parse failed schema=_VisionPayload raw='Okay, let\'s tackle this extraction task. First, I need to go through the provided text carefully and identify all the required fields according to the schema.\n\nStarting with the page_description. The document is a Guardant360 CDx report, a liquid biopsy for genomics. So the page_description would be something like "Guardant360 CDx report - NSCLC with acquired resistance".\n\nNext, primary_cancer_type. The text says "Dx: Non-small cell lung adenocarcinoma, metastatic". So that\'s lung adenocarcinoma. The correct snake_case would be "lung_adenocarcinoma".\n\nHistology: The diagnosis mentions adenocar'
+2026-04-18 19:35:24,204 [WARNING] neoantigen.llm: retrying schema=_VisionPayload after first-attempt failure:
+  - ValueError: model did not return valid JSON: "Okay, let's tackle this extraction task. First, I need to go through the provided text carefully and identify all the required fields according to the schema.\n\nStarting with the page_description. The document is a Guardant360 CDx report, a liquid biopsy for genomics. So the page_description would be"
+2026-04-18 19:35:36,340 [INFO] neoantigen.llm: call response schema=_VisionPayload len=8581
+2026-04-18 19:35:36,342 [INFO] neoantigen.llm: call schema=_AggPayload images=0 user_len=4634
+2026-04-18 19:35:50,670 [INFO] neoantigen.llm: call response schema=_AggPayload len=10189
+2026-04-18 19:35:50,738 [INFO] neoantigen.llm: stream_with_thinking start user_len=2400 images=0 prefill_len=15
+2026-04-18 19:36:12,651 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 19:36:12,663 [INFO] neoantigen.llm: stream_with_thinking start user_len=2361 images=0 prefill_len=15
+2026-04-18 19:36:40,434 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 19:36:40,435 [INFO] neoantigen.llm: call schema=_PhaseResponse images=0 user_len=2361
+2026-04-18 19:36:46,884 [INFO] neoantigen.llm: call response schema=_PhaseResponse len=4746
+2026-04-18 19:36:46,897 [INFO] neoantigen.llm: stream_with_thinking start user_len=2402 images=0 prefill_len=15
+2026-04-18 19:37:14,674 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 19:37:14,678 [INFO] neoantigen.llm: call schema=_PhaseResponse images=0 user_len=2402
+2026-04-18 19:37:29,772 [INFO] neoantigen.llm: call response schema=_PhaseResponse len=11494
+2026-04-18 19:37:29,773 [ERROR] neoantigen.llm: JSON parse failed schema=_PhaseResponse raw="Okay, let's tackle this. The patient has lung adenocarcinoma with EGFR mutations (p.E746_A750del and p.T790M), as well as TP53 mutation. TMB is low. The phase is systemic therapy, first-line and subsequent lines. Need to consider targeted therapy, immunotherapy, chemo.\n\nLooking at the provided trials. The first study (PMID 34839016) is about osimertinib with bevacizumab vs osimertinib alone in second-line for EGFR-mutant with acquired T790M. Second study (PMID 36863124) is osimertinib as neoadjuvant in resectable stage II-IIIB. Third study (PMID 34281470) is erlotinib and ramucirumab in EGFR-m"
+2026-04-18 19:37:29,773 [WARNING] neoantigen.llm: retrying schema=_PhaseResponse after first-attempt failure:
+  - ValueError: model did not return valid JSON: "Okay, let's tackle this. The patient has lung adenocarcinoma with EGFR mutations (p.E746_A750del and p.T790M), as well as TP53 mutation. TMB is low. The phase is systemic therapy, first-line and subsequent lines. Need to consider targeted therapy, immunotherapy, chemo.\n\nLooking at the provided trial"
+2026-04-18 19:37:44,847 [INFO] neoantigen.llm: call response schema=_PhaseResponse len=11658
+2026-04-18 19:37:44,848 [ERROR] neoantigen.llm: JSON parse failed schema=_PhaseResponse raw="Okay, let's start by analyzing the patient's case. The primary cancer type is lung adenocarcinoma with specific EGFR mutations: E746_A750del and T790M, plus TP53 R175H. Tumor mutational burden is low (0.1 mut/Mb). The task is to decide on the systemic therapy, focusing on first-line and subsequent regimens.\n\nFirst, check the retrieved literature. The trials mentioned are all related to EGFR-mutated NSCLC. \n\nPMID 34839016 (BOOSTER trial) is phase 2, comparing osimertinib + bevacizumab vs osimertinib alone in second-line for EGFR and T790M. So this is for second-line treatment.\n\nPMID 36863124 is"
+2026-04-18 19:37:44,848 [ERROR] neoantigen.llm: retry failed schema=_PhaseResponse err=model did not return valid JSON: "Okay, let's start by analyzing the patient's case. The primary cancer type is lung adenocarcinoma with specific EGFR mutations: E746_A750del and T790M, plus TP53 R175H. Tumor mutational burden is low (0.1 mut/Mb). The task is to decide on the systemic therapy, focusing on first-line and subsequent r"
+2026-04-18 19:37:44,861 [INFO] neoantigen.llm: stream_with_thinking start user_len=2399 images=0 prefill_len=15
+2026-04-18 19:38:12,618 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 19:38:12,622 [INFO] neoantigen.llm: call schema=_PhaseResponse images=0 user_len=2399
+2026-04-18 19:38:27,735 [INFO] neoantigen.llm: call response schema=_PhaseResponse len=11709
+2026-04-18 19:38:27,736 [ERROR] neoantigen.llm: JSON parse failed schema=_PhaseResponse raw="Okay, let's tackle this problem. The user is asking for a follow-up and adjuvant treatment plan for a lung adenocarcinoma patient. The primary cancer type is lung adenocarcinoma, with specific mutations like EGFR p.E746_A750del, T790M, and TP53 R175H. The tumor mutational burden is low at 0.1 mut/Mb.\n\nFirst, I need to look at the retrieved literature. There are three papers. Let's check each one.\n\nPMID 36863484 is about osimertinib based on plasma T790M monitoring in EGFR-mutant NSCLC. It's a phase 2 trial. Maybe useful for monitoring.\n\nPMID 40974872 is a phase 3 trial about chemo during EGFR "
+2026-04-18 19:38:27,736 [WARNING] neoantigen.llm: retrying schema=_PhaseResponse after first-attempt failure:
+  - ValueError: model did not return valid JSON: "Okay, let's tackle this problem. The user is asking for a follow-up and adjuvant treatment plan for a lung adenocarcinoma patient. The primary cancer type is lung adenocarcinoma, with specific mutations like EGFR p.E746_A750del, T790M, and TP53 R175H. The tumor mutational burden is low at 0.1 mut/Mb"
+2026-04-18 19:38:42,810 [INFO] neoantigen.llm: call response schema=_PhaseResponse len=12119
+2026-04-18 19:38:42,810 [ERROR] neoantigen.llm: JSON parse failed schema=_PhaseResponse raw="Okay, let's see. The user is an oncologist looking for a treatment plan based on phase-2+ clinical trials for a lung adenocarcinoma patient in the follow-up and adjuvant phase. The patient has EGFR mutations, including E746_A750del, T790M, and TP53 p.R175H, with low TMB.\n\nFirst, I need to check the retrieved literature. The papers mentioned are:\n\n1. PMID 36863484: Osimertinib based on plasma T790M monitoring in EGFR+ NSCLC. This is a phase 2 trial.\n2. PMID 40974872: Chemotherapy during EGFR TKI treatment. Phase 3.\n3. PMID 36863124: Osimertinib as neoadjuvant in stage II-IIIB lung adenocarcinom"
+2026-04-18 19:38:42,810 [ERROR] neoantigen.llm: retry failed schema=_PhaseResponse err=model did not return valid JSON: "Okay, let's see. The user is an oncologist looking for a treatment plan based on phase-2+ clinical trials for a lung adenocarcinoma patient in the follow-up and adjuvant phase. The patient has EGFR mutations, including E746_A750del, T790M, and TP53 p.R175H, with low TMB.\n\nFirst, I need to check the "
+2026-04-18 19:38:50,687 [INFO] neoantigen.llm: call schema=_Paragraphs images=0 user_len=3505
+2026-04-18 19:38:56,831 [INFO] neoantigen.llm: call response schema=_Paragraphs len=4711
+2026-04-18 19:38:56,831 [ERROR] neoantigen.llm: JSON parse failed schema=_Paragraphs raw='Okay, I need to write the ASSESSMENT section of a consult note as a board-certified medical oncologist. Let me start by understanding the case details provided. The patient is a 68-year-old with lung adenocarcinoma, stage IV. ECOG is 1, meaning they\'re ambulatory but with some limitations. There\'s measurable disease per RECIST, but the query says it\'s unknown. Wait, looking at the case context, it says "Measurable disease (RECIST): unknown" but the note mentions "stable despite CNS progression." Hmm, the user might have conflicting info. But the key points are that the patient had progression '
+2026-04-18 19:38:56,831 [WARNING] neoantigen.llm: retrying schema=_Paragraphs after first-attempt failure:
+  - ValueError: model did not return valid JSON: "Okay, I need to write the ASSESSMENT section of a consult note as a board-certified medical oncologist. Let me start by understanding the case details provided. The patient is a 68-year-old with lung adenocarcinoma, stage IV. ECOG is 1, meaning they're ambulatory but with some limitations. There's m"
+2026-04-18 19:39:02,845 [INFO] neoantigen.llm: call response schema=_Paragraphs len=4843
+2026-04-18 19:39:02,846 [ERROR] neoantigen.llm: JSON parse failed schema=_Paragraphs raw='Okay, let me try to figure out why my previous response didn\'t work. The user mentioned that my JSON failed validation, and the error was about the model not returning valid JSON. They specified that the output should be a single JSON object with exactly the \'paragraphs\' key, which is an array of strings.\n\nLooking back, I think my mistake was including the reasoning in the response. The instructions said to return only the JSON object after the reasoning, but I probably included the reasoning section as part of the response. The user said "Return ONLY the JSON object" and no markdown. So maybe'
+2026-04-18 19:39:02,846 [ERROR] neoantigen.llm: retry failed schema=_Paragraphs err=model did not return valid JSON: "Okay, let me try to figure out why my previous response didn't work. The user mentioned that my JSON failed validation, and the error was about the model not returning valid JSON. They specified that the output should be a single JSON object with exactly the 'paragraphs' key, which is an array of st"
+2026-04-18 19:39:02,847 [INFO] neoantigen.llm: call schema=_Paragraphs images=0 user_len=3505
+2026-04-18 19:39:06,765 [INFO] neoantigen.llm: call response schema=_Paragraphs len=3815
+2026-04-18 20:36:21,273 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+2026-04-18 20:36:21,276 [INFO] neoantigen.llm: call schema=_VisionPayload images=1 user_len=260
+2026-04-18 20:36:21,787 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=2599
+2026-04-18 20:36:21,806 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=1114
+2026-04-18 20:36:21,823 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=2081
+2026-04-18 20:36:21,824 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=681
+2026-04-18 20:36:21,826 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=3126
+2026-04-18 20:36:21,827 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=1809
+2026-04-18 20:36:21,828 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=1990
+2026-04-18 20:36:21,830 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=3360
+2026-04-18 20:36:21,831 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=1527
+2026-04-18 20:36:21,832 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=2666
+2026-04-18 20:36:21,833 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=1277
+2026-04-18 20:36:26,558 [INFO] neoantigen.llm: call response schema=_VisionPayload len=1495
+2026-04-18 20:36:30,318 [INFO] neoantigen.llm: call response schema=_VisionPayload len=2855
+2026-04-18 20:36:31,189 [INFO] neoantigen.llm: call response schema=_VisionPayload len=3603
+2026-04-18 20:36:36,083 [INFO] neoantigen.llm: call response schema=_VisionPayload len=4535
+2026-04-18 20:36:36,084 [INFO] neoantigen.llm: call response schema=_VisionPayload len=5138
+2026-04-18 20:36:39,017 [INFO] neoantigen.llm: call response schema=_VisionPayload len=6048
+2026-04-18 20:36:39,719 [INFO] neoantigen.llm: call response schema=_VisionPayload len=5625
+2026-04-18 20:36:39,900 [INFO] neoantigen.llm: call response schema=_VisionPayload len=7095
+2026-04-18 20:36:39,915 [INFO] neoantigen.llm: call response schema=_VisionPayload len=7073
+2026-04-18 20:36:41,796 [INFO] neoantigen.llm: call response schema=_VisionPayload len=7919

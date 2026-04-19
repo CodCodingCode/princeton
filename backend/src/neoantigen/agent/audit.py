@@ -14,7 +14,7 @@ Design notes:
   to a timestamped suffix (``llm_audit.jsonl.20260418_165342``) and starts a
   fresh file. No background thread needed.
 - Unlike ``k2.log`` (human tail format), this is JSONL intended to be queried
-  with ``jq`` — e.g. ``jq 'select(.stage=="walker" and .event=="phase_parse")'``.
+  with ``jq``: e.g. ``jq 'select(.stage=="walker" and .event=="phase_parse")'``.
 """
 
 from __future__ import annotations

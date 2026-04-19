@@ -30,6 +30,15 @@ class CaseRecord:
     # Memoize narrative prose (Assessment / Treatment Plan) generated at
     # PDF-build time so re-downloading the report doesn't re-hit the LLM.
     narrative_cache: dict[str, list[str]] = field(default_factory=dict)
+    # Patient-facing healing guide (populated on first hit to
+    # POST /patient-guide, returned cached on subsequent hits). Any-typed
+    # to avoid an import cycle with web.routes.patient_guide.
+    patient_guide: Any | None = None
+    # Content hash of the uploaded file set. Set on case creation (cache
+    # hit OR fresh run) so the orchestrator completion path and the
+    # patient-guide generator can write back to the disk cache under the
+    # right key.
+    input_hash: str | None = None
     # Fanout queues so multiple subscribers (multiple open tabs) can all receive
     # the same events. New subscribers get the replay first, then live events.
     _subscribers: list[asyncio.Queue[AgentEvent | None]] = field(default_factory=list)

@@ -1,20 +1,18 @@
 "use client";
 
-// Patient-location capture for the Trials tab.
+// Auto-fetching location banner for the Trials tab.
 //
-// UX flow:
-//   1. Show a compact card offering "Use my location" + a text input.
-//   2. "Use my location" -> navigator.geolocation -> precise lat/lng.
-//   3. Text input (city or ZIP) -> Google Maps Geocoder (JS SDK, loaded
-//      already for the TrialMap) -> lat/lng.
-//   4. Persist to localStorage keyed by caseId so a refresh keeps the
-//      distance sort intact.
+// On mount: restore any previously-granted location from localStorage. If we
+// don't have one, fire navigator.geolocation.getCurrentPosition() immediately
+// (this triggers the browser's native permission dialog on first use, and is
+// instant on subsequent visits since the browser caches the grant). No text
+// input, no "use my location" button - the user either grants the permission
+// once or the distance UI quietly stays off.
 //
-// Parent owns the `UserLocation` state; this component calls `onChange`
-// when a location is captured or cleared.
+// We still expose a "Change" button so a user who gave the wrong city can
+// re-trigger a lookup, and a "Clear" path to wipe the stored location.
 
-import { useJsApiLoader } from "@react-google-maps/api";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { UserLocation } from "@/lib/geo";
 
 interface Props {
@@ -61,152 +59,169 @@ export function writeStoredLocation(
   }
 }
 
-export function LocationPrompt({ caseId, location, onChange }: Props) {
-  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-  const { isLoaded: mapsReady } = useJsApiLoader({
-    id: "nv-map-loader",
-    googleMapsApiKey: apiKey ?? "",
-  });
+type Status =
+  | "idle"
+  | "locating"
+  | "ready"
+  | "denied"
+  | "unsupported"
+  | "error";
 
-  const [query, setQuery] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const update = (loc: UserLocation | null) => {
-    writeStoredLocation(caseId, loc);
-    onChange(loc);
-  };
-
-  async function useBrowserLocation() {
-    setError(null);
+function requestBrowserLocation(): Promise<GeolocationPosition> {
+  return new Promise((resolve, reject) => {
     if (typeof navigator === "undefined" || !navigator.geolocation) {
-      setError("Your browser doesn't support location lookup.");
+      reject(new Error("Geolocation is not supported by this browser."));
       return;
     }
-    setBusy(true);
+    navigator.geolocation.getCurrentPosition(resolve, reject, {
+      maximumAge: 5 * 60 * 1000,
+      timeout: 8000,
+    });
+  });
+}
+
+export function LocationPrompt({ caseId, location, onChange }: Props) {
+  const [status, setStatus] = useState<Status>(location ? "ready" : "idle");
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  const captureLocation = async () => {
+    setStatus("locating");
+    setErrorMsg(null);
     try {
-      const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(resolve, reject, {
-          maximumAge: 5 * 60 * 1000,
-          timeout: 8000,
-        });
-      });
-      update({
+      const pos = await requestBrowserLocation();
+      const loc: UserLocation = {
         lat: pos.coords.latitude,
         lng: pos.coords.longitude,
         source: "browser",
-      });
+      };
+      writeStoredLocation(caseId, loc);
+      onChange(loc);
+      setStatus("ready");
     } catch (e) {
-      const msg = e instanceof GeolocationPositionError ? e.message : String(e);
-      setError(
-        msg ||
-          "Couldn't read your location. Try entering a city or ZIP instead.",
-      );
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function geocodeQuery() {
-    const q = query.trim();
-    if (!q) return;
-    setError(null);
-    if (!mapsReady || typeof google === "undefined") {
-      setError("Map service isn't ready yet. Try again in a moment.");
-      return;
-    }
-    setBusy(true);
-    try {
-      const geocoder = new google.maps.Geocoder();
-      const { results } = await geocoder.geocode({ address: q });
-      if (!results.length) {
-        setError(`No match for "${q}". Try a city, ZIP, or address.`);
+      if (e instanceof GeolocationPositionError) {
+        if (e.code === 1) {
+          // PERMISSION_DENIED
+          setStatus("denied");
+          setErrorMsg(
+            "Location permission denied. Trials will still show, ranked by eligibility.",
+          );
+          return;
+        }
+        if (e.code === 2) {
+          // POSITION_UNAVAILABLE
+          setStatus("error");
+          setErrorMsg("Couldn't determine your location right now.");
+          return;
+        }
+        if (e.code === 3) {
+          // TIMEOUT
+          setStatus("error");
+          setErrorMsg("Location lookup timed out.");
+          return;
+        }
+      }
+      if (e instanceof Error && /not supported/i.test(e.message)) {
+        setStatus("unsupported");
+        setErrorMsg(null);
         return;
       }
-      const best = results[0];
-      const loc = best.geometry.location;
-      update({
-        lat: loc.lat(),
-        lng: loc.lng(),
-        label: best.formatted_address || q,
-        source: "geocoded",
-      });
-      setQuery("");
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-    } finally {
-      setBusy(false);
+      setStatus("error");
+      setErrorMsg(e instanceof Error ? e.message : String(e));
     }
+  };
+
+  // Auto-fire once on mount when we don't already have a cached location.
+  useEffect(() => {
+    if (location) {
+      setStatus("ready");
+      return;
+    }
+    captureLocation();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const clear = () => {
+    writeStoredLocation(caseId, null);
+    onChange(null);
+    setStatus("idle");
+    setErrorMsg(null);
+  };
+
+  // ── Render states ────────────────────────────────────────────────────────
+
+  if (status === "locating") {
+    return (
+      <div className="card p-3 flex items-center gap-2 text-xs text-neutral-600">
+        <span className="inline-block w-2 h-2 rounded-full bg-brand-700 animate-pulse" />
+        <span>Locating you to rank trials by nearest site</span>
+      </div>
+    );
   }
 
-  if (location) {
+  if (status === "ready" && location) {
     return (
-      <div className="card p-4 flex items-center justify-between gap-3">
-        <div className="min-w-0">
-          <div className="eyebrow mb-0.5">Your location</div>
-          <div className="text-sm text-black truncate">
-            {location.label ||
-              `${location.lat.toFixed(3)}, ${location.lng.toFixed(3)}`}
-          </div>
-          <div className="text-[11px] text-neutral-500 mt-0.5">
-            {location.source === "browser"
-              ? "From your browser. Trials sorted by distance."
-              : location.source === "geocoded"
-                ? "From your typed address."
-                : "Manual entry."}
+      <div className="card p-3 flex items-center justify-between gap-3">
+        <div className="min-w-0 flex items-center gap-2">
+          <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+          <div className="min-w-0">
+            <div className="text-xs text-neutral-500 leading-tight">
+              Trials sorted by distance from
+            </div>
+            <div className="text-sm text-black ">
+              {location.label ||
+                `${location.lat.toFixed(3)}, ${location.lng.toFixed(3)}`}
+            </div>
           </div>
         </div>
         <button
           type="button"
-          onClick={() => update(null)}
-          className="text-xs text-neutral-500 hover:text-black transition shrink-0"
+          onClick={captureLocation}
+          className="text-[11px] text-neutral-500 hover:text-black transition shrink-0"
         >
-          Change
+          Refresh
         </button>
       </div>
     );
   }
 
-  return (
-    <div className="card p-4">
-      <div className="eyebrow mb-1">Find trials near you</div>
-      <p className="text-xs text-neutral-500 mb-3">
-        We'll sort matched trials by distance to the nearest recruiting site.
-      </p>
-      <div className="flex flex-wrap items-center gap-2">
+  if (status === "denied" || status === "error" || status === "unsupported") {
+    return (
+      <div className="card p-3 flex items-center justify-between gap-3 text-xs">
+        <span className="text-neutral-600">
+          {errorMsg ||
+            "Location isn't available; trials are sorted by eligibility only."}
+        </span>
         <button
           type="button"
-          onClick={useBrowserLocation}
-          disabled={busy}
-          className="px-4 py-1.5 rounded-full bg-black text-white text-xs font-medium hover:bg-brand-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+          onClick={captureLocation}
+          className="text-[11px] text-brand-700 hover:text-black transition shrink-0"
         >
-          {busy ? "Locating…" : "Use my location"}
+          Retry
         </button>
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            geocodeQuery();
-          }}
-          className="flex items-center gap-2 flex-1 min-w-[220px]"
-        >
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="or enter city or ZIP"
-            disabled={busy}
-            className="flex-1 text-xs border border-neutral-200 rounded-full px-3 py-1.5 focus:outline-none focus:border-black disabled:opacity-50"
-          />
-          <button
-            type="submit"
-            disabled={busy || !query.trim()}
-            className="px-3 py-1.5 rounded-full border border-neutral-300 text-xs text-neutral-700 hover:border-black hover:text-black transition disabled:opacity-30 disabled:cursor-not-allowed"
-          >
-            Apply
-          </button>
-        </form>
       </div>
-      {error && <div className="mt-2 text-[11px] text-red-600">{error}</div>}
+    );
+  }
+
+  // idle: shouldn't linger, but render a minimal row just in case
+  return (
+    <div className="card p-3 flex items-center justify-between gap-3 text-xs">
+      <span className="text-neutral-500">Waiting for location permission</span>
+      <button
+        type="button"
+        onClick={captureLocation}
+        className="text-[11px] text-brand-700 hover:text-black transition shrink-0"
+      >
+        Allow
+      </button>
+      {location && (
+        <button
+          type="button"
+          onClick={clear}
+          className="text-[11px] text-neutral-400 hover:text-black transition shrink-0"
+        >
+          Clear
+        </button>
+      )}
     </div>
   );
 }

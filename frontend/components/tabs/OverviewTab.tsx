@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef } from "react";
 import type { PatientCase } from "@/lib/types";
 import { toPatientFriendly } from "@/lib/plainEnglish";
+import { PatientProfileCard } from "@/components/PatientProfileCard";
 import type { ExtractFeedEntry, ExtractProgress } from "../CaseTabs";
 
 function fmtBytes(bytes?: number): string {
@@ -82,6 +83,9 @@ export function OverviewTab({
 
   return (
     <div className="space-y-6">
+      {/* Physician-facing patient profile: dense, scannable, chart-note register. */}
+      <PatientProfileCard caseData={caseData} />
+
       {extracting && fileRows.length > 0 && (
         <section className="card-muted p-5">
           <div className="flex items-center justify-between mb-3">
@@ -90,7 +94,7 @@ export function OverviewTab({
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-black opacity-40" />
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-black" />
               </span>
-              Extracting your uploaded documents
+              Extracting your uploaded documents…
             </div>
             <div className="meta-mono">
               {extractProgress!.done}/{extractProgress!.total} · {overallPct}%
@@ -118,13 +122,13 @@ export function OverviewTab({
               return (
                 <div key={row.filename} className="text-[11px]">
                   <div className="flex items-center justify-between gap-2 mb-1">
-                    <span className="truncate font-mono text-neutral-800">
+                    <span className="font-mono text-neutral-800">
                       {row.filename}
                     </span>
                     <span className="tabular-nums text-neutral-500 shrink-0">
                       {isDone ? (
                         <>
-                          <span className="text-emerald-700 mr-1">done</span>
+                          <span className="text-emerald-700 mr-1">Done</span>
                           {row.chars ? `${row.chars} chars` : ""}
                           {elapsedMs
                             ? ` · ${(elapsedMs / 1000).toFixed(1)}s`
@@ -132,7 +136,7 @@ export function OverviewTab({
                         </>
                       ) : (
                         <>
-                          <span className="text-black mr-1">reading…</span>
+                          <span className="text-black mr-1">Reading</span>
                           {row.bytes ? fmtBytes(row.bytes) : ""}
                         </>
                       )}
@@ -212,7 +216,7 @@ export function OverviewTab({
           <span className="font-semibold">Worth reviewing:</span>{" "}
           {caseData.conflicts.length} fact
           {caseData.conflicts.length === 1 ? "" : "s"} disagreed between your
-          documents - see the Documents tab.
+          documents. See the Documents tab.
         </div>
       )}
     </div>

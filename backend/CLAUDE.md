@@ -56,7 +56,7 @@ LangGraph state machine: `rag_retrieve` → `k2_respond` → optional `tool_disp
 ### External APIs ([external/](src/neoantigen/external/))
 
 - [trials.py](src/neoantigen/external/trials.py) - ClinicalTrials.gov REST v2 client (disk-cached).
-- [regeneron_rules.py](src/neoantigen/external/regeneron_rules.py) - hardcoded predicate gates for four specific Regeneron-sponsored trials (currently all melanoma — fianlimab/cemiplimab + the BNT111 partnership). The registry is illustrative for the demo; the broader pipeline is cancer-agnostic, this matcher is the one component still narrowed to a sponsor's catalog. Most `never_in_intake_gates` (ECOG, prior therapy, RECIST) stay `needs_more_data` until the intake path captures them.
+- [regeneron_rules.py](src/neoantigen/external/regeneron_rules.py) - hardcoded predicate gates for four specific Regeneron-sponsored trials (currently all melanoma: fianlimab/cemiplimab + the BNT111 partnership). The registry is illustrative for the demo; the broader pipeline is cancer-agnostic, this matcher is the one component still narrowed to a sponsor's catalog. Most `never_in_intake_gates` (ECOG, prior therapy, RECIST) stay `needs_more_data` until the intake path captures them.
 - [trial_sites.py](src/neoantigen/external/trial_sites.py) - geocodes NCT site addresses via Google Maps when `GOOGLE_MAPS_API_KEY` is set.
 
 All use `httpx.AsyncClient` with `asyncio.gather()` where applicable.

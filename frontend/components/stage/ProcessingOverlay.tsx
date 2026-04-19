@@ -1,5 +1,9 @@
 "use client";
 
+// Processing-phase overlay. Floats in the top-right of the avatar stage
+// while the pipeline runs. Matches the app's light theme: solid white card,
+// single navy accent, eyebrow labels, no glass or color saturation.
+
 import { useEffect, useMemo, useRef } from "react";
 import type { EventKind } from "@/lib/types";
 import type { ExtractFeedEntry } from "@/components/CaseTabs";
@@ -20,8 +24,17 @@ export interface ProcessingState {
   stageLog?: StageLogEntry[];
 }
 
+type RowStatus = "pending" | "active" | "done";
+
+interface Row {
+  key: string;
+  label: string;
+  status: RowStatus;
+  detail?: string;
+  progress?: { done: number; total: number; pct: number };
+}
+
 function stageBody(message: string): string {
-  // Strip the "[stage N] ▶/✓/✗ PHASE · " prefix the backend tags on.
   const m = message.match(/·\s+(.+)$/);
   return m ? m[1] : message;
 }
@@ -33,16 +46,6 @@ function fmtBytes(bytes?: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
 }
 
-type RowStatus = "pending" | "active" | "done";
-
-interface Row {
-  key: string;
-  label: string;
-  status: RowStatus;
-  detail?: string;
-  progress?: { done: number; total: number; pct: number };
-}
-
 function deriveRows(s: ProcessingState): Row[] {
   const hasPdf = s.firedMilestones.has("pdf_extracted");
   const hasAggregate = s.firedMilestones.has("aggregation_done");
@@ -50,14 +53,8 @@ function deriveRows(s: ProcessingState): Row[] {
   const hasTrials = s.firedMilestones.has("trial_matches_ready");
   const hasSites = s.firedMilestones.has("trial_sites_ready");
 
-  const extracting =
-    !hasPdf &&
-    s.extractProgress &&
-    s.extractProgress.total > 0 &&
-    s.extractProgress.done < s.extractProgress.total;
-
   const extractDetail = s.extractProgress
-    ? `${s.extractProgress.done}/${s.extractProgress.total}`
+    ? `${s.extractProgress.done}/${s.extractProgress.total} files`
     : undefined;
 
   const readProgress =
@@ -75,20 +72,14 @@ function deriveRows(s: ProcessingState): Row[] {
     {
       key: "read",
       label: "Reading records",
-      status: hasPdf ? "done" : extracting ? "active" : "active",
+      status: hasPdf ? "done" : "active",
       detail: hasPdf ? undefined : extractDetail,
       progress: readProgress,
     },
     {
       key: "reconcile",
       label: "Reconciling across documents",
-      status: hasAggregate
-        ? "done"
-        : hasPdf
-          ? "active"
-          : s.currentStage === "2"
-            ? "active"
-            : "pending",
+      status: hasAggregate ? "done" : hasPdf ? "active" : "pending",
     },
     {
       key: "plan",
@@ -114,11 +105,25 @@ export function ProcessingOverlay({ state }: { state: ProcessingState }) {
     !!state.extractProgress &&
     state.extractProgress.total > 0 &&
     state.extractProgress.done < state.extractProgress.total;
-  const overallPct = state.extractProgress?.total
+
+  const overallExtractPct = state.extractProgress?.total
     ? Math.round(
         (state.extractProgress.done / state.extractProgress.total) * 100,
       )
     : 0;
+
+  // Overall pipeline progress: % of steps completed, with a soft credit for
+  // the currently-active step's sub-progress when available.
+  const overallPct = useMemo(() => {
+    const done = rows.filter((r) => r.status === "done").length;
+    const activeIndex = rows.findIndex((r) => r.status === "active");
+    const activeSub = rows[activeIndex]?.progress?.pct ?? 0;
+    const active = activeIndex >= 0 ? activeSub / 100 : 0;
+    return Math.round(((done + active) / rows.length) * 100);
+  }, [rows]);
+
+  const doneCount = rows.filter((r) => r.status === "done").length;
+  const currentStepNumber = Math.min(doneCount + 1, rows.length);
 
   // Fold the flat start/done event stream into per-file rows.
   const fileRows = useMemo(() => {
@@ -167,81 +172,71 @@ export function ProcessingOverlay({ state }: { state: ProcessingState }) {
 
   return (
     <div className="absolute top-24 right-6 pointer-events-none">
-      <div className="pointer-events-auto w-[360px] rounded-2xl bg-white/70 backdrop-blur-xl ring-1 ring-white/40 shadow-2xl shadow-black/10 p-5">
-        <div className="eyebrow mb-3">Working on your case</div>
-        <ul className="space-y-2.5">
-          {rows.map((r) => (
-            <li key={r.key} className="flex items-start gap-3">
-              <StatusGlyph status={r.status} />
-              <div className="flex-1 min-w-0">
-                <div
-                  className={`text-sm leading-snug ${
-                    r.status === "pending"
-                      ? "text-neutral-400"
-                      : r.status === "active"
-                        ? "text-black font-medium"
-                        : "text-neutral-600"
-                  }`}
-                >
-                  {r.label}
-                </div>
-                {r.progress ? (
-                  <div className="mt-1.5">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-[10px] text-neutral-500 tabular-nums">
-                        {r.progress.done}/{r.progress.total}
-                      </span>
-                      <span className="text-[10px] text-neutral-500 tabular-nums">
-                        {r.progress.pct}%
-                      </span>
-                    </div>
-                    <div className="h-1.5 w-full bg-neutral-200 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-brand-700 transition-[width] duration-300"
-                        style={{ width: `${r.progress.pct}%` }}
-                      />
-                    </div>
-                  </div>
-                ) : (
-                  r.detail && (
-                    <div className="text-[11px] text-neutral-500 mt-0.5 tabular-nums">
-                      {r.detail}
-                    </div>
-                  )
-                )}
-              </div>
-            </li>
-          ))}
-        </ul>
+      <div className="pointer-events-auto w-[360px] rounded-2xl border border-neutral-200 bg-white shadow-sm overflow-hidden scan-line">
+        {/* ── Header ───────────────────────────────────────────────── */}
+        <div className="flex items-center justify-between px-5 pt-4 pb-3">
+          <div className="flex items-center gap-2">
+            <span className="inline-flex h-1.5 w-1.5 rounded-full bg-brand-700 animate-breathe" />
+            <span className="eyebrow">NeoVax · Processing</span>
+          </div>
+          <span className="font-mono text-[10px] tabular-nums text-neutral-500">
+            <span className="text-black">
+              {String(currentStepNumber).padStart(2, "0")}
+            </span>
+            <span className="text-neutral-300 mx-0.5">/</span>
+            <span>{String(rows.length).padStart(2, "0")}</span>
+          </span>
+        </div>
 
+        {/* ── Overall ruler ────────────────────────────────────────── */}
+        <div className="px-5 pb-4">
+          <div className="h-[2px] w-full rounded-full bg-neutral-200 overflow-hidden">
+            <div
+              className="h-full bg-black transition-[width] duration-500 ease-out"
+              style={{ width: `${overallPct}%` }}
+            />
+          </div>
+          <div className="flex items-center justify-between mt-1.5">
+            <span className="eyebrow">Analysis progress</span>
+            <span className="font-mono text-[10px] tabular-nums text-black">
+              {overallPct}%
+            </span>
+          </div>
+        </div>
+
+        {/* ── Step rail ────────────────────────────────────────────── */}
+        <div className="px-5 pb-4">
+          <ul className="space-y-3">
+            {rows.map((r) => (
+              <StepRow key={r.key} row={r} />
+            ))}
+          </ul>
+        </div>
+
+        {/* ── Pipeline log ─────────────────────────────────────────── */}
         {state.stageLog && state.stageLog.length > 0 && (
-          <div className="mt-4 pt-4 divider">
-            <div className="eyebrow mb-2">Pipeline</div>
-            <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
-              {state.stageLog.slice(-8).map((e, i) => (
+          <div className="border-t border-neutral-100 px-5 py-3">
+            <div className="flex items-center justify-between mb-2">
+              <span className="eyebrow">Activity</span>
+              <span className="font-mono text-[10px] tabular-nums text-neutral-400">
+                {state.stageLog.length} events
+              </span>
+            </div>
+            <div className="space-y-1 max-h-36 overflow-y-auto pr-1">
+              {state.stageLog.slice(-6).map((e, i) => (
                 <div
                   key={`${e.stage}-${e.phase}-${e.at}-${i}`}
-                  className="flex items-start gap-2 text-[11px] leading-snug"
+                  className="flex items-center gap-2 text-[11px] leading-snug"
                 >
-                  <span
-                    className={`shrink-0 w-4 text-center font-mono ${
-                      e.phase === "done"
-                        ? "text-emerald-600"
-                        : e.phase === "fail"
-                          ? "text-red-600"
-                          : "text-black"
-                    }`}
-                  >
-                    {e.phase === "done" ? "✓" : e.phase === "fail" ? "✗" : "▶"}
+                  <LogGlyph phase={e.phase} />
+                  <span className="shrink-0 font-mono text-[10px] tabular-nums text-neutral-400">
+                    {e.stage.padStart(2, "0")}
                   </span>
-                  <span className="shrink-0 text-neutral-400 tabular-nums">
-                    {e.stage}
-                  </span>
-                  <span className="flex-1 min-w-0 text-neutral-700 truncate">
+                  <span className="flex-1 min-w-0 truncate text-neutral-700">
                     {stageBody(e.message)}
                   </span>
                   {typeof e.seconds === "number" && (
-                    <span className="shrink-0 text-[10px] text-neutral-500 tabular-nums">
+                    <span className="shrink-0 font-mono text-[10px] tabular-nums text-neutral-500">
                       {e.seconds.toFixed(1)}s
                     </span>
                   )}
@@ -251,24 +246,24 @@ export function ProcessingOverlay({ state }: { state: ProcessingState }) {
           </div>
         )}
 
+        {/* ── Live extraction feed ─────────────────────────────────── */}
         {extracting && fileRows.length > 0 && (
-          <div className="mt-4 pt-4 divider">
+          <div className="border-t border-neutral-100 px-5 py-3">
             <div className="flex items-center justify-between mb-2">
-              <div className="eyebrow">Reading files</div>
-              <div className="meta-mono">
-                {state.extractProgress!.done}/{state.extractProgress!.total} ·{" "}
-                {overallPct}%
-              </div>
-            </div>
-            <div className="h-1.5 w-full bg-neutral-200 rounded-full overflow-hidden mb-3">
-              <div
-                className="h-full bg-black transition-[width] duration-300"
-                style={{ width: `${overallPct}%` }}
-              />
+              <span className="eyebrow">Reading documents</span>
+              <span className="font-mono text-[10px] tabular-nums text-neutral-500">
+                <span className="text-black">
+                  {state.extractProgress!.done}
+                </span>
+                <span className="text-neutral-300 mx-0.5">/</span>
+                {state.extractProgress!.total}
+                <span className="text-neutral-300 mx-1.5">·</span>
+                {overallExtractPct}%
+              </span>
             </div>
             <div
               ref={feedRef}
-              className="max-h-52 overflow-y-auto space-y-2 pr-1"
+              className="max-h-44 overflow-y-auto space-y-2 pr-1"
             >
               {fileRows.map((row) => {
                 const isDone = row.status === "done";
@@ -276,32 +271,34 @@ export function ProcessingOverlay({ state }: { state: ProcessingState }) {
                   ? (row.finishedAt ?? row.startedAt) - row.startedAt
                   : 0;
                 return (
-                  <div key={row.filename} className="text-[11px]">
-                    <div className="flex items-center justify-between gap-2 mb-1">
-                      <span className="truncate font-mono text-neutral-800">
+                  <div key={row.filename} className="space-y-1">
+                    <div className="flex items-center gap-2 text-[11px]">
+                      <span className="flex-1 min-w-0 truncate text-neutral-700">
                         {row.filename}
                       </span>
-                      <span className="tabular-nums text-neutral-500 shrink-0 text-[10px]">
+                      <span className="shrink-0 font-mono text-[10px] tabular-nums">
                         {isDone ? (
-                          <>
-                            <span className="text-emerald-700 mr-1">done</span>
+                          <span className="text-neutral-500">
+                            Done
                             {elapsedMs
-                              ? `${(elapsedMs / 1000).toFixed(1)}s`
+                              ? ` · ${(elapsedMs / 1000).toFixed(1)}s`
                               : ""}
-                          </>
+                          </span>
                         ) : (
-                          <>
-                            <span className="text-black mr-1">reading…</span>
-                            {row.bytes ? fmtBytes(row.bytes) : ""}
-                          </>
+                          <span className="text-brand-700">
+                            Reading
+                            {row.bytes ? ` · ${fmtBytes(row.bytes)}` : ""}
+                          </span>
                         )}
                       </span>
                     </div>
-                    {isDone ? (
-                      <div className="h-[3px] w-full rounded-full bg-emerald-500/80" />
-                    ) : (
-                      <div className="h-[3px] w-full rounded-full bar-indeterminate" />
-                    )}
+                    <div className="h-[2px] w-full rounded-full bg-neutral-200 overflow-hidden">
+                      {isDone ? (
+                        <div className="h-full w-full bg-black" />
+                      ) : (
+                        <div className="h-full w-full bar-indeterminate" />
+                      )}
+                    </div>
                   </div>
                 );
               })}
@@ -313,20 +310,112 @@ export function ProcessingOverlay({ state }: { state: ProcessingState }) {
   );
 }
 
-function StatusGlyph({ status }: { status: RowStatus }) {
+// ── Step row: rail glyph vertically centered with the label ──────────
+function StepRow({ row }: { row: Row }) {
+  const labelCls =
+    row.status === "pending"
+      ? "text-neutral-400"
+      : row.status === "active"
+        ? "text-black font-medium"
+        : "text-neutral-700";
+
+  return (
+    <li>
+      <div className="flex items-center gap-3">
+        <StepGlyph status={row.status} />
+        <span className={`flex-1 min-w-0 text-[13px] leading-snug ${labelCls}`}>
+          {row.label}
+        </span>
+        <StepStatusChip status={row.status} detail={row.detail} />
+      </div>
+      {row.progress ? (
+        <div className="mt-2 pl-[22px]">
+          <div className="h-[2px] w-full rounded-full bg-neutral-200 overflow-hidden">
+            <div
+              className="h-full bg-brand-700 transition-[width] duration-300"
+              style={{ width: `${row.progress.pct}%` }}
+            />
+          </div>
+          <div className="flex items-center justify-between mt-1">
+            <span className="font-mono text-[10px] tabular-nums text-neutral-500">
+              {row.progress.done}/{row.progress.total}
+            </span>
+            <span className="font-mono text-[10px] tabular-nums text-black">
+              {row.progress.pct}%
+            </span>
+          </div>
+        </div>
+      ) : null}
+    </li>
+  );
+}
+
+// ── Step glyph: fixed 10×10 box, dot vertically centered with the label
+function StepGlyph({ status }: { status: RowStatus }) {
+  return (
+    <span className="shrink-0 w-2.5 h-2.5 flex items-center justify-center">
+      {status === "done" ? (
+        <span className="w-2.5 h-2.5 rounded-full bg-black" />
+      ) : status === "active" ? (
+        <span className="relative w-2.5 h-2.5 flex items-center justify-center">
+          <span className="absolute inset-0 rounded-full border-[1.5px] border-brand-700 border-t-transparent animate-spin" />
+          <span className="w-1 h-1 rounded-full bg-brand-700" />
+        </span>
+      ) : (
+        <span className="w-2 h-2 rounded-full border border-neutral-300 bg-white" />
+      )}
+    </span>
+  );
+}
+
+// ── Status chip on the right of each step row ──────────────────────────
+function StepStatusChip({
+  status,
+  detail,
+}: {
+  status: RowStatus;
+  detail?: string;
+}) {
   if (status === "done") {
     return (
-      <span className="shrink-0 w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px]">
-        ✓
+      <span className="shrink-0 font-mono text-[9px] uppercase tracking-[0.18em] text-neutral-500">
+        complete
       </span>
     );
   }
   if (status === "active") {
     return (
-      <span className="shrink-0 w-5 h-5 rounded-full border-2 border-brand-700 border-t-transparent animate-spin" />
+      <span className="shrink-0 font-mono text-[9px] uppercase tracking-[0.18em] text-brand-700">
+        {detail ?? "live"}
+      </span>
     );
   }
   return (
-    <span className="shrink-0 w-5 h-5 rounded-full border border-neutral-300 bg-white" />
+    <span className="shrink-0 font-mono text-[9px] uppercase tracking-[0.18em] text-neutral-400">
+      queued
+    </span>
+  );
+}
+
+// ── Pipeline log glyph: mono directional markers ──────────────────────
+function LogGlyph({ phase }: { phase: "start" | "done" | "fail" }) {
+  if (phase === "done") {
+    return (
+      <span className="shrink-0 w-3 text-center text-black font-mono text-[11px] leading-none">
+        ✓
+      </span>
+    );
+  }
+  if (phase === "fail") {
+    return (
+      <span className="shrink-0 w-3 text-center text-black font-mono text-[11px] leading-none">
+        ✗
+      </span>
+    );
+  }
+  return (
+    <span className="shrink-0 w-3 text-center text-brand-700 font-mono text-[11px] leading-none">
+      ▸
+    </span>
   );
 }

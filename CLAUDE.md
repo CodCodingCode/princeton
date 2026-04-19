@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-Princeton Hacks project - **NeoVax**, an oncologist copilot. The user drops a folder of clinical records (PDFs, scans, notes); the backend extracts oncology fields, walks a literature-grounded treatment railway (streaming `<think>` tokens from a medical reasoning model), matches Regeneron-sponsored trials, geocodes trial sites, and produces a downloadable oncologist report. Works across cancer types — the dynamic walker, RAG corpus filter, and cancer-type detector all key off the extracted `primary_cancer_type` rather than assuming any single tumour. The case page is a **cockpit**: a LiveAvatar video on the left acts as a TTS puppet for K2-Think (the model generates the answer, the avatar just speaks it), while the case data sits behind URL-synced tabs on the right.
+Princeton Hacks project - **NeoVax**, an oncologist copilot. The user drops a folder of clinical records (PDFs, scans, notes); the backend extracts oncology fields, walks a literature-grounded treatment railway (streaming `<think>` tokens from a medical reasoning model), matches Regeneron-sponsored trials, geocodes trial sites, and produces a downloadable oncologist report. Works across cancer types: the dynamic walker, RAG corpus filter, and cancer-type detector all key off the extracted `primary_cancer_type` rather than assuming any single tumour. The case page is a **cockpit**: a LiveAvatar video on the left acts as a TTS puppet for K2-Think (the model generates the answer, the avatar just speaks it), while the case data sits behind URL-synced tabs on the right.
 
 Two services:
 

@@ -36,7 +36,7 @@ export const EVENT_NARRATION: Partial<Record<EventKind, string>> = {
 export const PROJECT_EXPLAINERS: string[] = [
   "While I'm working, let me tell you a bit about what I'm doing. I'm NeoVax. My job is to sit with you and your oncologist and turn a messy pile of medical records into a clear treatment plan.",
   "Most cancer cases live across ten or twenty different documents. Pathology reports, imaging, notes, molecular panels. Nobody has time to read them all at once. I do.",
-  "Right now I'm reading every page of every file you gave me, using a medical vision model trained on oncology reports. It can read a pathology slide, an imaging report, or a clinician's free-text note.",
+  "Right now I'm reading every page of every file you shared, carefully, from pathology slides and imaging reports to clinician notes.",
   "After reading, I cross-check the files against each other. If one report says stage two and another says stage three, I flag it instead of picking one silently.",
   "Then I walk through the national oncology guidelines, step by step, to decide which treatments actually fit your specific case. Not a generic list. A path built for you.",
   "I also match you against open clinical trials. Real trials, with real eligibility rules. If a trial might accept you, you'll see it on the right, with the nearest sites on a map.",
@@ -57,9 +57,13 @@ export function buildResultsNarration(
     c.primary_cancer_type || c.pathology?.primary_cancer_type || "";
   const cancer = cancerRaw ? cancerRaw.replace(/_/g, " ") : "";
 
-  const mutations = (c.mutations || [])
-    .slice(0, 2)
-    .map((m) => `${m.gene} ${m.ref_aa}${m.position}${m.alt_aa}`);
+  const mutations = (c.mutations || []).slice(0, 2).map((m) => {
+    const isPoint =
+      m.position !== null && m.position !== undefined && m.ref_aa && m.alt_aa;
+    return isPoint
+      ? `${m.gene} ${m.ref_aa}${m.position}${m.alt_aa}`
+      : m.raw_label || m.gene || "variant";
+  });
 
   const eligibleTrials = (c.trial_matches || []).filter(
     (t) => t.status === "eligible",

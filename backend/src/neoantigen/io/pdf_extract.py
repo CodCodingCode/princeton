@@ -27,6 +27,8 @@ from ..agent.events import EventKind, emit
 from ..models import DocumentExtraction, Mutation, PageFinding
 
 
+import os as _os
+
 MAX_PAGES = 20          # Hard cap per PDF to keep per-case latency bounded.
 RASTER_DPI = 150
 # K2-Think V2 emits a <think> block before the JSON. On a dense pathology or
@@ -35,7 +37,11 @@ RASTER_DPI = 150
 # errors that users saw as "(VLM call failed: ValueError)" in the Documents
 # tab. 2500 gives headroom without materially increasing cost.
 VISION_MAX_TOKENS = 2500
-VISION_CONCURRENCY = 3  # Run up to N pages concurrently against the VLM.
+# Per-document page concurrency. Env override: ``NEOVAX_VISION_CONCURRENCY``.
+# Raising this is the biggest lever for multi-page PDFs since each page is an
+# independent K2 call. 6 is a safe cloud ceiling; bump to 8-10 if the K2
+# endpoint isn't rate-limiting in practice.
+VISION_CONCURRENCY = int(_os.environ.get("NEOVAX_VISION_CONCURRENCY", "6"))
 
 
 # ─────────────────────────────────────────────────────────────
@@ -387,7 +393,7 @@ async def _analyze_page(
     if page_text.strip():
         prompt += (
             "OCR / text-layer contents of this page (may be noisy, scanned, "
-            "or upside-down fax artefacts — trust your eyes over this text):\n"
+            "or upside-down fax artefacts: trust your eyes over this text):\n"
             "---\n"
             f"{page_text[:6000]}\n---\n\n"
         )
@@ -429,7 +435,7 @@ async def _analyze_page(
 # Text-quality and fax-detection heuristics
 #
 # pypdf's text extraction on faxed / scanned PDFs routinely returns >200
-# characters of OCR noise — symbols, fragmented words, and misaligned
+# characters of OCR noise: symbols, fragmented words, and misaligned
 # whitespace. The old dispatch chose text-only whenever `len(text) >= 200`,
 # which fed that noise to Kimi and triggered "(text-only LLM call failed)".
 # These helpers detect those pages so we prefer the VLM path instead.
@@ -476,6 +482,7 @@ async def _analyze_with_fallback(
     prefer_vlm: bool,
     llm_ok: bool,
     vlm_ok: bool,
+    filename: str = "unknown",
 ) -> tuple[PageFinding, bool]:
     """Try preferred modality; on failure, try the other; then regex-only.
 
@@ -499,10 +506,10 @@ async def _analyze_with_fallback(
     for modality in attempts:
         try:
             if modality == "text":
-                return await _analyze_page_text(page_number, page_text), False
+                return await _analyze_page_text(page_number, page_text, filename), False
             else:
                 finding = await _analyze_page(
-                    page_number, image_bytes or b"", page_text
+                    page_number, image_bytes or b"", page_text, filename
                 )
                 return finding, True
         except Exception as e:  # noqa: BLE001 - we want EVERY failure to fall through
@@ -552,6 +559,13 @@ def _text_only_page_finding(page_number: int, page_text: str) -> PageFinding:
 def _guess_document_kind(filename: str, text: str) -> str:
     name = filename.lower()
     sample = (text or "")[:2000].lower()
+    if (
+        "demograph" in name
+        or "registration" in name
+        or "face sheet" in sample
+        or ("medical record number" in sample and "date of birth" in sample)
+    ):
+        return "demographics"
     if "patholog" in name or "histolog" in sample or "breslow" in sample:
         return "pathology_report"
     if "ngs" in name or "foundation" in name or "oncopanel" in sample or "tmb" in sample:
@@ -604,6 +618,7 @@ async def extract_document(filename: str, pdf_bytes: bytes) -> DocumentExtractio
                 prefer_vlm=False,
                 llm_ok=True,
                 vlm_ok=False,
+                filename=filename,
             )
         else:
             finding = PageFinding(
@@ -641,6 +656,7 @@ async def extract_document(filename: str, pdf_bytes: bytes) -> DocumentExtractio
                 prefer_vlm=True,
                 llm_ok=has_api_key(),
                 vlm_ok=True,
+                filename=filename,
             )
         else:
             finding = PageFinding(
@@ -709,6 +725,7 @@ async def extract_document(filename: str, pdf_bytes: bytes) -> DocumentExtractio
                     prefer_vlm=prefer_vlm,
                     llm_ok=llm_ok,
                     vlm_ok=vlm_ok and img is not None,
+                    filename=filename,
                 )
                 if used_v:
                     any_vision = True

@@ -17,6 +17,25 @@ export interface PatientFriendly {
   trialsCta: string;
 }
 
+// Normalize AJCC stage strings for display. Strips underscores, drops any
+// "stage" prefix, and converts leading Roman numerals to Arabic so "III_C"
+// / "stage iii" / "IIIC" all render as "3C" / "3".
+export function formatStage(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  let s = raw.trim();
+  if (!s) return null;
+  s = s.replace(/_/g, " ").replace(/\s+/g, " ").trim();
+  s = s.replace(/^stage\s*/i, "");
+  const m = s.match(/^(IV|III|II|I)\s*([A-Za-z0-9].*)?$/i);
+  if (m) {
+    const map: Record<string, string> = { I: "1", II: "2", III: "3", IV: "4" };
+    const arabic = map[m[1].toUpperCase()];
+    const rest = (m[2] ?? "").toUpperCase().replace(/\s+/g, "");
+    return arabic + rest;
+  }
+  return s;
+}
+
 // Cancer-type display labels. Extend as the corpus grows.
 const CANCER_TYPE_EN: Record<string, string> = {
   cutaneous_melanoma: "cutaneous melanoma",
@@ -112,7 +131,8 @@ function diagnosisHeadline(c: PatientCase): string {
   const label =
     CANCER_TYPE_EN[cancerType] || cancerType?.replace(/_/g, " ") || "cancer";
   const site = c.pathology.primary_site ? ` - ${c.pathology.primary_site}` : "";
-  const stage = c.intake.ajcc_stage ? ` · Stage ${c.intake.ajcc_stage}` : "";
+  const stageFmt = formatStage(c.intake.ajcc_stage);
+  const stage = stageFmt ? ` · Stage ${stageFmt}` : "";
   return `${capitalize(label)}${site}${stage}`;
 }
 
@@ -132,7 +152,7 @@ export function toPatientFriendly(c: PatientCase): PatientFriendly {
   const recommendedAction = finalStepEnglish(headlineStep);
   const reason =
     (headlineStep?.chosen_rationale || "").split(/[.!?]/)[0].trim() ||
-    "Based on the extracted pathology and retrieved phase-2+ trial literature.";
+    "Based on the clinical findings in your records and current oncology-trial literature.";
 
   const aboutYou: Array<{ label: string; value: string }> = [];
 
@@ -182,8 +202,9 @@ export function toPatientFriendly(c: PatientCase): PatientFriendly {
     });
   }
 
-  if (c.intake.ajcc_stage && !isMelanoma) {
-    aboutYou.push({ label: "Overall stage", value: c.intake.ajcc_stage });
+  const stageDisplay = formatStage(c.intake.ajcc_stage);
+  if (stageDisplay && !isMelanoma) {
+    aboutYou.push({ label: "Overall stage", value: stageDisplay });
   }
   if (c.intake.ecog != null) {
     aboutYou.push({
@@ -194,7 +215,16 @@ export function toPatientFriendly(c: PatientCase): PatientFriendly {
   if (c.mutations.length) {
     const top = c.mutations
       .slice(0, 4)
-      .map((m) => `${m.gene} ${m.ref_aa}${m.position}${m.alt_aa}`)
+      .map((m) => {
+        const isPoint =
+          m.position !== null &&
+          m.position !== undefined &&
+          m.ref_aa &&
+          m.alt_aa;
+        return isPoint
+          ? `${m.gene} ${m.ref_aa}${m.position}${m.alt_aa}`
+          : m.raw_label || m.gene || "variant";
+      })
       .join(", ");
     aboutYou.push({ label: "Mutations found", value: top });
   }
@@ -205,7 +235,7 @@ export function toPatientFriendly(c: PatientCase): PatientFriendly {
       c.pathology.notes?.slice(0, 220) ||
       (c.documents.length > 0
         ? `Based on ${c.documents.length} document${c.documents.length === 1 ? "" : "s"} you uploaded.`
-        : "Extracting your uploaded documents…"),
+        : "Extracting your uploaded documents"),
     recommendedAction,
     recommendedActionDetail: reason,
     ctaLabel: "Book an appointment with a medical oncologist",
@@ -213,6 +243,37 @@ export function toPatientFriendly(c: PatientCase): PatientFriendly {
     nextSteps: nextStepsFromRailway(c.railway?.steps),
     trialsCta: trialsSentence(c.trial_matches),
   };
+}
+
+// Friendly label for a document_kind value emitted by the backend extractor.
+// Maps the machine enums (pathology_report, molecular_report, …) to the kind
+// of document a clinician would describe in conversation.
+const DOCUMENT_KIND_LABEL: Record<string, string> = {
+  pathology_report: "Pathology report",
+  molecular_report: "Molecular / NGS report",
+  imaging_report: "Imaging report",
+  clinical_note: "Clinical note",
+  unknown: "Clinical document",
+};
+
+export function documentKindLabel(kind: string | null | undefined): string {
+  if (!kind) return "Clinical document";
+  return DOCUMENT_KIND_LABEL[kind] ?? "Clinical document";
+}
+
+// Build a human display name for an uploaded document: "Pathology report",
+// or "Pathology report 2" when several of the same kind were uploaded.
+// `indexOfKind` is the 0-based position of this doc within its kind group.
+// `totalOfKind` is how many documents share this kind overall - used to
+// decide whether to append a numeric suffix at all.
+export function documentDisplayName(
+  kind: string | null | undefined,
+  indexOfKind: number,
+  totalOfKind: number,
+): string {
+  const base = documentKindLabel(kind);
+  if (totalOfKind <= 1) return base;
+  return `${base} ${indexOfKind + 1}`;
 }
 
 export function deriveTStage(

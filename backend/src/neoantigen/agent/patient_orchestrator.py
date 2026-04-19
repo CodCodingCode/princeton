@@ -29,6 +29,7 @@ from ..external.regeneron_rules import evaluate_all
 from ..external.trial_sites import fetch_trial_sites
 from ..external.trials_global import search_global_trials
 from ..io.aggregator import aggregate_documents
+from ..io.demographics import extract_demographics
 from ..io.pdf_extract import extract_document
 from ..models import (
     ClinicianIntake,
@@ -37,6 +38,7 @@ from ..models import (
     Mutation,
     PathologyFindings,
     PatientCase,
+    PatientDemographics,
     TrialMatch,
     TrialSite,
 )
@@ -46,6 +48,7 @@ from ..nccn.dynamic_walker import (
     final_recommendation_from_steps,
 )
 from ..nccn.railway import build_map
+from .audit import audit, set_case_id
 from .events import EventBus, EventKind, set_current_bus
 
 
@@ -55,12 +58,28 @@ class InputPDF:
     data: bytes
 
 
+def _default_doc_concurrency() -> int:
+    """How many documents to extract in parallel.
+
+    Env override: ``NEOVAX_DOC_CONCURRENCY``. Default 16. This multiplies
+    with ``NEOVAX_VISION_CONCURRENCY`` inside ``pdf_extract`` (default 6),
+    so the ceiling on simultaneous K2 calls is doc * vision = ~96. Raise
+    only if the K2 endpoint can actually absorb it.
+    """
+    import os
+
+    try:
+        return max(1, int(os.environ.get("NEOVAX_DOC_CONCURRENCY", "16")))
+    except ValueError:
+        return 16
+
+
 @dataclass
 class PatientOrchestrator:
     case_id: str
     pdfs: Sequence[InputPDF]
     bus: EventBus = field(default_factory=EventBus)
-    doc_concurrency: int = 10
+    doc_concurrency: int = field(default_factory=_default_doc_concurrency)
 
     async def _stage_start(self, num: str, name: str) -> float:
         msg = f"[stage {num}] ▶ START · {name}"
@@ -90,12 +109,20 @@ class PatientOrchestrator:
 
     async def run(self) -> PatientCase:
         set_current_bus(self.bus)
+        set_case_id(self.case_id)
+        audit(
+            "orchestrator", "run_start",
+            case_id=self.case_id, doc_count=len(self.pdfs),
+            filenames=[p.filename for p in self.pdfs],
+        )
         try:
             case = await self._run_inner()
         finally:
+            audit("orchestrator", "run_done", case_id=self.case_id)
             await self.bus.emit(EventKind.DONE, "Run complete", {"case_id": self.case_id})
             await self.bus.close()
             set_current_bus(None)
+            set_case_id(None)
         return case
 
     async def _run_inner(self) -> PatientCase:
@@ -110,10 +137,26 @@ class PatientOrchestrator:
         # ── Stage 1: Per-doc extraction (text + per-page VLM), bounded concurrency ──
         t0 = await self._stage_start("1", "Per-doc extraction (pypdf + MediX VLM)")
         total_pdfs = len(self.pdfs)
+        # Log the effective concurrency so tuning is observable. Each doc can
+        # also run up to VISION_CONCURRENCY pages in parallel, so the real
+        # ceiling on simultaneous K2 calls is doc_concurrency * VISION_CONCURRENCY.
+        from ..io.pdf_extract import VISION_CONCURRENCY as _vc
+        print(
+            f"[stage 1]   · concurrency: {self.doc_concurrency} docs × "
+            f"{_vc} pages = up to {self.doc_concurrency * _vc} concurrent K2 calls",
+            flush=True,
+            file=sys.stderr,
+        )
         await self.bus.emit(
             EventKind.TOOL_START,
             f"Extracting {total_pdfs} documents",
-            {"phase": "extract_start", "total": total_pdfs, "stage": "1"},
+            {
+                "phase": "extract_start",
+                "total": total_pdfs,
+                "stage": "1",
+                "doc_concurrency": self.doc_concurrency,
+                "vision_concurrency": _vc,
+            },
         )
         try:
             sem = asyncio.Semaphore(self.doc_concurrency)
@@ -211,6 +254,20 @@ class PatientOrchestrator:
             f"TMB={enriched.tmb_mut_per_mb}",
         )
 
+        # ── Stage 3b: Demographics extraction (best-effort) ────────────────────
+        # Pulls patient identity + contact fields out of any demographics /
+        # registration document that was uploaded. Failures never abort the run -
+        # a missing demographics sheet just means the profile card degrades to
+        # "Not documented" on every field.
+        demographics: PatientDemographics | None = None
+        try:
+            demographics = await extract_demographics(documents)
+        except Exception as e:
+            audit(
+                "orchestrator", "demographics_fail",
+                error=str(e)[:300], error_type=type(e).__name__,
+            )
+
         # ── Stage 4: Primary cancer detection ──────────────────────────────────
         t0 = await self._stage_start("4", "Primary cancer detection")
         try:
@@ -233,6 +290,7 @@ class PatientOrchestrator:
                 pathology=pathology,
                 primary_cancer_type=primary_cancer_type,
                 intake=intake,
+                demographics=demographics,
                 enrichment=enriched,
                 mutations=mutations,
                 documents=documents,
@@ -279,7 +337,12 @@ class PatientOrchestrator:
             steps = await walker.walk()
             rmap = build_map(
                 steps,
-                final_recommendation=final_recommendation_from_steps(steps),
+                final_recommendation=final_recommendation_from_steps(
+                    steps,
+                    pathology=pathology,
+                    mutations=mutations,
+                    cancer_type=primary_cancer_type,
+                ),
             )
             case.railway = rmap
             case.final_recommendation = rmap.final_recommendation

@@ -74,7 +74,7 @@ export function TrialList({
   if (!matches.length) {
     return (
       <div className="card p-5 text-neutral-500 text-sm">
-        Trials will appear here once the railway finishes…
+        Trials will appear here once the analysis finishes.
       </div>
     );
   }
@@ -95,7 +95,7 @@ export function TrialList({
           >
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <div className="mono-tag mb-1 truncate">
+                <div className="mono-tag mb-1 ">
                   {m.nct_id}
                   {m.is_regeneron && (
                     <span className="ml-2 text-neutral-500">· Regeneron</span>
@@ -124,48 +124,56 @@ export function TrialList({
               </span>
             </div>
 
-            {active && (
-              <div className="mt-3 text-xs space-y-2">
-                {m.passing_criteria.length > 0 && (
-                  <div>
-                    <span className="text-emerald-700 font-medium">
-                      Passing:
-                    </span>{" "}
-                    <span className="text-neutral-700">
-                      {m.passing_criteria.join(" · ")}
-                    </span>
-                  </div>
-                )}
-                {m.failing_criteria.length > 0 && (
-                  <div>
-                    <span className="text-red-700 font-medium">Failing:</span>{" "}
-                    <span className="text-neutral-700">
-                      {m.failing_criteria.join(" · ")}
-                    </span>
-                  </div>
-                )}
-                {m.unknown_criteria.length > 0 && (
-                  <div>
-                    <span className="text-amber-700 font-medium">
-                      Need more data:
-                    </span>{" "}
-                    <span className="text-neutral-700">
-                      {m.unknown_criteria.join(" · ")}
-                    </span>
-                  </div>
-                )}
-                {m.url && (
-                  <a
-                    href={m.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-brand-700 hover:text-black underline"
-                  >
-                    ClinicalTrials.gov →
-                  </a>
-                )}
+            <div
+              className={`grid transition-all duration-300 ease-out ${
+                active
+                  ? "grid-rows-[1fr] opacity-100 mt-3"
+                  : "grid-rows-[0fr] opacity-0 mt-0"
+              }`}
+            >
+              <div className="overflow-hidden min-h-0">
+                <div className="text-xs space-y-2">
+                  {m.passing_criteria.length > 0 && (
+                    <div>
+                      <span className="text-emerald-700 font-medium">
+                        Passing:
+                      </span>{" "}
+                      <span className="text-neutral-700">
+                        {m.passing_criteria.join(" · ")}
+                      </span>
+                    </div>
+                  )}
+                  {m.failing_criteria.length > 0 && (
+                    <div>
+                      <span className="text-red-700 font-medium">Failing:</span>{" "}
+                      <span className="text-neutral-700">
+                        {m.failing_criteria.join(" · ")}
+                      </span>
+                    </div>
+                  )}
+                  {m.unknown_criteria.length > 0 && (
+                    <div>
+                      <span className="text-amber-700 font-medium">
+                        Need more data:
+                      </span>{" "}
+                      <span className="text-neutral-700">
+                        {m.unknown_criteria.join(" · ")}
+                      </span>
+                    </div>
+                  )}
+                  {m.url && (
+                    <a
+                      href={m.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-brand-700 hover:text-black underline"
+                    >
+                      ClinicalTrials.gov →
+                    </a>
+                  )}
+                </div>
               </div>
-            )}
+            </div>
           </button>
         );
       })}

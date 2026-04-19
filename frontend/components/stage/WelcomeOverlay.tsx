@@ -1,5 +1,7 @@
 "use client";
 
+import { Button } from "@/components/ui/Button";
+
 interface Props {
   onBegin: () => void;
   busy?: boolean;
@@ -16,16 +18,11 @@ export function WelcomeOverlay({ onBegin, busy }: Props) {
         <p className="text-sm text-neutral-600 leading-relaxed mb-6">
           Share your records and I&apos;ll walk you through what the guidelines
           say, trial by trial, in plain English. When you&apos;re ready, press
-          begin - I&apos;ll greet you and we can get started.
+          Begin. I&apos;ll greet you and we can get started.
         </p>
-        <button
-          type="button"
-          onClick={onBegin}
-          disabled={busy}
-          className="px-8 py-3 rounded-full bg-brand-700 hover:bg-brand-900 text-white text-sm font-medium transition disabled:opacity-50 disabled:cursor-not-allowed"
-        >
+        <Button onClick={onBegin} disabled={busy} size="lg">
           {busy ? "Connecting…" : "Begin"}
-        </button>
+        </Button>
       </div>
     </div>
   );

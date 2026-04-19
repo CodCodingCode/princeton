@@ -107,7 +107,7 @@ export function EventLog({ events }: { events: AgentEvent[] }) {
       {/* Header */}
       <div className="border-b border-neutral-100 px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 shrink-0">
         <div className="flex items-center gap-3 text-xs">
-          <span className="eyebrow">Pipeline events</span>
+          <span className="eyebrow">System activity</span>
           <span className="text-neutral-500 tabular-nums">
             {visible.length} / {events.length}
           </span>
@@ -127,7 +127,7 @@ export function EventLog({ events }: { events: AgentEvent[] }) {
         <div className="flex items-center gap-2">
           <input
             type="search"
-            placeholder="filter kind or label…"
+            placeholder="Filter by kind or label"
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
             className="text-xs border border-neutral-200 rounded px-2 py-1 w-44 focus:outline-none focus:border-black"
@@ -139,7 +139,7 @@ export function EventLog({ events }: { events: AgentEvent[] }) {
               onChange={(e) => setShowNoisy(e.target.checked)}
               className="accent-black"
             />
-            noisy
+            Noisy
           </label>
           <label className="text-xs flex items-center gap-1 text-neutral-600 cursor-pointer select-none">
             <input
@@ -148,7 +148,7 @@ export function EventLog({ events }: { events: AgentEvent[] }) {
               onChange={(e) => setAutoScroll(e.target.checked)}
               className="accent-black"
             />
-            auto-scroll
+            Auto-scroll
           </label>
         </div>
       </div>
@@ -202,10 +202,10 @@ function EventRow({ event }: { event: AgentEvent }) {
         <span className="text-neutral-400 shrink-0 tabular-nums">
           {formatTime(event.timestamp)}
         </span>
-        <span className={`shrink-0 w-44 truncate font-semibold ${kindCls}`}>
-          {event.kind}
+        <span className={`shrink-0 w-44 font-semibold ${kindCls}`}>
+          {event.kind.replace(/_/g, " ")}
         </span>
-        <span className="flex-1 truncate text-neutral-700">{event.label}</span>
+        <span className="flex-1 text-neutral-700">{event.label}</span>
         {expandable && (
           <span className="text-neutral-400 shrink-0 w-4 text-center">
             {open ? "▾" : "▸"}
@@ -261,8 +261,5 @@ function PayloadView({ payload }: { payload: Record<string, unknown> }) {
  * wall you with a 50k-char excerpt. Keeps full arrays and objects intact.
  */
 function payloadReplacer(_key: string, value: unknown): unknown {
-  if (typeof value === "string" && value.length > 400) {
-    return value.slice(0, 400) + `… (${value.length - 400} more chars)`;
-  }
   return value;
 }

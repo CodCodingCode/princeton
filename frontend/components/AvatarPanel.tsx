@@ -16,6 +16,7 @@ import {
   SessionEvent,
   AgentEventsEnum,
 } from "@heygen/liveavatar-web-sdk";
+import { Button } from "@/components/ui/Button";
 
 interface Turn {
   role: "user" | "avatar";
@@ -121,7 +122,7 @@ export function AvatarPanel() {
 
   const statusLabel: Record<Status, string> = {
     idle: "Start a session to talk with your virtual oncologist",
-    connecting: "Connecting to HeyGen…",
+    connecting: "Connecting to HeyGen",
     live: speaking ? "Session live · speaking" : "Session live · listening",
     error: "Error - see below",
   };
@@ -135,21 +136,18 @@ export function AvatarPanel() {
           </div>
           <div className="text-sm text-black mt-0.5">{statusLabel[status]}</div>
         </div>
-        <button
+        <Button
+          variant={status === "live" ? "secondary" : "primary"}
+          size="sm"
           onClick={status === "live" ? endSession : startSession}
           disabled={status === "connecting"}
-          className={`px-4 py-2 rounded-full text-xs font-medium transition ${
-            status === "live"
-              ? "bg-neutral-200 text-neutral-700 hover:bg-neutral-300"
-              : "bg-brand-700 text-white hover:bg-brand-900"
-          } disabled:opacity-50 disabled:cursor-not-allowed`}
         >
           {status === "live"
             ? "End session"
             : status === "connecting"
-              ? "Connecting…"
+              ? "Connecting"
               : "Start session"}
-        </button>
+        </Button>
       </div>
 
       <div className="p-5 flex-1 flex flex-col min-h-0 gap-4">
@@ -181,7 +179,7 @@ export function AvatarPanel() {
                   HeyGen avatar
                 </div>
                 <div className="text-xs text-neutral-500 mt-1">
-                  {status === "connecting" ? "connecting…" : "idle"}
+                  {status === "connecting" ? "connecting" : "idle"}
                 </div>
               </div>
             </div>
@@ -243,19 +241,19 @@ export function AvatarPanel() {
             onChange={(e) => setInput(e.target.value)}
             placeholder={
               status === "live"
-                ? "Type something for the avatar to say…"
+                ? "Type something for the avatar to say"
                 : "Start a session first"
             }
             disabled={status !== "live"}
             className="flex-1 bg-white border border-neutral-200 rounded-full px-4 py-2.5 text-sm text-black placeholder-neutral-500 focus:outline-none focus:border-black disabled:bg-neutral-100 disabled:text-neutral-400"
           />
-          <button
+          <Button
             type="submit"
+            size="lg"
             disabled={status !== "live" || !input.trim()}
-            className="px-5 py-2.5 rounded-full bg-brand-700 hover:bg-brand-900 text-white text-sm font-medium disabled:opacity-30 disabled:cursor-not-allowed transition"
           >
             Say it
-          </button>
+          </Button>
         </form>
 
         {error && (
