@@ -66,8 +66,18 @@ def get_logger() -> logging.Logger:
     log_path = Path(os.environ.get("NEOVAX_LOG_PATH", default_log_path))
     log_path.parent.mkdir(parents=True, exist_ok=True)
     handler = logging.FileHandler(log_path)
+    # Formatter subclass runs PII redaction on the final formatted line so any
+    # %-interpolated raw model output (user prompts, raw responses, coerced
+    # dicts) has SSN / phone / MRN / DOB / long ID patterns masked before
+    # hitting disk. No-op when NEOVAX_LOG_REDACTION=0.
+    from ..security.redact import redact_text
+
+    class _RedactingFormatter(logging.Formatter):
+        def format(self, record: logging.LogRecord) -> str:
+            return redact_text(super().format(record))
+
     handler.setFormatter(
-        logging.Formatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s")
+        _RedactingFormatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s")
     )
     logger.addHandler(handler)
     logger.info("LLM logger initialized (path=%s, base_url=%s)", log_path, K2_BASE_URL)

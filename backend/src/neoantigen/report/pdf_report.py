@@ -54,6 +54,41 @@ def _escape(s: str | None) -> str:
 _UNKNOWN_TOKENS = {"unknown", "", "none", "n/a", "na"}
 
 
+# Substrings that identify a Kimi/LLM structuring error that was accidentally
+# persisted as a trial eligibility criterion by the scraper. Anything matching
+# these is replaced with a single clean fallback line so the consult note
+# never prints raw Python tracebacks or chain-of-thought prose.
+_ERROR_CRITERIA_MARKERS = (
+    "kimi structuring failed",
+    "model did not return valid json",
+    "structuredpredicates validation",
+    "valueerror:",
+    "traceback (most recent call last)",
+)
+
+
+def _is_garbage_criterion(s: str) -> bool:
+    low = (s or "").lower()
+    return any(marker in low for marker in _ERROR_CRITERIA_MARKERS)
+
+
+def _clean_criteria(items: list[str]) -> tuple[list[str], bool]:
+    """Drop raw-error strings. Returns (kept, had_parse_failure)."""
+    kept: list[str] = []
+    dropped = False
+    for x in items or []:
+        if _is_garbage_criterion(x):
+            dropped = True
+            continue
+        kept.append(x)
+    return kept, dropped
+
+
+def _is_melanoma_case(case: "PatientCase") -> bool:
+    ctype = (case.primary_cancer_type or case.pathology.primary_cancer_type or "").lower()
+    return "melanoma" in ctype
+
+
 def _pretty_enum(val: str | None) -> str:
     if val is None:
         return "Unknown"
@@ -218,45 +253,60 @@ def _render_pathology_v2(case: PatientCase, styles) -> list:
 
     p = case.pathology
     i = case.intake
+    melanoma = _is_melanoma_case(case)
     out: list = [_P("Pathology Review", styles, "Heading2")]
 
-    # Microscopic findings
+    # Microscopic findings — cancer-agnostic rows always, melanoma-specific
+    # rows only when the detected primary is melanoma (the Breslow /
+    # ulceration / TIL / mitotic rate vocabulary is specific to cutaneous
+    # melanoma CAP protocols and is misleading on lung/GI/etc cases).
     out.append(_P("Microscopic findings", styles, "Heading3"))
-    micro_rows = [
+    micro_rows: list[tuple[str, str]] = [
         ("Histology", _pretty_enum(p.histology) if p.histology else "Unknown"),
         ("Primary site", _pretty_enum(p.primary_site) if p.primary_site else "Unknown"),
-        ("Melanoma subtype", _pretty_enum(p.melanoma_subtype)),
-        ("Breslow thickness", _pretty_number(p.breslow_thickness_mm, " mm")),
-        ("Ulceration", _pretty_bool(p.ulceration)),
-        ("Mitoses per mm²", _pretty_number(p.mitotic_rate_per_mm2)),
-        ("TILs", _pretty_enum(p.tils_present)),
-        ("PD-L1", _pretty_enum(p.pdl1_estimate)),
-        (
-            "LAG-3 IHC",
-            f"{p.lag3_ihc_percent:.0f}%" if p.lag3_ihc_percent is not None else "Unknown",
-        ),
-        ("Extraction confidence", f"{p.confidence:.0%}" if p.confidence is not None else "Unknown"),
     ]
+    if melanoma:
+        micro_rows.extend([
+            ("Melanoma subtype", _pretty_enum(p.melanoma_subtype)),
+            ("Breslow thickness", _pretty_number(p.breslow_thickness_mm, " mm")),
+            ("Ulceration", _pretty_bool(p.ulceration)),
+            ("Mitoses per mm²", _pretty_number(p.mitotic_rate_per_mm2)),
+            ("TILs", _pretty_enum(p.tils_present)),
+            (
+                "LAG-3 IHC",
+                f"{p.lag3_ihc_percent:.0f}%" if p.lag3_ihc_percent is not None else "Unknown",
+            ),
+        ])
+    # PD-L1 is oncology-wide (lung, breast, bladder, etc.); only show when
+    # a value was actually extracted so non-IO cancers don't get a noisy
+    # "Unknown" row.
+    if p.pdl1_estimate and str(p.pdl1_estimate).lower() not in _UNKNOWN_TOKENS:
+        micro_rows.append(("PD-L1", _pretty_enum(p.pdl1_estimate)))
+    if p.confidence is not None:
+        micro_rows.append(("Extraction confidence", f"{p.confidence:.0%}"))
     for k, v in micro_rows:
         out.append(_P_raw(f"<b>{_escape(k)}:</b> {_escape(str(v))}", styles))
 
-    # Staging
+    # Staging & constitutional. "Derived T-stage" is computed from Breslow
+    # thickness (melanoma formula) so only render it for melanoma cases -
+    # for NSCLC/colorectal/breast etc. it's always "Tx" and misleads readers.
     out.append(Spacer(1, 6))
     out.append(_P("Staging & constitutional", styles, "Heading3"))
-    staging_rows = [
-        ("Derived T-stage", _pretty_stage(p.t_stage)),
+    staging_rows: list[tuple[str, str]] = []
+    if melanoma:
+        staging_rows.append(("Derived T-stage", _pretty_stage(p.t_stage)))
+    staging_rows.extend([
         ("AJCC stage", _pretty_stage(i.ajcc_stage)),
         ("Age", _pretty_number(i.age_years)),
         ("ECOG", _pretty_number(i.ecog)),
         ("Measurable disease (RECIST)", _pretty_bool(i.measurable_disease_recist)),
         ("Prior systemic therapy", _pretty_bool(i.prior_systemic_therapy)),
         ("Prior anti-PD-1", _pretty_bool(i.prior_anti_pd1)),
-        (
-            "Life expectancy",
-            _pretty_number(i.life_expectancy_months, " months")
-            if i.life_expectancy_months is not None else "Unknown",
-        ),
-    ]
+    ])
+    if i.life_expectancy_months is not None:
+        staging_rows.append(
+            ("Life expectancy", _pretty_number(i.life_expectancy_months, " months"))
+        )
     for k, v in staging_rows:
         out.append(_P_raw(f"<b>{_escape(k)}:</b> {_escape(str(v))}", styles))
 
@@ -485,19 +535,32 @@ def _render_trials_v2(case: PatientCase, styles) -> list:
             meta_bits.append(f"<i>Link:</i> {_escape(m.url)}")
         out.append(_P_raw(" · ".join(meta_bits), styles))
 
-        if m.passing_criteria:
+        passing_clean, _ = _clean_criteria(m.passing_criteria)
+        failing_clean, _ = _clean_criteria(m.failing_criteria)
+        unknown_clean, had_parse_failure = _clean_criteria(m.unknown_criteria)
+
+        if passing_clean:
             out.append(_P_raw(
-                "<i>Passing:</i> " + "; ".join(_escape(x) for x in m.passing_criteria),
+                "<i>Passing:</i> " + "; ".join(_escape(x) for x in passing_clean),
                 styles,
             ))
-        if m.failing_criteria:
+        if failing_clean:
             out.append(_P_raw(
-                "<i>Failing:</i> " + "; ".join(_escape(x) for x in m.failing_criteria),
+                "<i>Failing:</i> " + "; ".join(_escape(x) for x in failing_clean),
                 styles,
             ))
-        if m.unknown_criteria:
+        if unknown_clean:
             out.append(_P_raw(
-                "<i>Need more data:</i> " + "; ".join(_escape(x) for x in m.unknown_criteria),
+                "<i>Need more data:</i> " + "; ".join(_escape(x) for x in unknown_clean),
+                styles,
+            ))
+        if had_parse_failure:
+            # Replaces the raw Kimi structuring error / chain-of-thought dump
+            # that the scraper persisted into `never_in_tcga_gates`.
+            out.append(_P_raw(
+                "<i>Note:</i> Automated eligibility parsing could not fully "
+                "structure this trial's criteria. See ClinicalTrials.gov for "
+                "the authoritative inclusion/exclusion list.",
                 styles,
             ))
 

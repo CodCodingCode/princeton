@@ -57,8 +57,6 @@ export function ResultsSidebar({
               {caseData.documents.length} doc
               {caseData.documents.length === 1 ? "" : "s"}
             </span>
-            <span className="text-neutral-300">·</span>
-            <span>{done ? "Ready" : "Running"}</span>
           </div>
           <h1 className="mt-1.5 text-xl font-semibold tracking-tight leading-tight text-black">
             {friendly.diagnosisHeadline}

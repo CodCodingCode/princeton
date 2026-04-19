@@ -556,13 +556,36 @@ def _heuristic_aggregate(
 # ─────────────────────────────────────────────────────────────
 
 
+# Per-field char budgets in the prompt body. Page descriptions and free-text
+# notes are the biggest input contributors and the easiest to lose without
+# hurting reconciliation — the structured fields below them carry the real
+# signal. Trim aggressively so the full prompt fits under the model's
+# context window even on 15-20 document cases.
+_DESC_CHAR_LIMIT = 320
+_NOTES_CHAR_LIMIT = 240
+_MUTATIONS_PER_PAGE_LIMIT = 12
+
+
+def _trim(s: str | None, limit: int) -> str:
+    if not s:
+        return ""
+    s = s.strip()
+    if len(s) <= limit:
+        return s
+    return s[: limit - 1].rstrip() + "…"
+
+
 def _render_docs_for_prompt(docs: list[DocumentExtraction]) -> str:
     blocks: list[str] = []
     for doc in docs:
-        blocks.append(f"=== FILE: {doc.filename} ({doc.document_kind}, {doc.page_count} pages) ===")
+        blocks.append(
+            f"=== FILE: {doc.filename} ({doc.document_kind}, {doc.page_count} pages) ==="
+        )
         for page in doc.pages:
             blocks.append(f"--- page {page.page_number} ---")
-            blocks.append(f"description: {page.description}")
+            desc = _trim(page.description, _DESC_CHAR_LIMIT)
+            if desc:
+                blocks.append(f"description: {desc}")
             shown_fields = {
                 "primary_cancer_type": page.primary_cancer_type,
                 "histology": page.histology,
@@ -586,9 +609,16 @@ def _render_docs_for_prompt(docs: list[DocumentExtraction]) -> str:
                 if v is not None:
                     blocks.append(f"{k}: {v}")
             if page.mutations_text:
-                blocks.append("mutations_text: " + "; ".join(page.mutations_text))
-            if page.notes:
-                blocks.append(f"notes: {page.notes}")
+                capped = page.mutations_text[:_MUTATIONS_PER_PAGE_LIMIT]
+                blocks.append("mutations_text: " + "; ".join(capped))
+                if len(page.mutations_text) > _MUTATIONS_PER_PAGE_LIMIT:
+                    blocks.append(
+                        f"  (+{len(page.mutations_text) - _MUTATIONS_PER_PAGE_LIMIT}"
+                        " more mutations truncated from prompt)"
+                    )
+            notes = _trim(page.notes, _NOTES_CHAR_LIMIT)
+            if notes:
+                blocks.append(f"notes: {notes}")
         blocks.append("")
     return "\n".join(blocks)
 
@@ -640,18 +670,52 @@ async def aggregate_documents(
         "JSON; a partial JSON is useless."
     )
 
-    # K2-Think's reasoning budget scales with document count. Seventeen docs
-    # with ~20 fields each can burn 4-8k tokens on thinking alone before the
-    # JSON block starts. 3000 was enough for single-doc cases and nothing else -
-    # the model would truncate mid-reasoning and the caller saw "model did not
-    # return valid JSON" with prose tail. Cap sits below the 8192 max_total
-    # ceiling of the current vLLM server so we don't 400 on BadRequestError;
-    # bump via NEOVAX_AGG_MAX_TOKENS if the backend is swapped to a larger
-    # context window.
-    # Aggregator input prompt for a typical case runs ~2500 tokens; with the
-    # 8192-token ceiling on the vLLM-served model, leave safe headroom for
-    # output. 6000 was observed to 400 on larger prompts.
-    agg_max_tokens = int(os.environ.get("NEOVAX_AGG_MAX_TOKENS", "3500"))
+    # Dynamic max_tokens. The model server's 8192-token ceiling covers
+    # input + output combined, so a fixed output budget blows up the moment
+    # the prompt grows (17 docs × 2 pages × 20 fields each + trimmed notes
+    # = ~4500-5500 input tokens). Compute the budget per call:
+    #
+    #     output_budget = MODEL_CTX - est_input_tokens - safety_buffer
+    #
+    # and clamp to a sane floor (the model needs room to think) and the
+    # env-configured ceiling.
+    model_ctx = int(os.environ.get("NEOVAX_MODEL_MAX_TOKENS", "8192"))
+    output_ceiling = int(os.environ.get("NEOVAX_AGG_MAX_TOKENS", "3500"))
+    output_floor = 1200  # below this, K2-Think routinely truncates mid-JSON
+    safety_buffer = 256  # chat-template tokens + tokenizer rounding slack
+    # Conservative token estimate: 1 token ≈ 3.5 chars for dense English
+    # + code-like text. Favor over-estimating (tighter output cap) over
+    # under-estimating (400 from the server).
+    est_input_tokens = (
+        len(SYSTEM_PROMPT) + len(user_prompt)
+    ) // 3 + 64  # +chat-template overhead
+    available_output = model_ctx - est_input_tokens - safety_buffer
+    agg_max_tokens = max(output_floor, min(output_ceiling, available_output))
+    if available_output < output_floor:
+        # Input is large enough that even the minimum output won't fit.
+        # Skip the model call and synthesize via heuristic merge instead of
+        # sending a request we know will 400.
+        reason = (
+            f"Heuristic merge: prompt too large for model context "
+            f"({est_input_tokens} input tokens + {output_floor} output "
+            f"floor > {model_ctx} ceiling)."
+        )
+        pathology, intake, muts, provenance = _heuristic_aggregate(
+            docs, reason=reason,
+        )
+        audit(
+            "aggregator", "skip_oversized_prompt",
+            doc_count=len(docs), user_len=len(user_prompt),
+            est_input_tokens=est_input_tokens,
+            model_ctx=model_ctx,
+        )
+        await emit(
+            EventKind.AGGREGATION_DONE,
+            f"Skipped aggregator (prompt oversize) · {len(muts)} mutations · "
+            f"{len(provenance)} provenance entries",
+            {"fallback": True, "reason": reason},
+        )
+        return pathology, intake, muts, provenance, []
     import time as _time
     t0 = _time.time()
     audit(
@@ -682,7 +746,11 @@ async def aggregate_documents(
             f"Kimi aggregator failed ({type(e).__name__}) - used heuristic merge",
             {"fallback": True, "error": str(e), "reason": reason},
         )
-        return pathology, intake, muts, provenance, [f"aggregator_error: {e}"]
+        # Deliberately return [] for conflicts, not the raw error string.
+        # The conflicts list is rendered as a user-facing warning banner in
+        # the Documents tab — technical failure messages belong in the
+        # audit log, not in the clinician's UI.
+        return pathology, intake, muts, provenance, []
 
     pathology, intake, muts, provenance = _payload_to_models(payload)
     audit(

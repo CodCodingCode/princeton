@@ -6,6 +6,31 @@
 
 import type { PatientCase, RailwayStep, TrialMatch } from "./types";
 
+// Strip internal / technical error strings out of the case conflict list
+// before it ever touches the UI. The `conflicts` field is meant for real
+// clinical disagreements between source documents ("Breslow 2.1 vs 2.3 mm")
+// - not for backend errors. Older cached cases may still carry entries
+// like "aggregator_error: Error code: 400 - ..." that leaked from a
+// previous pipeline run; keep them out of the Documents tab banner and
+// the Overview "worth reviewing" card.
+const _TECH_CONFLICT_PATTERNS = [
+  /^aggregator_error\b/i,
+  /^parser_error\b/i,
+  /\bError code: \d+\b/i,
+  /\bBadRequestError\b/,
+  /\bTraceback \(/i,
+  /^Heuristic merge\b/i,
+];
+
+export function cleanConflicts(raw: string[] | null | undefined): string[] {
+  if (!raw) return [];
+  return raw.filter((c) => {
+    const s = (c ?? "").trim();
+    if (!s) return false;
+    return !_TECH_CONFLICT_PATTERNS.some((re) => re.test(s));
+  });
+}
+
 export interface PatientFriendly {
   diagnosisHeadline: string;
   diagnosisDetails: string;

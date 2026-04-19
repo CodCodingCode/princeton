@@ -6,7 +6,7 @@ import { Gauge } from "@/components/ui/Gauge";
 import { TickRuler } from "@/components/ui/TickRuler";
 
 // Physician-facing patient profile. Styled as a hospital EHR patient banner
-// (identity strip on top — MRN, DOB, sex, race, language, contact) followed
+// (identity strip on top,MRN, DOB, sex, race, language, contact) followed
 // by dense clinical sections. Fields the intake pipeline doesn't capture
 // render as "Not documented" rather than hiding, so the chart always looks
 // like a real chart.
@@ -35,7 +35,7 @@ function prettyBool(v: boolean | null): string | null {
 }
 
 // Deterministic MRN derived from case_id so repeated renders match. Takes
-// the first 7 alphanumerics, uppercased — mimics an Epic/Cerner-style MRN.
+// the first 7 alphanumerics, uppercased,mimics an Epic/Cerner-style MRN.
 function synthesizeMrn(caseId: string): string {
   const cleaned = caseId.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
   const short = cleaned.slice(0, 7) || "0000000";
@@ -115,13 +115,13 @@ interface StatDef {
   value: string | null;
   mono?: boolean;
   wide?: boolean;
-  // Plain-English caption shown under the value. Written for a lay reader —
+  // Plain-English caption shown under the value. Written for a lay reader,
   // explains what the field is and what this specific value tends to mean.
   hint?: string | null;
 }
 
 // Short layperson-friendly explanations for each clinical field the card
-// surfaces. Returns null when we don't have a useful sentence — the hint
+// surfaces. Returns null when we don't have a useful sentence,the hint
 // row is then hidden.
 function explainStat(label: string, value: string | null): string | null {
   if (!value) return null;
@@ -133,18 +133,18 @@ function explainStat(label: string, value: string | null): string | null {
       const n = parseInt(v.replace(/[^0-9]/g, ""), 10);
       if (Number.isNaN(n)) return null;
       const band = [
-        "Fully active — no limits from the illness.",
+        "Fully active,no limits from the illness.",
         "Up and active, tires with strenuous work.",
         "Up more than half the day, can't work but self-care is fine.",
         "Mostly bed or chair, limited self-care.",
-        "Bedbound — completely reliant on care.",
+        "Bedbound,completely reliant on care.",
       ];
       return `Performance score (0–4). ${band[n] ?? ""}`.trim();
     }
     case "AJCC stage": {
       const s = v.toUpperCase();
       if (s.startsWith("1"))
-        return "Early stage — tumor confined to where it started.";
+        return "Early stage,tumor confined to where it started.";
       if (s.startsWith("2"))
         return "Larger or slightly deeper, still localized.";
       if (s.startsWith("3")) return "Spread to nearby lymph nodes or tissue.";
@@ -153,11 +153,11 @@ function explainStat(label: string, value: string | null): string | null {
     }
     case "PD-L1":
       if (lower === "high")
-        return "Tumor strongly displays the PD-L1 marker — often responds well to immunotherapy.";
+        return "Tumor strongly displays the PD-L1 marker,often responds well to immunotherapy.";
       if (lower === "low")
-        return "Tumor displays a little PD-L1 — immunotherapy may still help.";
+        return "Tumor displays a little PD-L1,immunotherapy may still help.";
       if (lower === "negative")
-        return "Tumor doesn't display PD-L1 — immunotherapy response is less predictable.";
+        return "Tumor doesn't display PD-L1,immunotherapy response is less predictable.";
       return "A tumor marker that predicts how well immunotherapy may work.";
     case "TMB": {
       const n = parseFloat(v);
@@ -171,27 +171,27 @@ function explainStat(label: string, value: string | null): string | null {
       const n = parseFloat(v);
       if (Number.isNaN(n))
         return "How deep the melanoma has grown into the skin.";
-      if (n < 1) return "Thin — grown less than 1 mm into the skin.";
+      if (n < 1) return "Thin,grown less than 1 mm into the skin.";
       if (n < 2) return "Intermediate thickness (1–2 mm).";
-      if (n < 4) return "Thick (2–4 mm) — deeper invasion.";
-      return "Very thick (≥4 mm) — deeply invaded skin.";
+      if (n < 4) return "Thick (2–4 mm),deeper invasion.";
+      return "Very thick (≥4 mm),deeply invaded skin.";
     }
     case "Ulceration":
       return lower === "yes"
-        ? "The skin over the tumor has broken down — a marker of more aggressive disease."
-        : "The skin over the tumor is intact — a better prognostic sign.";
+        ? "The skin over the tumor has broken down,a marker of more aggressive disease."
+        : "The skin over the tumor is intact,a better prognostic sign.";
     case "Mitotic rate":
       return "How many tumor cells are actively dividing. Higher = faster-growing cancer.";
     case "TILs":
       if (lower.includes("brisk"))
-        return "Immune cells are strongly attacking the tumor — a good sign.";
+        return "Immune cells are strongly attacking the tumor,a good sign.";
       if (lower.includes("non"))
         return "Some immune response, but not intense.";
       if (lower.includes("absent"))
         return "No immune cells infiltrating the tumor.";
       return "Whether the body's immune cells are attacking the tumor.";
     case "LAG-3 IHC":
-      return "Another immune-checkpoint marker — relevant for LAG-3 blocking drugs like relatlimab or fianlimab.";
+      return "Another immune-checkpoint marker,relevant for LAG-3 blocking drugs like relatlimab or fianlimab.";
     case "UV signature":
       return "Fraction of mutations caused by sun/UV damage. High = classic sun-driven melanoma.";
     case "Subtype":
@@ -207,27 +207,27 @@ function explainStat(label: string, value: string | null): string | null {
         return "Desmoplastic: a rarer scar-like melanoma.";
       return null;
     case "Histology":
-      return "The cancer's microscopic appearance — what kind of cells it's made of.";
+      return "The cancer's microscopic appearance,what kind of cells it's made of.";
     case "Primary site":
       return "Where in the body the cancer first started.";
     case "Laterality":
       return "Which side of the body the tumor is on.";
     case "Measurable (RECIST)":
       return lower === "yes"
-        ? "There's a tumor big enough to measure on a scan — required for most drug trials."
-        : "No scan-measurable tumor today — some trials won't apply without one.";
+        ? "There's a tumor big enough to measure on a scan,required for most drug trials."
+        : "No scan-measurable tumor today,some trials won't apply without one.";
     case "Life expectancy":
-      return "The care team's rough estimate — many trials require at least 3 months.";
+      return "The care team's rough estimate,many trials require at least 3 months.";
     case "Prior systemic therapy":
       if (lower.startsWith("treatment-naive"))
         return "Patient has not received any prior cancer drugs.";
       if (lower.startsWith("yes"))
-        return "Patient has received cancer drugs before — affects which trials they can join.";
+        return "Patient has received cancer drugs before,affects which trials they can join.";
       return null;
     case "Prior anti-PD-1":
       return lower === "yes"
-        ? "Already received immunotherapy — changes which drugs are options next."
-        : "No prior immunotherapy — first-line immunotherapy is still on the table.";
+        ? "Already received immunotherapy,changes which drugs are options next."
+        : "No prior immunotherapy,first-line immunotherapy is still on the table.";
     case "Driver mutations":
       return "The DNA changes driving this cancer. Many have matching targeted drugs.";
     case "Extraction confidence":
@@ -275,10 +275,9 @@ function Section({
             >
               <div className="eyebrow-xs">{s.label}</div>
               <div
-                className={`mt-0.5 text-sm leading-snug truncate ${
+                className={`mt-0.5 text-sm leading-snug break-words ${
                   empty ? "text-neutral-400 italic" : "text-black"
                 } ${s.mono && !empty ? "font-mono tabular-nums" : ""}`}
-                title={display ?? undefined}
               >
                 {display}
               </div>
@@ -438,7 +437,7 @@ export function PatientProfileCard({ caseData }: { caseData: PatientCase }) {
                 dob ? "font-mono tabular-nums" : "text-neutral-400 italic"
               }
             >
-              DOB {dob ?? "—"}
+              DOB {dob ?? "-"}
             </span>
             <span className="text-neutral-300">·</span>
             <span className={raceEthnicity ? "" : "text-neutral-400 italic"}>
@@ -588,7 +587,7 @@ export function PatientProfileCard({ caseData }: { caseData: PatientCase }) {
                     bands={[{ from: 10, to: 30, fill: "rgba(11,37,69,0.10)" }]}
                   />
                   <p className="mt-2 text-[11px] leading-snug text-neutral-500">
-                    Tumor mutational burden — roughly, how many DNA mistakes the
+                    Tumor mutational burden,roughly, how many DNA mistakes the
                     tumor has per million letters of genome. More mistakes means
                     more unusual proteins for the immune system to see, so high
                     TMB tumors tend to respond better to immunotherapy.

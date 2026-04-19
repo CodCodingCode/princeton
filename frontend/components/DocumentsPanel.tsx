@@ -6,7 +6,11 @@ import type {
   PageFinding,
   ProvenanceEntry,
 } from "@/lib/types";
-import { documentDisplayName, documentKindLabel } from "@/lib/plainEnglish";
+import {
+  cleanConflicts,
+  documentDisplayName,
+  documentKindLabel,
+} from "@/lib/plainEnglish";
 
 // Per-page field names we count as a "mention" when they're non-null.
 // Excludes mutations_text (counted separately as mutation mentions) and
@@ -94,6 +98,14 @@ export function DocumentsPanel({
 }) {
   const [open, setOpen] = useState<string | null>(null);
 
+  // Filter out any technical/error strings that may have been persisted
+  // into the conflicts list by an older pipeline run (cached cases). Only
+  // real clinical disagreements should reach the UI.
+  const visibleConflicts = useMemo(
+    () => cleanConflicts(conflicts),
+    [conflicts],
+  );
+
   if (!documents.length) {
     return (
       <div className="card p-5 text-sm text-neutral-600">
@@ -137,17 +149,18 @@ export function DocumentsPanel({
         <h2 className="eyebrow">Source documents ({documents.length})</h2>
         <span className="meta">
           {provenance.length} field{provenance.length === 1 ? "" : "s"} sourced
-          {conflicts.length > 0 && (
+          {visibleConflicts.length > 0 && (
             <span className="ml-3 text-amber-700">
-              {conflicts.length} conflict{conflicts.length === 1 ? "" : "s"}
+              {visibleConflicts.length} conflict
+              {visibleConflicts.length === 1 ? "" : "s"}
             </span>
           )}
         </span>
       </div>
 
-      {conflicts.length > 0 && (
+      {visibleConflicts.length > 0 && (
         <div className="mb-3 rounded-2xl bg-amber-50 border border-amber-200 p-4 text-xs text-amber-800 space-y-1">
-          {conflicts.map((c, i) => (
+          {visibleConflicts.map((c, i) => (
             <div key={i}>
               <span className="text-amber-700 mr-2">⚠</span>
               {c}

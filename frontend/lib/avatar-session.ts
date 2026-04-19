@@ -39,10 +39,23 @@ interface AvatarGlobal {
   status: AvatarStatus;
   speaking: boolean;
   caption: string;
+  // The full text of the most recent chunk passed to speak(). The on-screen
+  // caption mirrors this directly — each speak() call REPLACES the caption
+  // with the new chunk, so a multi-sentence reply cycles sentence-by-
+  // sentence instead of growing or word-pacing. No ticker, no accumulation,
+  // no race conditions.
+  captionFullText: string;
   error: string | null;
   listeners: Set<AvatarSubscriber>;
   videoEl: HTMLVideoElement | null;
   starting: boolean;
+  // Cached MediaStream captured from the video element's srcObject after
+  // the SDK's first `session.attach(el)` bind. Re-used on every subsequent
+  // mount so we can bypass the SDK entirely when re-binding to a fresh
+  // <video> on remount. Without this, client-side nav between /  and
+  // /patient leaves the new video element with no usable srcObject and
+  // the user sees a frozen first frame.
+  stream: MediaStream | null;
   // Keepalive timer ID: kept on the global so module reload doesn't leak
   // duplicate timers.
   keepaliveId: ReturnType<typeof setInterval> | null;
@@ -72,10 +85,12 @@ if (!G.__onkosAvatar) {
     status: "idle",
     speaking: false,
     caption: "",
+    captionFullText: "",
     error: null,
     listeners: new Set(),
     videoEl: null,
     starting: false,
+    stream: null,
     keepaliveId: null,
     reconnectAttempts: 0,
     reconnectTimerId: null,
@@ -104,6 +119,28 @@ export function subscribe(l: AvatarSubscriber): () => void {
   };
 }
 
+// Synchronous readers for callers that need to seed initial React state
+// with the singleton's current values. Without these, toggling Patient ↔
+// Clinician view would start the new AvatarStage at status="idle" for one
+// frame, covering the video with the idle poster even though the session
+// is already live.
+
+export function getStatus(): AvatarStatus {
+  return state.status;
+}
+
+export function getSpeaking(): boolean {
+  return state.speaking;
+}
+
+export function getCaption(): string {
+  return state.caption;
+}
+
+export function hasLiveSession(): boolean {
+  return state.session !== null;
+}
+
 // ── Narration-dedup helpers ─────────────────────────────────────────────
 // Callers should use a stable key per line+case, e.g.
 //   hasSpoken(`results:${caseId}`)  /  markSpoken(`results:${caseId}`)
@@ -123,18 +160,49 @@ export function clearSpokenKeys(): void {
 
 export function attachVideo(el: HTMLVideoElement | null) {
   state.videoEl = el;
-  // Re-bind the stream whenever there's a session, even if the status is
-  // briefly "connecting" (transparent reconnect) or the previous mount
-  // already had it attached. Without this, navigating away and back leaves
-  // the fresh <video> with a blank srcObject and the "Your concierge"
-  // placeholder stays on screen over a running session.
-  if (el && state.session) {
+  if (!el) return;
+
+  // Step 1: ask the SDK to attach. This sets srcObject and hooks up the
+  // HeyGen session's internal lifecycle. If the SDK has already attached
+  // to a prior (now-unmounted) element it may or may not cleanly re-bind
+  // to the new one — so we always follow up with a manual bind using the
+  // stream we captured on the first successful attach.
+  if (state.session) {
     try {
       state.session.attach(el);
     } catch (e) {
       console.warn("avatar.attach failed", e);
     }
   }
+
+  // Step 2: capture the MediaStream the first time we see one on an
+  // element. After this, we own the stream reference and don't have to
+  // trust the SDK to rebind it on remount.
+  const current = el.srcObject;
+  if (!state.stream && current instanceof MediaStream) {
+    state.stream = current;
+  }
+
+  // Step 3: if srcObject isn't a live MediaStream yet (fresh <video> from
+  // a client-side navigation, SDK didn't rebind), force-bind the cached
+  // one. This is the core of the fix — the user was seeing a frozen first
+  // frame because the new element's srcObject was either null or a stale
+  // reference that no longer pumped frames.
+  if (state.stream && el.srcObject !== state.stream) {
+    try {
+      el.srcObject = state.stream;
+    } catch (e) {
+      console.warn("avatar.srcObject bind failed", e);
+    }
+  }
+
+  // Step 4: actively play. `autoplay` alone doesn't reliably fire when
+  // srcObject is swapped on a mounted element, especially after a route
+  // transition. Swallow AbortError and NotAllowedError — the former is
+  // harmless (replaced by a newer play()), the latter just means the
+  // browser wants one more user gesture, which the user will provide by
+  // clicking anywhere on the page.
+  void el.play().catch(() => {});
 }
 
 function startKeepalive() {
@@ -216,6 +284,14 @@ async function _start(opts: { silent?: boolean } = {}) {
         } catch (e) {
           console.warn("avatar.attach failed", e);
         }
+        // Capture the MediaStream as soon as the SDK binds it. From this
+        // point on, every future mount's <video> gets bound against
+        // state.stream directly — we stop relying on the SDK to rebind.
+        const maybeStream = state.videoEl.srcObject;
+        if (maybeStream instanceof MediaStream) {
+          state.stream = maybeStream;
+        }
+        void state.videoEl.play().catch(() => {});
       }
       state.status = "live";
       state.reconnectAttempts = 0; // success: reset backoff
@@ -234,6 +310,7 @@ async function _start(opts: { silent?: boolean } = {}) {
           // User clicked End session: clean teardown, drop the video.
           state.status = "idle";
           state.caption = "";
+          state.captionFullText = "";
           state.reconnectAttempts = 0;
           cancelPendingReconnect();
           if (state.videoEl) state.videoEl.srcObject = null;
@@ -259,6 +336,16 @@ async function _start(opts: { silent?: boolean } = {}) {
       state.speaking = false;
       notify();
     });
+
+    // The on-screen caption is driven EXCLUSIVELY by speak(). We used to
+    // also wire up AVATAR_TRANSCRIPTION_CHUNK / AVATAR_TRANSCRIPTION as
+    // "defensive passthroughs" in case we ever turned on voiceChat mode —
+    // but in our current mode (voiceChat: false, repeat()-driven TTS) the
+    // SDK still emits those events at inconsistent cadence, and their
+    // handlers overwrote speak()'s caption with stale or cumulative text.
+    // That showed up to the user as the caption cycling through three
+    // states per reply: section 1, section 2, then both concatenated.
+    // No subscription = no fight, one caption per chunk.
 
     await session.start();
   } catch (e) {
@@ -288,7 +375,9 @@ export async function stop() {
   state.status = "idle";
   state.speaking = false;
   state.caption = "";
+  state.captionFullText = "";
   state.reconnectAttempts = 0;
+  state.stream = null;
   // Reset narration dedup so the next session can greet / re-narrate from
   // scratch. Without this, clicking End session → Begin would keep the
   // avatar silent because the last session's keys would still be in the set.
@@ -306,6 +395,12 @@ export async function speak(text: string) {
   const t = text.trim();
   const s = state.session;
   if (!s || !t) return;
+  // One chunk in, one caption out. Each speak() call REPLACES the on-screen
+  // caption with exactly the text passed in — no streaming, no growing
+  // text, no word-reveal ticker. Multi-sentence chat replies fire one
+  // speak() per sentence, and the caption cycles through them in sync with
+  // the avatar's TTS.
+  state.captionFullText = t;
   state.caption = t;
   notify();
   try {
@@ -313,8 +408,4 @@ export async function speak(text: string) {
   } catch (e) {
     console.warn("avatar.repeat failed", e);
   }
-}
-
-export function getStatus(): AvatarStatus {
-  return state.status;
 }

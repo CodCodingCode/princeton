@@ -214,6 +214,10 @@ async def k2_stream_with_thinking(
     buffer = ""
     tool_call_accum: dict[int, dict] = {}
     tool_call_text_buf = ""
+    # We only want to scrub FN_CALL markers and lstrip on the FIRST answer
+    # chunk; stripping every chunk eats the leading space of token-by-token
+    # streams ("the ", "patient ", ...) and produces "thepatient".
+    first_answer_chunk = True
     total_chunks = 0
     total_text = 0
 
@@ -335,12 +339,13 @@ async def k2_stream_with_thinking(
             if state == "answer":
                 if buffer:
                     emit_text, buffer = buffer, ""
-                    # Defensive scrub: even if the post-think gate missed a
-                    # protocol marker (chunk-boundary split, unusual
-                    # whitespace, duplicated line), nuke any FN_CALL=<bool>
-                    # substring before it reaches the avatar.
-                    emit_text = _PROTOCOL_ANYWHERE_RE.sub("", emit_text)
-                    emit_text = emit_text.lstrip()
+                    if first_answer_chunk:
+                        # Scrub and lstrip ONLY on the first chunk. Doing
+                        # this every chunk eats the leading space of
+                        # token-by-token streams and produces "thepatient".
+                        emit_text = _PROTOCOL_ANYWHERE_RE.sub("", emit_text)
+                        emit_text = emit_text.lstrip()
+                        first_answer_chunk = False
                     if emit_text:
                         yield ("answer", emit_text)
                 break

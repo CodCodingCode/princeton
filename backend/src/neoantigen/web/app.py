@@ -15,9 +15,10 @@ except ImportError:
 
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from ..security.auth import require_api_token
 from .routes import cases, chat, heygen, patient_guide
 
 
@@ -83,17 +84,23 @@ app.add_middleware(
 )
 
 
-app.include_router(cases.router)
-app.include_router(chat.router)
-app.include_router(heygen.router)
-app.include_router(patient_guide.router)
+# Protected routers. When NEOVAX_API_TOKEN is set the dependency rejects
+# unauthenticated callers; when unset (the dev / demo default) it is a no-op
+# so nothing breaks. /api/health is declared below the include_router calls
+# and stays unprotected so orchestrators and monitors can probe without a token.
+_api_guard = [Depends(require_api_token)]
+app.include_router(cases.router, dependencies=_api_guard)
+app.include_router(chat.router, dependencies=_api_guard)
+app.include_router(heygen.router, dependencies=_api_guard)
+app.include_router(patient_guide.router, dependencies=_api_guard)
 
 
 @app.get("/api/health")
 async def health() -> dict:
-    from ..chat.k2_client import has_kimi_key
     from ..agent._llm import has_api_key
+    from ..chat.k2_client import has_kimi_key
     from ..rag import has_store as rag_available
+    from ..security import api_token_enabled, log_redaction_enabled
     from .routes.heygen import has_liveavatar_key
 
     return {
@@ -103,4 +110,6 @@ async def health() -> dict:
         "rag_store": rag_available(),
         "google_maps_api_key": bool(os.environ.get("GOOGLE_MAPS_API_KEY")),
         "liveavatar_api_key": has_liveavatar_key(),
+        "api_token_enabled": api_token_enabled(),
+        "log_redaction_enabled": log_redaction_enabled(),
     }

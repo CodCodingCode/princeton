@@ -57,8 +57,16 @@ def _maybe_rotate(path: Path) -> None:
 
 
 def audit(stage: str, event: str, **fields: object) -> None:
-    """Append one structured JSONL line. Never raises."""
+    """Append one structured JSONL line. Never raises.
+
+    Every string field is passed through the PII redactor before serialisation
+    so the audit file is safe to share for debugging even when the orchestrator
+    is processing real-looking patient bundles. No-op when
+    NEOVAX_LOG_REDACTION=0.
+    """
     try:
+        from ..security.redact import redact_value
+
         path = _audit_path()
         path.parent.mkdir(parents=True, exist_ok=True)
         _maybe_rotate(path)
@@ -69,7 +77,7 @@ def audit(stage: str, event: str, **fields: object) -> None:
             "event": event,
         }
         for k, v in fields.items():
-            record[k] = _truncate(v)
+            record[k] = redact_value(_truncate(v))
         with path.open("a", encoding="utf-8") as f:
             f.write(json.dumps(record, ensure_ascii=False, default=str) + "\n")
     except Exception:

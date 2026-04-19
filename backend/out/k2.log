@@ -4479,3 +4479,158 @@ During task with name 'rag_retrieve' and id '4d90dcb9-9725-2f60-fec7-f96ec11c7ac
 2026-04-18 22:03:35,311 [INFO] neoantigen.llm: chat stream done chunks=84 text_chars=1834 tool_calls=0 state=answer
 2026-04-18 22:04:10,643 [INFO] neoantigen.llm: chat client base=https://api.k2think.ai/v1 model=MBZUAI-IFM/K2-Think-v2 key_idx=2 pool=3
 2026-04-18 22:04:11,934 [INFO] neoantigen.llm: chat stream done chunks=89 text_chars=2233 tool_calls=0 state=answer
+2026-04-18 22:06:07,084 [INFO] neoantigen.llm: call schema=_VisionPayload images=1 user_len=260
+2026-04-18 22:06:08,052 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=5704
+2026-04-18 22:06:08,058 [INFO] neoantigen.llm: call schema=_VisionPayload images=1 user_len=260
+2026-04-18 22:06:08,218 [INFO] neoantigen.llm: call schema=_VisionPayload images=1 user_len=260
+2026-04-18 22:06:08,221 [INFO] neoantigen.llm: call schema=_VisionPayload images=1 user_len=260
+2026-04-18 22:06:08,224 [INFO] neoantigen.llm: call schema=_VisionPayload images=1 user_len=260
+2026-04-18 22:06:08,294 [INFO] neoantigen.llm: call schema=_VisionPayload images=1 user_len=260
+2026-04-18 22:06:08,295 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=2599
+2026-04-18 22:06:08,297 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=1114
+2026-04-18 22:06:08,298 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=2081
+2026-04-18 22:06:08,299 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=681
+2026-04-18 22:06:08,301 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=3126
+2026-04-18 22:06:08,302 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=1809
+2026-04-18 22:06:08,303 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=1990
+2026-04-18 22:06:08,304 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=2846
+2026-04-18 22:06:08,306 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=2607
+2026-04-18 22:06:08,307 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=2152
+2026-04-18 22:06:08,308 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=2665
+2026-04-18 22:06:08,309 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=3360
+2026-04-18 22:06:12,398 [INFO] neoantigen.llm: call response schema=_VisionPayload len=584
+2026-04-18 22:06:12,548 [INFO] neoantigen.llm: call response schema=_VisionPayload len=637
+2026-04-18 22:06:12,646 [INFO] neoantigen.llm: call response schema=_VisionPayload len=581
+2026-04-18 22:06:12,647 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=6365
+2026-04-18 22:06:12,687 [ERROR] neoantigen.llm: call HTTP error schema=_VisionPayload model=medix-r1-30b err=BadRequestError: Error code: 400 - {'error': {'message': "This model's maximum context length is 8192 tokens. However, you requested 2500 output tokens and your prompt contains at least 5693 input tokens, for a total of at least 8193 tokens. Please reduce the length of the input prompt or the number of requested output tokens. (parameter=input_tokens, value=5693)", 'type': 'BadRequestError', 'param': 'input_tokens', 'code': 400}}
+2026-04-18 22:06:12,744 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=1527
+2026-04-18 22:06:12,923 [INFO] neoantigen.llm: call response schema=_VisionPayload len=750
+2026-04-18 22:06:13,026 [INFO] neoantigen.llm: call response schema=_VisionPayload len=743
+2026-04-18 22:06:13,115 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=2722
+2026-04-18 22:06:13,117 [INFO] neoantigen.llm: call response schema=_VisionPayload len=754
+2026-04-18 22:06:13,120 [INFO] neoantigen.llm: call schema=_VisionPayload images=1 user_len=260
+2026-04-18 22:06:13,134 [INFO] neoantigen.llm: call response schema=_VisionPayload len=731
+2026-04-18 22:06:13,191 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=1776
+2026-04-18 22:06:13,200 [INFO] neoantigen.llm: call response schema=_VisionPayload len=654
+2026-04-18 22:06:13,353 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=2666
+2026-04-18 22:06:13,355 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=1277
+2026-04-18 22:06:13,356 [INFO] neoantigen.llm: call response schema=_VisionPayload len=689
+2026-04-18 22:06:13,358 [INFO] neoantigen.llm: call schema=_VisionPayload images=1 user_len=260
+2026-04-18 22:06:13,679 [INFO] neoantigen.llm: call response schema=_VisionPayload len=836
+2026-04-18 22:06:13,680 [INFO] neoantigen.llm: call schema=_VisionPayload images=0 user_len=5500
+2026-04-18 22:06:14,054 [INFO] neoantigen.llm: call response schema=_VisionPayload len=876
+2026-04-18 22:06:14,204 [INFO] neoantigen.llm: call response schema=_VisionPayload len=907
+2026-04-18 22:06:14,249 [INFO] neoantigen.llm: call response schema=_VisionPayload len=792
+2026-04-18 22:06:14,264 [INFO] neoantigen.llm: call response schema=_VisionPayload len=856
+2026-04-18 22:06:14,492 [INFO] neoantigen.llm: call response schema=_VisionPayload len=933
+2026-04-18 22:06:14,637 [INFO] neoantigen.llm: call response schema=_VisionPayload len=1005
+2026-04-18 22:06:15,068 [INFO] neoantigen.llm: call response schema=_VisionPayload len=953
+2026-04-18 22:06:15,452 [INFO] neoantigen.llm: call response schema=_VisionPayload len=1008
+2026-04-18 22:06:15,753 [INFO] neoantigen.llm: call response schema=_VisionPayload len=540
+2026-04-18 22:06:15,786 [INFO] neoantigen.llm: call response schema=_VisionPayload len=542
+2026-04-18 22:06:16,277 [INFO] neoantigen.llm: call response schema=_VisionPayload len=842
+2026-04-18 22:06:16,761 [INFO] neoantigen.llm: call response schema=_VisionPayload len=848
+2026-04-18 22:06:17,056 [INFO] neoantigen.llm: call response schema=_VisionPayload len=860
+2026-04-18 22:06:17,056 [ERROR] neoantigen.llm: validation failed schema=_VisionPayload err=1 validation error for _VisionPayload
+prior_systemic_therapy
+  Input should be a valid boolean, unable to interpret input [type=bool_parsing, input_value='osimertinib, amivantamab + lazertinib', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/bool_parsing data={'page_description': 'Discharge summary - NSCLC with CNS progression', 'primary_cancer_type': 'lung_adenocarcinoma', 'histology': 'adenocarcinoma', 'primary_site': 'brain (with metastatic disease from primary lung site)', 'melanoma_subtype': None, 'breslow_thickness_mm': None, 'ulceration': None, 'mitotic_rate_per_mm2': None, 'tils_present': None, 'pdl1_estimate': None, 'lag3_ihc_percent': None, 'ajcc_stage': 'IV', 'age_years': 68, 'ecog': None, 'measurable_disease_recist': None, 'life_expectancy_months': None, 'prior_systemic_therapy': 'osimertinib, amivantamab + lazertinib', 'prior_anti_pd1': None, 'mutations_text': ['EGFR exon 19 del', 'T790M', 'MET amplification'], 'relevant_notes': 'Patient transitioned to amivantamab + lazertinib due to acquired resistance; completed SRS to 2 CNS lesions (10/02/25).'}
+2026-04-18 22:06:17,056 [WARNING] neoantigen.llm: retrying schema=_VisionPayload after first-attempt failure:
+  - prior_systemic_therapy: Input should be a valid boolean, unable to interpret input (got: 'osimertinib, amivantamab + lazertinib')
+2026-04-18 22:06:17,165 [INFO] neoantigen.llm: call response schema=_VisionPayload len=861
+2026-04-18 22:06:17,501 [INFO] neoantigen.llm: call response schema=_VisionPayload len=965
+2026-04-18 22:06:17,567 [INFO] neoantigen.llm: call response schema=_VisionPayload len=1770
+2026-04-18 22:06:17,782 [INFO] neoantigen.llm: call response schema=_VisionPayload len=1287
+2026-04-18 22:06:18,623 [INFO] neoantigen.llm: call response schema=_VisionPayload len=795
+2026-04-18 22:06:18,625 [INFO] neoantigen.llm: call schema=_AggPayload images=0 user_len=14403
+2026-04-18 22:06:18,657 [ERROR] neoantigen.llm: call HTTP error schema=_AggPayload model=medix-r1-30b err=BadRequestError: Error code: 400 - {'error': {'message': "This model's maximum context length is 8192 tokens. However, you requested 3500 output tokens and your prompt contains at least 4693 input tokens, for a total of at least 8193 tokens. Please reduce the length of the input prompt or the number of requested output tokens. (parameter=input_tokens, value=4693)", 'type': 'BadRequestError', 'param': 'input_tokens', 'code': 400}}
+2026-04-18 22:06:18,659 [INFO] neoantigen.llm: call schema=PatientDemographics images=0 user_len=1371
+2026-04-18 22:06:19,818 [INFO] neoantigen.llm: call response schema=PatientDemographics len=598
+2026-04-18 22:06:19,845 [INFO] neoantigen.llm: stream_with_thinking start user_len=2554 images=0 prefill_len=15
+2026-04-18 22:06:47,611 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 22:06:47,627 [INFO] neoantigen.llm: stream_with_thinking start user_len=2494 images=0 prefill_len=15
+2026-04-18 22:07:11,051 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 22:07:11,066 [INFO] neoantigen.llm: stream_with_thinking start user_len=2653 images=0 prefill_len=15
+2026-04-18 22:07:38,850 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 22:07:38,854 [INFO] neoantigen.llm: call schema=_PhaseResponse images=0 user_len=2653
+2026-04-18 22:07:41,842 [INFO] neoantigen.llm: call response schema=_PhaseResponse len=2160
+2026-04-18 22:07:41,857 [INFO] neoantigen.llm: stream_with_thinking start user_len=2512 images=0 prefill_len=15
+2026-04-18 22:08:09,634 [INFO] neoantigen.llm: stream_with_thinking done
+2026-04-18 22:08:09,638 [INFO] neoantigen.llm: call schema=_PhaseResponse images=0 user_len=2512
+2026-04-18 22:08:12,723 [INFO] neoantigen.llm: call response schema=_PhaseResponse len=2834
+2026-04-18 22:10:18,782 [INFO] neoantigen.llm: call schema=PatientGuide images=0 user_len=12123
+2026-04-18 22:10:18,784 [INFO] neoantigen.llm: call schema=PatientGuide images=0 user_len=12123
+2026-04-18 22:10:18,835 [ERROR] neoantigen.llm: call HTTP error schema=PatientGuide model=medix-r1-30b err=BadRequestError: Error code: 400 - {'error': {'message': "This model's maximum context length is 8192 tokens. However, you requested 4000 output tokens and your prompt contains at least 4193 input tokens, for a total of at least 8193 tokens. Please reduce the length of the input prompt or the number of requested output tokens. (parameter=input_tokens, value=4193)", 'type': 'BadRequestError', 'param': 'input_tokens', 'code': 400}}
+2026-04-18 22:10:18,847 [ERROR] neoantigen.llm: call HTTP error schema=PatientGuide model=medix-r1-30b err=BadRequestError: Error code: 400 - {'error': {'message': "This model's maximum context length is 8192 tokens. However, you requested 4000 output tokens and your prompt contains at least 4193 input tokens, for a total of at least 8193 tokens. Please reduce the length of the input prompt or the number of requested output tokens. (parameter=input_tokens, value=4193)", 'type': 'BadRequestError', 'param': 'input_tokens', 'code': 400}}
+2026-04-18 22:12:04,236 [INFO] neoantigen.llm: call schema=_Paragraphs images=0 user_len=4558
+2026-04-18 22:12:07,283 [INFO] neoantigen.llm: call response schema=_Paragraphs len=1849
+2026-04-18 22:12:07,284 [INFO] neoantigen.llm: call schema=_Paragraphs images=0 user_len=4558
+2026-04-18 22:12:08,829 [INFO] neoantigen.llm: call response schema=_Paragraphs len=1299
+2026-04-18 22:20:04,675 [INFO] neoantigen.llm: chat client base=https://api.k2think.ai/v1 model=MBZUAI-IFM/K2-Think-v2 key_idx=0 pool=3
+2026-04-18 22:20:06,481 [INFO] neoantigen.llm: chat stream done chunks=201 text_chars=4657 tool_calls=0 state=answer
+2026-04-18 22:22:08,420 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+2026-04-18 22:22:34,394 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+2026-04-18 22:22:51,017 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+2026-04-18 22:23:03,197 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+2026-04-18 22:23:09,289 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+2026-04-18 22:23:24,023 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+2026-04-18 22:26:04,385 [INFO] neoantigen.llm: call schema=_Paragraphs images=0 user_len=4558
+2026-04-18 22:26:06,625 [INFO] neoantigen.llm: call response schema=_Paragraphs len=1539
+2026-04-18 22:26:06,626 [INFO] neoantigen.llm: call schema=_Paragraphs images=0 user_len=4558
+2026-04-18 22:26:08,150 [INFO] neoantigen.llm: call response schema=_Paragraphs len=1074
+2026-04-18 22:26:42,480 [INFO] neoantigen.llm: chat client base=https://api.k2think.ai/v1 model=MBZUAI-IFM/K2-Think-v2 key_idx=0 pool=3
+2026-04-18 22:26:43,572 [INFO] neoantigen.llm: chat stream done chunks=16 text_chars=217 tool_calls=0 state=answer
+2026-04-18 22:34:29,650 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+2026-04-18 22:34:54,678 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+2026-04-18 22:35:18,689 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+2026-04-18 22:41:10,118 [INFO] neoantigen.llm: chat client base=https://api.k2think.ai/v1 model=MBZUAI-IFM/K2-Think-v2 key_idx=0 pool=3
+2026-04-18 22:41:12,517 [INFO] neoantigen.llm: chat stream done chunks=105 text_chars=1867 tool_calls=0 state=answer
+2026-04-18 22:41:38,788 [INFO] neoantigen.llm: chat client base=https://api.k2think.ai/v1 model=MBZUAI-IFM/K2-Think-v2 key_idx=1 pool=3
+2026-04-18 22:41:40,104 [INFO] neoantigen.llm: chat stream done chunks=134 text_chars=2740 tool_calls=0 state=answer
+2026-04-18 22:42:33,058 [INFO] neoantigen.llm: call schema=_Paragraphs images=0 user_len=4558
+2026-04-18 22:42:34,990 [INFO] neoantigen.llm: call response schema=_Paragraphs len=1507
+2026-04-18 22:42:34,991 [INFO] neoantigen.llm: call schema=_Paragraphs images=0 user_len=4558
+2026-04-18 22:42:36,593 [INFO] neoantigen.llm: call response schema=_Paragraphs len=1354
+2026-04-18 22:43:31,913 [INFO] neoantigen.llm: chat client base=https://api.k2think.ai/v1 model=MBZUAI-IFM/K2-Think-v2 key_idx=2 pool=3
+2026-04-18 22:43:33,381 [INFO] neoantigen.llm: chat stream done chunks=124 text_chars=4182 tool_calls=0 state=answer
+2026-04-18 22:44:13,457 [INFO] neoantigen.llm: chat client base=https://api.k2think.ai/v1 model=MBZUAI-IFM/K2-Think-v2 key_idx=0 pool=3
+2026-04-18 22:44:15,623 [INFO] neoantigen.llm: chat stream done chunks=262 text_chars=8034 tool_calls=0 state=answer
+2026-04-18 22:49:27,579 [INFO] neoantigen.llm: chat client base=https://api.k2think.ai/v1 model=MBZUAI-IFM/K2-Think-v2 key_idx=1 pool=3
+2026-04-18 22:49:29,474 [INFO] neoantigen.llm: chat stream done chunks=115 text_chars=3093 tool_calls=0 state=answer
+2026-04-18 22:52:53,795 [INFO] neoantigen.llm: chat client base=https://api.k2think.ai/v1 model=MBZUAI-IFM/K2-Think-v2 key_idx=2 pool=3
+2026-04-18 22:52:54,927 [INFO] neoantigen.llm: chat stream done chunks=65 text_chars=1253 tool_calls=0 state=answer
+2026-04-18 22:53:03,074 [INFO] neoantigen.llm: chat client base=https://api.k2think.ai/v1 model=MBZUAI-IFM/K2-Think-v2 key_idx=0 pool=3
+2026-04-18 22:53:05,173 [INFO] neoantigen.llm: chat stream done chunks=111 text_chars=2311 tool_calls=0 state=answer
+2026-04-18 22:54:40,674 [INFO] neoantigen.llm: chat client base=https://api.k2think.ai/v1 model=MBZUAI-IFM/K2-Think-v2 key_idx=1 pool=3
+2026-04-18 22:54:42,049 [INFO] neoantigen.llm: chat stream done chunks=74 text_chars=1692 tool_calls=0 state=answer
+2026-04-18 22:55:24,514 [INFO] neoantigen.llm: chat client base=https://api.k2think.ai/v1 model=MBZUAI-IFM/K2-Think-v2 key_idx=2 pool=3
+2026-04-18 22:55:25,525 [INFO] neoantigen.llm: chat stream done chunks=71 text_chars=1810 tool_calls=0 state=answer
+2026-04-18 22:55:25,553 [INFO] neoantigen.llm: chat client base=https://api.k2think.ai/v1 model=MBZUAI-IFM/K2-Think-v2 key_idx=0 pool=3
+2026-04-18 22:55:26,823 [INFO] neoantigen.llm: chat stream done chunks=78 text_chars=1560 tool_calls=0 state=answer
+2026-04-18 22:55:26,856 [INFO] neoantigen.llm: chat client base=https://api.k2think.ai/v1 model=MBZUAI-IFM/K2-Think-v2 key_idx=1 pool=3
+2026-04-18 22:55:28,402 [INFO] neoantigen.llm: chat stream done chunks=157 text_chars=4577 tool_calls=0 state=answer
+2026-04-18 22:55:28,431 [INFO] neoantigen.llm: chat client base=https://api.k2think.ai/v1 model=MBZUAI-IFM/K2-Think-v2 key_idx=2 pool=3
+2026-04-18 22:55:29,797 [WARNING] neoantigen.llm: K2 tool-call parse failed, buf="func1('highlight_section', section='trials')  \n\nSo what we’re seeing is that nearly all the 22 matched trials are flagged as “needs_more_data.” For example, NCT06465329 requires age ≥18, but the patie"
+2026-04-18 22:55:29,797 [INFO] neoantigen.llm: chat stream done chunks=113 text_chars=2598 tool_calls=0 state=tool_call_text
+2026-04-18 22:55:49,058 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+2026-04-18 22:56:20,326 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+2026-04-18 23:01:42,961 [INFO] neoantigen.llm: chat client base=https://api.k2think.ai/v1 model=MBZUAI-IFM/K2-Think-v2 key_idx=0 pool=3
+2026-04-18 23:01:45,479 [INFO] neoantigen.llm: chat stream done chunks=243 text_chars=7037 tool_calls=0 state=answer
+2026-04-18 23:15:21,884 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+2026-04-18 23:18:57,797 [INFO] neoantigen.llm: chat client base=https://api.k2think.ai/v1 model=MBZUAI-IFM/K2-Think-v2 key_idx=0 pool=3
+2026-04-18 23:18:59,878 [INFO] neoantigen.llm: chat stream done chunks=168 text_chars=4464 tool_calls=0 state=answer
+2026-04-18 23:19:26,125 [INFO] neoantigen.llm: chat client base=https://api.k2think.ai/v1 model=MBZUAI-IFM/K2-Think-v2 key_idx=1 pool=3
+2026-04-18 23:19:28,384 [INFO] neoantigen.llm: chat stream done chunks=282 text_chars=8146 tool_calls=0 state=answer
+2026-04-18 23:20:54,904 [INFO] neoantigen.llm: chat client base=https://api.k2think.ai/v1 model=MBZUAI-IFM/K2-Think-v2 key_idx=2 pool=3
+2026-04-18 23:20:55,892 [INFO] neoantigen.llm: chat stream done chunks=17 text_chars=257 tool_calls=0 state=answer
+2026-04-18 23:21:23,432 [INFO] neoantigen.llm: chat client base=https://api.k2think.ai/v1 model=MBZUAI-IFM/K2-Think-v2 key_idx=0 pool=3
+2026-04-18 23:21:24,804 [INFO] neoantigen.llm: chat stream done chunks=95 text_chars=1965 tool_calls=0 state=answer
+2026-04-19 00:03:01,952 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+2026-04-19 00:03:14,507 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+2026-04-19 00:03:19,973 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+[REDACTED-DATE] 00:03:31,133 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+[REDACTED-DATE] 00:03:37,665 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+[REDACTED-DATE] 00:03:41,949 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+[REDACTED-DATE] 00:03:46,144 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+[REDACTED-DATE] 00:03:50,291 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+[REDACTED-DATE] 00:04:13,653 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=https://api.k2think.ai/v1)

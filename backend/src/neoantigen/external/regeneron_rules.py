@@ -25,6 +25,23 @@ from ..models import (
 ADVANCED_T_STAGES = {"T3a", "T3b", "T4a", "T4b"}
 HIGH_RISK_RESECTABLE_T_STAGES = {"T2b", "T3a", "T3b", "T4a", "T4b"}
 
+# Substrings that identify a Kimi/LLM structuring error accidentally persisted
+# into a registry file's ``never_in_tcga_gates``. We drop these at evaluate()
+# time so they never reach the case snapshot, SSE stream, chat prompt, or
+# generated report.
+_GATE_ERROR_MARKERS = (
+    "kimi structuring failed",
+    "model did not return valid json",
+    "structuredpredicates validation",
+    "valueerror:",
+    "traceback (most recent call last)",
+)
+
+
+def _is_gate_error(text: str) -> bool:
+    low = (text or "").lower()
+    return any(marker in low for marker in _GATE_ERROR_MARKERS)
+
 
 @dataclass
 class TrialRule:
@@ -442,8 +459,20 @@ def evaluate(case: PatientCase, rule: TrialRule) -> TrialMatch:
     if rule.pdl1_min_tps is not None:
         _record(_pdl1_min_tps_gate(case, rule.pdl1_min_tps))
 
+    saw_gate_error = False
     for gate in rule.never_in_tcga_gates:
+        if _is_gate_error(gate):
+            saw_gate_error = True
+            continue
         unknown.append(gate)
+    if saw_gate_error:
+        # Scraper serialized Kimi's raw error / chain-of-thought into this
+        # rule's gates. Record a clean placeholder so the verdict stays
+        # `needs_more_data` (not falsely `eligible`) without leaking the
+        # raw error string into case snapshots, SSE, chat, or the report.
+        unknown.append(
+            "Automated eligibility parsing incomplete - see ClinicalTrials.gov for full criteria"
+        )
 
     if failing:
         status: str = "ineligible"

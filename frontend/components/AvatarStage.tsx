@@ -25,6 +25,9 @@ import {
   speak as speakSession,
   subscribe as subscribeSession,
   attachVideo,
+  getStatus as getSessionStatus,
+  getSpeaking as getSessionSpeaking,
+  getCaption as getSessionCaption,
   type AvatarStatus,
 } from "@/lib/avatar-session";
 
@@ -54,9 +57,21 @@ export const AvatarStage = forwardRef<AvatarStageHandle, Props>(
     ref,
   ) {
     const videoRef = useRef<HTMLVideoElement | null>(null);
-    const [status, setStatus] = useState<AvatarStatus>("idle");
-    const [speaking, setSpeaking] = useState(false);
-    const [caption, setCaption] = useState<string>("");
+    // Seed from the singleton so a remount during a live session starts
+    // with status="live" on the FIRST render. Otherwise the idle poster
+    // would cover the video for one frame, and on WebRTC that's long
+    // enough for the fresh <video> element to paint only the paused first
+    // frame — which is what surfaces as "still frame instead of live feed"
+    // when the user toggles between Patient and Clinician views.
+    const [status, setStatus] = useState<AvatarStatus>(() =>
+      typeof window === "undefined" ? "idle" : getSessionStatus(),
+    );
+    const [speaking, setSpeaking] = useState<boolean>(() =>
+      typeof window === "undefined" ? false : getSessionSpeaking(),
+    );
+    const [caption, setCaption] = useState<string>(() =>
+      typeof window === "undefined" ? "" : getSessionCaption(),
+    );
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {

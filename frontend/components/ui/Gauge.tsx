@@ -60,7 +60,7 @@ export function Gauge({
             </span>
           )}
           <span className="text-[11px] tabular-nums text-black font-medium">
-            {hasValue ? value : "—"}
+            {hasValue ? value : "-"}
             {unit && hasValue ? (
               <span className="text-neutral-400 ml-0.5">{unit}</span>
             ) : null}

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef } from "react";
 import type { PatientCase } from "@/lib/types";
-import { toPatientFriendly } from "@/lib/plainEnglish";
+import { cleanConflicts, toPatientFriendly } from "@/lib/plainEnglish";
 import { PatientProfileCard } from "@/components/PatientProfileCard";
 import type { ExtractFeedEntry, ExtractProgress } from "../CaseTabs";
 
@@ -211,14 +211,18 @@ export function OverviewTab({
         </ul>
       </section>
 
-      {caseData.conflicts.length > 0 && (
-        <div className="rounded-2xl bg-amber-50 border border-amber-200 p-4 text-xs text-amber-800">
-          <span className="font-semibold">Worth reviewing:</span>{" "}
-          {caseData.conflicts.length} fact
-          {caseData.conflicts.length === 1 ? "" : "s"} disagreed between your
-          documents. See the Documents tab.
-        </div>
-      )}
+      {(() => {
+        const realConflicts = cleanConflicts(caseData.conflicts);
+        if (realConflicts.length === 0) return null;
+        return (
+          <div className="rounded-2xl bg-amber-50 border border-amber-200 p-4 text-xs text-amber-800">
+            <span className="font-semibold">Worth reviewing:</span>{" "}
+            {realConflicts.length} fact
+            {realConflicts.length === 1 ? "" : "s"} disagreed between your
+            documents. See the Documents tab.
+          </div>
+        );
+      })()}
     </div>
   );
 }

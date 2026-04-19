@@ -34,7 +34,7 @@ function requestBrowserLocation(): Promise<GeolocationPosition> {
 }
 
 // IP-based fallback. Used only when the native prompt is denied, unsupported,
-// or times out. Accuracy is roughly city-level — good enough to sort trial
+// or times out. Accuracy is roughly city-level,good enough to sort trial
 // sites by rough distance even without the user sharing GPS.
 async function lookupIpLocation(): Promise<UserLocation | null> {
   try {

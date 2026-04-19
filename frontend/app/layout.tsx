@@ -38,13 +38,13 @@ export default function RootLayout({
         }}
       >
         <header className="fixed top-0 left-0 right-0 z-30 bg-[#faf7f3]/80 backdrop-blur-xl border-b border-neutral-200/60">
-          <div className="px-6 h-11 flex items-center justify-between">
-            <a href="/" className="flex items-baseline gap-3 group">
-              <span className="font-serif text-xl leading-none tracking-tight text-black">
+          <div className="px-6 h-16 flex items-center justify-between">
+            <a href="/" className="flex flex-col items-start gap-0.5 group">
+              <span className="font-serif text-4xl leading-none tracking-tight text-black">
                 Onkos
               </span>
-              <span className="hidden sm:inline text-[10px] uppercase tracking-[0.2em] text-neutral-500 font-medium">
-                Oncology Copilot
+              <span className="text-[10px] uppercase tracking-[0.2em] text-neutral-500 font-medium">
+                Cursor for Oncologists
               </span>
             </a>
             <Suspense fallback={null}>
