@@ -14,6 +14,9 @@
   <img src="https://img.shields.io/badge/next.js-15-black" alt="Next.js 15" />
 </p>
 
+
+[link to presentation](https://docs.google.com/presentation/d/10lJNNbDWpV05T409lz7RT_2AMcOvC-vd/edit?usp=sharing&ouid=118151704154272449197&rtpof=true&sd=true)
+
 ## What it does
 
 Drop a folder of messy patient records (PDFs, scanned pathology, intake CSVs, imaging notes) and Onkos:
