@@ -4648,3 +4648,28 @@ prior_systemic_therapy
 [REDACTED-DATE] 02:02:06,990 [ERROR] neoantigen.llm: call HTTP error schema=_Paragraphs model=medix-r1-30b err=APIConnectionError: Connection error.
 [REDACTED-DATE] 02:02:40,071 [INFO] neoantigen.llm: chat client base=https://api.k2think.ai/v1 model=MBZUAI-IFM/K2-Think-v2 key_idx=2 pool=3
 [REDACTED-DATE] 02:02:42,079 [INFO] neoantigen.llm: chat stream done chunks=256 text_chars=7210 tool_calls=0 state=answer
+[REDACTED-DATE] 10:04:46,256 [INFO] neoantigen.llm: chat client base=https://api.k2think.ai/v1 model=MBZUAI-IFM/K2-Think-v2 key_idx=0 pool=3
+[REDACTED-DATE] 10:04:47,489 [INFO] neoantigen.llm: chat stream done chunks=110 text_chars=2581 tool_calls=0 state=answer
+[REDACTED-DATE] 10:07:14,550 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+[REDACTED-DATE] 10:38:59,356 [INFO] neoantigen.llm: chat client base=https://api.k2think.ai/v1 model=MBZUAI-IFM/K2-Think-v2 key_idx=0 pool=3
+[REDACTED-DATE] 10:39:01,706 [INFO] neoantigen.llm: chat stream done chunks=199 text_chars=4146 tool_calls=0 state=answer
+[REDACTED-DATE] 10:47:16,729 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+[REDACTED-DATE] 10:50:32,928 [INFO] neoantigen.llm: chat client base=https://api.k2think.ai/v1 model=MBZUAI-IFM/K2-Think-v2 key_idx=0 pool=3
+[REDACTED-DATE] 10:50:35,455 [INFO] neoantigen.llm: chat stream done chunks=289 text_chars=5806 tool_calls=0 state=answer
+[REDACTED-DATE] 11:19:47,886 [INFO] neoantigen.llm: call schema=_Paragraphs images=0 user_len=4558
+[REDACTED-DATE] 11:19:49,122 [ERROR] neoantigen.llm: call HTTP error schema=_Paragraphs model=medix-r1-30b err=APIConnectionError: Connection error.
+[REDACTED-DATE] 11:19:49,123 [INFO] neoantigen.llm: call schema=_Paragraphs images=0 user_len=4558
+[REDACTED-DATE] 11:19:50,508 [ERROR] neoantigen.llm: call HTTP error schema=_Paragraphs model=medix-r1-30b err=APIConnectionError: Connection error.
+[REDACTED-DATE] 11:20:09,295 [INFO] neoantigen.llm: chat client base=https://api.k2think.ai/v1 model=MBZUAI-IFM/K2-Think-v2 key_idx=1 pool=3
+[REDACTED-DATE] 11:20:10,654 [INFO] neoantigen.llm: chat stream done chunks=76 text_chars=1884 tool_calls=0 state=answer
+[REDACTED-DATE] 11:27:38,888 [INFO] neoantigen.llm: chat client base=https://api.k2think.ai/v1 model=MBZUAI-IFM/K2-Think-v2 key_idx=2 pool=3
+[REDACTED-DATE] 11:27:40,389 [INFO] neoantigen.llm: chat stream done chunks=132 text_chars=4112 tool_calls=0 state=answer
+[REDACTED-DATE] 11:29:14,880 [INFO] neoantigen.llm: chat client base=https://api.k2think.ai/v1 model=MBZUAI-IFM/K2-Think-v2 key_idx=0 pool=3
+[REDACTED-DATE] 11:29:16,366 [INFO] neoantigen.llm: chat stream done chunks=158 text_chars=4208 tool_calls=0 state=answer
+[REDACTED-DATE] 11:36:40,381 [INFO] neoantigen.llm: chat client base=https://api.k2think.ai/v1 model=MBZUAI-IFM/K2-Think-v2 key_idx=1 pool=3
+[REDACTED-DATE] 11:36:41,966 [INFO] neoantigen.llm: chat stream done chunks=180 text_chars=5656 tool_calls=0 state=answer
+[REDACTED-DATE] 13:35:53,699 [INFO] neoantigen.llm: LLM logger initialized (path=/Users/owner/Downloads/hackathons/princeton/backend/out/k2.log, base_url=http://127.0.0.1:8000/v1)
+[REDACTED-DATE] 13:37:29,784 [INFO] neoantigen.llm: chat client base=https://api.k2think.ai/v1 model=MBZUAI-IFM/K2-Think-v2 key_idx=0 pool=3
+[REDACTED-DATE] 13:37:32,099 [INFO] neoantigen.llm: chat stream done chunks=66 text_chars=727 tool_calls=0 state=pre
+[REDACTED-DATE] 13:37:43,689 [INFO] neoantigen.llm: chat client base=https://api.k2think.ai/v1 model=MBZUAI-IFM/K2-Think-v2 key_idx=1 pool=3
+[REDACTED-DATE] 13:37:45,979 [INFO] neoantigen.llm: chat stream done chunks=292 text_chars=7846 tool_calls=0 state=answer
